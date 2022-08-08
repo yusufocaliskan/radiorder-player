@@ -6,6 +6,10 @@ export const AudioContext = createContext();
 export class AudioProvider extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      audioFiles: [],
+      permissionError: false,
+    };
   }
 
   //Hata mesajı göster.
@@ -31,15 +35,6 @@ export class AudioProvider extends Component {
     "status": "undetermined",
     } 
    */
-
-    /**
-     * Şarkı dosyalarını al.
-     */
-    getAudioFiles = async () => {
-      const media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
-      console.log(media);
-    };
-
     //Erişim al.
     const permission = await MediaLibrary.getPermissionsAsync();
 
@@ -68,19 +63,58 @@ export class AudioProvider extends Component {
         this.getAudioFiles();
       }
 
+      if (!permission.canAskAgain && !permission.granted) {
+        this.setState({ ...this.state, permissionError: true });
+      }
+
       //izin verilmedi ve yeniden sormamızı mı engelledi!!
       if (status === "denied" && !canAskAgain) {
         //Ona bir şeyler söyle..
+        this.setState({ ...this.state, permissionError: true });
       }
     }
+  };
+
+  /**
+   * Şarkı dosyalarını al.
+   */
+  getAudioFiles = async () => {
+    let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
+
+    //Tüm şarkıları listele.
+    media = await MediaLibrary.getAssetsAsync({
+      mediaType: "audio",
+      first: media.totalCount,
+    });
+
+    //Şarkıları state ata.
+    this.setState({ ...this.state, audioFiles: media.assets });
+    //console.log(media.assets.length);
   };
 
   componentDidMount() {
     this.getPermission();
   }
   render() {
+    if (this.state.permissionError)
+      return (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: 30,
+            color: "red",
+          }}
+        >
+          <Text>
+            Ses dosyalarına erişim izni vermediniz. Ayarları gidip erişim izni
+            verin.
+          </Text>
+        </View>
+      );
     return (
-      <AudioContext.Provider value={{}}>
+      <AudioContext.Provider value={{ audioFiles: this.state.audioFiles }}>
         {this.props.children}
       </AudioContext.Provider>
     );
