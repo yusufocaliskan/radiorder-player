@@ -5,27 +5,56 @@ import color from "../misc/color";
 //Icon
 import { Entypo } from "@expo/vector-icons";
 
-const AudioListItem = () => {
+//Şarkının ilk harfını al.
+const getThumnailText = (filename) => filename[0];
+
+//Dakika dönüştürücü
+const convertTime = (minutes) => {
+  if (minutes) {
+    const hrs = minutes / 60;
+    const minute = hrs.toString().split(".")[0];
+    const percent = parseInt(hrs.toString().split(".")[1].slice(0, 2));
+    const sec = Math.ceil((60 * percent) / 100);
+
+    if (parseInt(minute) < 10 && sec < 10) {
+      return `0${minute}:0${sec}`;
+    }
+
+    if (parseInt(minute) < 10) {
+      return `0${minute}:${sec}`;
+    }
+    return `${minute}:${sec}`;
+  }
+};
+
+//her bir şarkıyı liste
+const AudioListItem = ({ title, duration, onOptionPress }) => {
   return (
-    <View style={styles.container}>
-      <View style={styles.leftContainer}>
-        <View style={styles.thumbnail}>
-          <Text style={styles.thumbnailText}>A</Text>
+    <>
+      <View style={styles.container}>
+        <View style={styles.leftContainer}>
+          <View style={styles.thumbnail}>
+            <Text style={styles.thumbnailText}>{getThumnailText(title)}</Text>
+          </View>
+          <View style={styles.titleContainer}>
+            <Text numberOfLines={1} style={styles.title}>
+              {title}
+            </Text>
+            <Text style={styles.timeText}>{convertTime(duration)}</Text>
+          </View>
         </View>
-        <View style={styles.titleContainer}>
-          <Text numberOfLines={1} style={styles.title}>
-            A Song Song Song Song Song Song Song Song Song text!
-          </Text>
+        <View style={styles.rightContainer}>
+          <Entypo
+            name="dots-three-vertical"
+            size={20}
+            color={color.FONT_MEDIUM}
+            onPress={onOptionPress}
+            style={{ padding: 10 }}
+          />
         </View>
       </View>
-      <View style={styles.rightContainer}>
-        <Entypo
-          name="dots-three-vertical"
-          size={20}
-          color={color.FONT_MEDIUM}
-        />
-      </View>
-    </View>
+      <View style={styles.separator}></View>
+    </>
   );
 };
 
@@ -74,6 +103,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     color: color.FONT,
+  },
+  separator: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    width: width - 90,
+    marginBottom: 5,
+    marginTop: 5,
+    justifyContent: "center",
+    alignSelf: "center",
+    opacity: 0.5,
+  },
+  timeText: {
+    color: color.FONT_LIGHT,
+    fontSize: 14,
   },
 });
 
