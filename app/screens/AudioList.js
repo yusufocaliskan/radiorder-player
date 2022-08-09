@@ -35,11 +35,17 @@ export class AudioList extends Component {
     }
   );
 
+  //şarkıya çalmak için basıldığında
+  handleAudioPress = () => {
+    console.log("Yeeee");
+  };
+  //Şarkıyı listele.
   rowRenderer = (type, item) => {
     return (
       <AudioListItem
         title={item.filename}
         duration={item.duration}
+        onAudioPress={this.handleAudioPress}
         onOptionPress={() => {
           this.currentItem = item;
           this.setState({ ...this.state, optionModalVisible: true });
