@@ -1,26 +1,44 @@
 import React, { Component } from "react";
-import { View, StyleSheet, Text, ScrollView } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Text,
+  ScrollView,
+  LayoutAnimation,
+  Dimensions,
+} from "react-native";
 import { AudioContext } from "../context/AudioProvider";
+import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 
 export class AudioList extends Component {
   static contextType = AudioContext;
 
+  layoutProvider = new LayoutProvider(
+    (i) => "audio",
+    (type, dim) => {
+      dim.width = Dimensions.get("window").width;
+      dim.height = 70;
+    }
+  );
+
+  rowRenderer = (type, item) => {
+    return <Text>{item.filename}</Text>;
+  };
   render() {
     return (
-      <ScrollView>
-        {this.context.audioFiles.map((item) => (
-          <Text
-            style={{
-              padding: 10,
-              borderBottomColor: "red",
-              borderBottomWidth: 1,
-            }}
-            key={item.id}
-          >
-            {item.filename}
-          </Text>
-        ))}
-      </ScrollView>
+      <AudioContext.Consumer>
+        {({ dataProvider }) => {
+          return (
+            <View style={{ flex: 1 }}>
+              <RecyclerListView
+                dataProvider={dataProvider}
+                layoutProvider={this.layoutProvider}
+                rowRenderer={this.rowRenderer}
+              />
+            </View>
+          );
+        }}
+      </AudioContext.Consumer>
     );
   }
 }

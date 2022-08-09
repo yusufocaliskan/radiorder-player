@@ -2,13 +2,23 @@ import React, { Component, createContext } from "react";
 import { Text, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 
+//Şarkıları listelemek için kullanırlır
+//ScrollView'den daha performanlısdır.
+import { DataProvider } from "recyclerlistview";
+
 export const AudioContext = createContext();
 export class AudioProvider extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      //Mediadan alınan şarkılar
       audioFiles: [],
+
+      //Permission hataları
       permissionError: false,
+
+      //Şarkı listesi
+      dataProvider: new DataProvider((r1, r2) => r1 !== r2),
     };
   }
 
@@ -79,6 +89,8 @@ export class AudioProvider extends Component {
    * Şarkı dosyalarını al.
    */
   getAudioFiles = async () => {
+    const { dataProvider, audioFiles } = this.state;
+
     let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
 
     //Tüm şarkıları listele.
@@ -88,7 +100,14 @@ export class AudioProvider extends Component {
     });
 
     //Şarkıları state ata.
-    this.setState({ ...this.state, audioFiles: media.assets });
+    this.setState({
+      ...this.state,
+      dataProvider: dataProvider.cloneWithRows([
+        ...audioFiles,
+        ...media.assets,
+      ]),
+      audioFiles: [...audioFiles, ...media.assets],
+    });
     //console.log(media.assets.length);
   };
 
@@ -96,13 +115,14 @@ export class AudioProvider extends Component {
     this.getPermission();
   }
   render() {
-    if (this.state.permissionError)
+    const { audioFiles, dataProvider, permissionError } = this.state;
+    if (permissionError)
       return (
         <View
           style={{
             flex: 1,
             justifyContent: "center",
-            alignItems: "center",
+            alignItems: "ce nter",
             fontSize: 30,
             color: "red",
           }}
@@ -114,7 +134,7 @@ export class AudioProvider extends Component {
         </View>
       );
     return (
-      <AudioContext.Provider value={{ audioFiles: this.state.audioFiles }}>
+      <AudioContext.Provider value={{ audioFiles, dataProvider }}>
         {this.props.children}
       </AudioContext.Provider>
     );
