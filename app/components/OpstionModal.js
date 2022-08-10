@@ -6,8 +6,11 @@ import {
   StyleSheet,
   Modal,
   TouchableWithoutFeedback,
+  TouchableOpacity,
 } from "react-native";
 import color from "../misc/color";
+import { AntDesign } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const OptionModal = ({
   visible,
@@ -25,13 +28,33 @@ const OptionModal = ({
           <Text numberOfLines={2} style={styles.title}>
             {filename}
           </Text>
+
           <View style={styles.optionContainer}>
-            <TouchableWithoutFeedback onPress={onPlayPress}>
-              <Text style={styles.option}>Oynat</Text>
-            </TouchableWithoutFeedback>
-            <TouchableWithoutFeedback onPress={onPlayListPress}>
-              <Text style={styles.option}>Çalma Listesine Ekle</Text>
-            </TouchableWithoutFeedback>
+            <TouchableOpacity style={styles.button} onPress={onPlayPress}>
+              <View style={styles.optionView}>
+                <AntDesign
+                  style={styles.optionIcon}
+                  name="caretright"
+                  size={18}
+                  color={color.FONT_LIGHT}
+                />
+
+                <Text style={styles.option}>Oynat</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={onPlayListPress}>
+              <View style={styles.optionView}>
+                <MaterialIcons
+                  name="playlist-add"
+                  size={24}
+                  color={color.FONT_LIGHT}
+                  style={styles.optionIcon}
+                />
+
+                <Text style={styles.option}>Çalma Listesine Ekle</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
         <TouchableWithoutFeedback onPress={onClose}>
@@ -43,6 +66,8 @@ const OptionModal = ({
 };
 
 const styles = StyleSheet.create({
+  button: {},
+
   modal: {
     borderTopRightRadius: 20,
     borderTopLeftRadius: 20,
@@ -61,6 +86,13 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     position: "absolute",
+  },
+  optionView: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  optionIcon: {
+    flexBasis: 30,
   },
 
   optionContainer: {

@@ -1,8 +1,10 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { StyleSheet } from "react-native";
 import AudioList from "../screens/AudioList";
 import Player from "../screens/Player";
 import PlayList from "../screens/PlayList";
+import color from "../misc/color";
 
 //Iconları import et.
 import { Entypo } from "@expo/vector-icons";
@@ -13,7 +15,17 @@ const Tab = createBottomTabNavigator();
 
 const AppNavigator = () => {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: color.WHITE,
+        tabBarInactiveTintColor: color.DARK_RED,
+        headerStyle: { backgroundColor: color.RED },
+        headerTintColor: color.WHITE,
+        tabBarStyle: {
+          backgroundColor: color.RED,
+        },
+      }}
+    >
       <Tab.Screen
         name="Şarkılar"
         component={AudioList}
@@ -46,5 +58,11 @@ const AppNavigator = () => {
     </Tab.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  tab: {
+    backgroundColor: "blue",
+  },
+});
 
 export default AppNavigator;

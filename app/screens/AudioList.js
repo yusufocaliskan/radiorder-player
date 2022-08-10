@@ -10,8 +10,11 @@ import {
 import { AudioContext } from "../context/AudioProvider";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import AudioListItem from "../components/AudioListItem";
-import Screen from "../components/screen";
+import Screen from "../components/Screen";
 import OptionModal from "../components/OpstionModal";
+
+//Expo-av şarkıları çalar.
+import { Audio } from "expo-av";
 
 export class AudioList extends Component {
   static contextType = AudioContext;
@@ -36,16 +39,19 @@ export class AudioList extends Component {
   );
 
   //şarkıya çalmak için basıldığında
-  handleAudioPress = () => {
-    console.log("Yeeee");
+  handleAudioPress = (audio) => {
+    const playbackObj = new Audio.Sound();
+    const status = await playbackObj.loadAsync({ uri: audio.uri }, { shouldPlay: true });
+    console.log(status)
   };
+  
   //Şarkıyı listele.
   rowRenderer = (type, item) => {
     return (
       <AudioListItem
         title={item.filename}
         duration={item.duration}
-        onAudioPress={this.handleAudioPress}
+        onAudioPress={() => this.handleAudioPress(item)}
         onOptionPress={() => {
           this.currentItem = item;
           this.setState({ ...this.state, optionModalVisible: true });
