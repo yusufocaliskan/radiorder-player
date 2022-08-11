@@ -10,6 +10,7 @@ import color from "../misc/color";
 
 //Icon
 import { Entypo } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 //Şarkının ilk harfını al.
 const getThumnailText = (filename) => filename[0];
@@ -33,15 +34,45 @@ const convertTime = (minutes) => {
   }
 };
 
+const renderIcon = (isPlaying) => {
+  //Playing: Şarkı çalıyorlar
+  if (isPlaying) {
+    return <Ionicons name="pause" size={24} color="black" />;
+  }
+
+  //Paused: Şarkı durdurulmuş ise
+  return <Entypo name="controller-play" size={24} color="black" />;
+};
+
 //her bir şarkıyı liste
-const AudioListItem = ({ title, duration, onOptionPress, onAudioPress }) => {
+const AudioListItem = ({
+  title,
+  duration,
+  onOptionPress,
+  onAudioPress,
+  isPlaying,
+  activeListItem,
+}) => {
   return (
     <>
       <View style={styles.container}>
         <TouchableWithoutFeedback onPress={onAudioPress}>
           <View style={styles.leftContainer}>
-            <View style={styles.thumbnail}>
-              <Text style={styles.thumbnailText}>{getThumnailText(title)}</Text>
+            <View
+              style={[
+                styles.thumbnail,
+                {
+                  backgroundColor: activeListItem
+                    ? color.RED
+                    : color.FONT_LARGE,
+                },
+              ]}
+            >
+              <Text style={styles.thumbnailText}>
+                {activeListItem
+                  ? renderIcon(isPlaying)
+                  : getThumnailText(title)}
+              </Text>
             </View>
             <View style={styles.titleContainer}>
               <Text numberOfLines={1} style={styles.title}>
@@ -90,7 +121,7 @@ const styles = StyleSheet.create({
 
   thumbnail: {
     height: 40,
-    backgroundColor: color.FONT_LIGHT,
+    backgroundColor: color.FONT_LARGE,
     flexBasis: 40,
     justifyContent: "center",
     alignItems: "center",

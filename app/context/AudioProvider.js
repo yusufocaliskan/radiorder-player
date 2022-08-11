@@ -24,6 +24,8 @@ export class AudioProvider extends Component {
       playbackObj: null,
       soundObj: null,
       currentAudio: {},
+      isPlaying: false,
+      currentAudioIndex: null,
     };
   }
 
@@ -133,6 +135,8 @@ export class AudioProvider extends Component {
       playbackObj,
       soundObj,
       currentAudio,
+      isPlaying,
+      currentAudioIndex,
     } = this.state;
     if (permissionError)
       return (
@@ -159,6 +163,8 @@ export class AudioProvider extends Component {
           playbackObj,
           soundObj,
           currentAudio,
+          isPlaying,
+          currentAudioIndex,
           updateState: this.updateState,
         }}
       >
