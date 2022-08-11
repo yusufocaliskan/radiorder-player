@@ -16,6 +16,9 @@ import OptionModal from "../components/OpstionModal";
 //Expo-av şarkıları çalar.
 import { Audio } from "expo-av";
 
+//Controller
+import { play, pause, resume } from "../misc/AudioController";
+
 export class AudioList extends Component {
   static contextType = AudioContext;
 
@@ -24,6 +27,9 @@ export class AudioList extends Component {
     super(props);
     this.state = {
       optionModalVisible: false,
+      playbackObj: null,
+      soundObj: null,
+      currentAudio: {},
     };
 
     this.currentItem = {};
@@ -39,12 +45,48 @@ export class AudioList extends Component {
   );
 
   //şarkıya çalmak için basıldığında
-  handleAudioPress = (audio) => {
-    const playbackObj = new Audio.Sound();
-    const status = await playbackObj.loadAsync({ uri: audio.uri }, { shouldPlay: true });
-    console.log(status)
+  handleAudioPress = async (audio) => {
+    //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
+    if (this.state.soundObj === null) {
+      const playbackObj = new Audio.Sound();
+
+      //Controllerdan çağır.
+      const status = await play(playbackObj, audio.uri);
+
+      //Yeni durumu state ata ve ilerlememesi için return'le
+      return this.setState({
+        ...this.state,
+        currentAudio: audio,
+        playbackObj: playbackObj,
+        soundObj: status,
+      });
+    }
+
+    //Pause#2: Şarkıyı durdur.
+    if (this.state.soundObj.isLoaded && this.state.soundObj.isPlaying) {
+      //Controller
+      const status = await pause(this.state.playbackObj);
+
+      //Yeni durumu state ata ve ilerlememesi için return'le
+      return this.setState({ ...this.state, soundObj: status });
+    }
+
+    //Resume#3 : Şarkı durdurulmuş ise yeniden çalıdrmaya devam ettir
+    if (
+      this.state.soundObj.isLoaded &&
+      !this.state.soundObj.isPlaying &&
+      this.state.currentAudio.id === audio.id
+    ) {
+      const status = await resume(this.state.playbackObj);
+
+      //Yeni durumu state ata ve ilerlememesi için return'le
+      return this.setState({
+        ...this.state,
+        soundObj: status,
+      });
+    }
   };
-  
+
   //Şarkıyı listele.
   rowRenderer = (type, item) => {
     return (
