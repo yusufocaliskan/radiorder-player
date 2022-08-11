@@ -5,6 +5,7 @@ import {
   View,
   StyleSheet,
   Text,
+  TouchableOpacity,
 } from "react-native";
 import color from "../misc/color";
 
@@ -56,7 +57,7 @@ const AudioListItem = ({
   return (
     <>
       <View style={styles.container}>
-        <TouchableWithoutFeedback onPress={onAudioPress}>
+        <TouchableOpacity onPress={onAudioPress}>
           <View style={styles.leftContainer}>
             <View
               style={[
@@ -81,7 +82,7 @@ const AudioListItem = ({
               <Text style={styles.timeText}>{convertTime(duration)}</Text>
             </View>
           </View>
-        </TouchableWithoutFeedback>
+        </TouchableOpacity>
         <View style={styles.rightContainer}>
           <Entypo
             name="dots-three-vertical"
@@ -145,10 +146,9 @@ const styles = StyleSheet.create({
   },
   separator: {
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    borderBottomColor: "#555",
     width: width - 90,
-    marginBottom: 5,
-    marginTop: 5,
+    marginTop: 10,
     justifyContent: "center",
     alignSelf: "center",
     opacity: 0.5,
