@@ -27,9 +27,6 @@ export class AudioList extends Component {
     super(props);
     this.state = {
       optionModalVisible: false,
-      playbackObj: null,
-      soundObj: null,
-      currentAudio: {},
     };
 
     this.currentItem = {};
@@ -46,16 +43,16 @@ export class AudioList extends Component {
 
   //şarkıya çalmak için basıldığında
   handleAudioPress = async (audio) => {
+    const { playbackObj, soundObj, currentAudio, updateState } = this.context;
     //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
-    if (this.state.soundObj === null) {
+    if (soundObj === null) {
       const playbackObj = new Audio.Sound();
 
       //Controllerdan çağır.
       const status = await play(playbackObj, audio.uri);
 
       //Yeni durumu state ata ve ilerlememesi için return'le
-      return this.setState({
-        ...this.state,
+      return updateState(this.context, {
         currentAudio: audio,
         playbackObj: playbackObj,
         soundObj: status,
@@ -63,25 +60,24 @@ export class AudioList extends Component {
     }
 
     //Pause#2: Şarkıyı durdur.
-    if (this.state.soundObj.isLoaded && this.state.soundObj.isPlaying) {
+    if (soundObj.isLoaded && soundObj.isPlaying) {
       //Controller
-      const status = await pause(this.state.playbackObj);
+      const status = await pause(playbackObj);
 
       //Yeni durumu state ata ve ilerlememesi için return'le
-      return this.setState({ ...this.state, soundObj: status });
+      return updateState(this.context, { soundObj: status });
     }
 
     //Resume#3 : Şarkı durdurulmuş ise yeniden çalıdrmaya devam ettir
     if (
-      this.state.soundObj.isLoaded &&
-      !this.state.soundObj.isPlaying &&
-      this.state.currentAudio.id === audio.id
+      soundObj.isLoaded &&
+      !soundObj.isPlaying &&
+      currentAudio.id === audio.id
     ) {
-      const status = await resume(this.state.playbackObj);
+      const status = await resume(playbackObj);
 
       //Yeni durumu state ata ve ilerlememesi için return'le
-      return this.setState({
-        ...this.state,
+      return updateState(this.context, {
         soundObj: status,
       });
     }

@@ -1,4 +1,5 @@
 //Play#1
+//Şarkıyı başlatmak için kullanılır
 export const play = async (playbackObj, uri) => {
   try {
     console.log("Playing");
@@ -9,6 +10,7 @@ export const play = async (playbackObj, uri) => {
 };
 
 //Pause#2
+//Şarkıyı durdurmak için kullanırılır
 export const pause = async (playbackObj) => {
   try {
     console.log("Paused");
@@ -21,6 +23,7 @@ export const pause = async (playbackObj) => {
 };
 
 //Resum#3
+//Durdurulmuş şarkıyı yeniden başlatmak için kullanırılır
 export const resume = async (playbackObj) => {
   try {
     console.log("Resumed");
@@ -29,3 +32,5 @@ export const resume = async (playbackObj) => {
     console.log("Hata! Şarkı durdurulamadı.", error.message);
   }
 };
+
+//Başka bir şarkıya geç
