@@ -5,6 +5,7 @@ import * as MediaLibrary from "expo-media-library";
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
 import { DataProvider } from "recyclerlistview";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const AudioContext = createContext();
 export class AudioProvider extends Component {
@@ -47,8 +48,27 @@ export class AudioProvider extends Component {
     );
   };
 
-  //bir önceki şarkıyı yükle.
-  loadPreviousAudio = () => {};
+  /**
+   * Application açıldığında en son şarkıyı seç
+   */
+  loadPreviousAudio = async () => {
+    let previousAudio = await AsyncStorage.getItem("previousAudio");
+    let currentAudio;
+    let currentAudioIndex;
+
+    //Kullanıcı henüz bir şarkı çaldırmadı
+    if (previousAudio === null) {
+      currentAudio = this.state.audioFiles[0];
+      currentAudioIndex = 0;
+    } else {
+      (previousAudio = JSON.parse(previousAudio)),
+        (currentAudio = previousAudio.audio);
+      currentAudioIndex = previousAudio.index;
+    }
+
+    //Durumu güncelle
+    this.setState({ ...this.state, currentAudio, currentAudioIndex });
+  };
 
   /**
    * Kullanıcıdan şarkılarına erişim izni iste
@@ -174,6 +194,7 @@ export class AudioProvider extends Component {
           playbackPosition,
           playbackDuration,
           totalAudioCount: this.totalAudioCount,
+          loadPreviousAudio: this.loadPreviousAudio,
           updateState: this.updateState,
         }}
       >

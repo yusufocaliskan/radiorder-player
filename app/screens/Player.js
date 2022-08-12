@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { View, StyleSheet, Text, Dimensions } from "react-native";
 import Screen from "../components/Screen";
 import color from "../misc/color";
@@ -22,6 +22,11 @@ const Player = () => {
     }
     return 0;
   };
+
+  useEffect(() => {
+    context.loadPreviousAudio();
+  }, []);
+  if (!context.currentAudio) return null;
 
   return (
     <Screen>
@@ -52,17 +57,17 @@ const Player = () => {
           <View style={styles.audioControllers}>
             <PlayerButton
               iconType="PREV"
-              style={{ marginTop: 20 }}
+              style={{ marginTop: 10 }}
               color={context.isPlaying ? color.RED : color.GRAY}
             />
             <PlayerButton
-              style={{ marginHorizontal: 30, marginBottom: 20, fontSize: 80 }}
+              style={{ marginHorizontal: 30, marginBottom: 20, fontSize: 60 }}
               iconType={context.isPlaying ? "PAUSE" : "PLAY"}
               color={context.isPlaying ? color.RED : color.GRAY}
             />
             <PlayerButton
               iconType="NEXT"
-              style={{ marginTop: 20 }}
+              style={{ marginTop: 10 }}
               color={context.isPlaying ? color.RED : color.GRAY}
             />
           </View>

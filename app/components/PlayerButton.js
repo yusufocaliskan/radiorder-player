@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import color from "../misc/color";
 
@@ -22,15 +22,15 @@ const PlayerButton = (props) => {
         return "pause-circle";
 
       case "NEXT":
-        return "forward";
+        return "step-forward";
 
       case "PREV":
-        return "backward";
+        return "step-backward";
     }
   };
 
   return (
-    <FontAwesome
+    <FontAwesome5
       onPress={onPress}
       name={getIconName(iconType)}
       size={size}
