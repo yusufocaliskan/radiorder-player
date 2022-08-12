@@ -26,7 +26,13 @@ export class AudioProvider extends Component {
       currentAudio: {},
       isPlaying: false,
       currentAudioIndex: null,
+
+      //Slider için
+      playbackPosition: null,
+      playbackDuration: null,
     };
+
+    this.totalAudioCount = 0;
   }
 
   //Hata mesajı göster.
@@ -106,6 +112,8 @@ export class AudioProvider extends Component {
       first: media.totalCount,
     });
 
+    this.totalAudioCount = media.totalCount;
+
     //Şarkıları state ata.
     this.setState({
       ...this.state,
@@ -137,6 +145,8 @@ export class AudioProvider extends Component {
       currentAudio,
       isPlaying,
       currentAudioIndex,
+      playbackPosition,
+      playbackDuration,
     } = this.state;
     if (permissionError)
       return (
@@ -165,6 +175,9 @@ export class AudioProvider extends Component {
           currentAudio,
           isPlaying,
           currentAudioIndex,
+          playbackPosition,
+          playbackDuration,
+          totalAudioCount: this.totalAudioCount,
           updateState: this.updateState,
         }}
       >

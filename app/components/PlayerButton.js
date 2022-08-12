@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import color from "../misc/color";
 
 const PlayerButton = (props) => {
@@ -18,7 +19,7 @@ const PlayerButton = (props) => {
         return "play-circle";
 
       case "PAUSE":
-        return "pausecircle";
+        return "pause-circle";
 
       case "NEXT":
         return "forward";

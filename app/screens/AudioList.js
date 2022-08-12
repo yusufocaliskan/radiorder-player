@@ -41,6 +41,19 @@ export class AudioList extends Component {
     }
   );
 
+  /**
+   *
+   * @param {object} Slider için duration güncelle
+   */
+  onPlaybackStatusUpdate = (playbackStatus) => {
+    if (playbackStatus.isLoaded && playbackStatus.isPlaying) {
+      this.context.updateState(this.context, {
+        playbackPosition: playbackStatus.positionMillis,
+        playbackDuration: playbackStatus.durationMillis,
+      });
+    }
+  };
+
   //şarkıya çalmak için basıldığında
   handleAudioPress = async (audio) => {
     const { playbackObj, soundObj, currentAudio, updateState, audioFiles } =
@@ -55,7 +68,7 @@ export class AudioList extends Component {
       const index = audioFiles.indexOf(audio);
 
       //Yeni durumu state ata ve ilerlememesi için return'le
-      return updateState(this.context, {
+      updateState(this.context, {
         currentAudio: audio,
         playbackObj: playbackObj,
         soundObj: status,
@@ -64,6 +77,9 @@ export class AudioList extends Component {
         //Çalma-Durdurma iconları için
         isPlaying: true,
       });
+
+      //Slider bar için statuyü güncelle
+      return playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
     }
 
     //Pause#2: Şarkıyı durdur.
