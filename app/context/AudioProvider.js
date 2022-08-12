@@ -46,18 +46,14 @@ export class AudioProvider extends Component {
       ]
     );
   };
+
+  //bir önceki şarkıyı yükle.
+  loadPreviousAudio = () => {};
+
   /**
    * Kullanıcıdan şarkılarına erişim izni iste
    */
   getPermission = async () => {
-    /**
-   * Object {
-    "canAskAgain": true,
-    "expires": "never",
-    "granted": false,
-    "status": "undetermined",
-    } 
-   */
     //Erişim al.
     const permission = await MediaLibrary.getPermissionsAsync();
 

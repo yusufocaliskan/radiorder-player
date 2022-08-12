@@ -43,18 +43,56 @@ export class AudioList extends Component {
 
   /**
    *
-   * @param {object} Slider için duration güncelle
+   * Şarkı çaldığında
+   * @param {object} playbackStatus
+   * @returns
    */
-  onPlaybackStatusUpdate = (playbackStatus) => {
+  onPlaybackStatusUpdate = async (playbackStatus) => {
+    //Slider için positionı update et
     if (playbackStatus.isLoaded && playbackStatus.isPlaying) {
       this.context.updateState(this.context, {
         playbackPosition: playbackStatus.positionMillis,
         playbackDuration: playbackStatus.durationMillis,
       });
     }
+
+    //Şarkı bitti ise diğerine geç
+    if (playbackStatus.didJustFinish) {
+      //Sonraki şarkının id'sini belirle
+      const nextAudioIndex = this.context.currentAudioIndex + 1;
+
+      //Son şarkıyı bul
+      //Son şarkı ise, çalmayı durdur
+      if (nextAudioIndex >= this.context.totalAudioCount) {
+        this.context.playbackObj.unloadAsync();
+        return this.context.updateState(this.context, {
+          soundObj: null,
+          currentAudio: this.context.audioFiles[0],
+          isPlaying: false,
+          currentAudioIndex: 0,
+          playbackPosition: null,
+          playbackDuration: null,
+        });
+      }
+
+      //Eğer yukarıdaki şart geçerli değil ise sonraki şarkıya geç...
+      //Ve Şarkıya geç ve çal, durumu güncelle
+      const audio = this.context.audioFiles[nextAudioIndex];
+      const status = await playNext(this.context.playbackObj, audio.uri);
+      this.context.updateState(this.context, {
+        soundObj: status,
+        currentAudio: audio,
+        isPlaying: true,
+        currentAudioIndex: nextAudioIndex,
+      });
+    }
   };
 
-  //şarkıya çalmak için basıldığında
+  /**
+   * //İlkez: şarkıya çalmak için basıldığında
+   * @param {object} audio
+   * @returns object
+   */
   handleAudioPress = async (audio) => {
     const { playbackObj, soundObj, currentAudio, updateState, audioFiles } =
       this.context;
