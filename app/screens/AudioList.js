@@ -18,7 +18,6 @@ import { Audio } from "expo-av";
 
 //Controller
 import { play, pause, resume, playNext } from "../misc/AudioController";
-import { storeAudioForNextOpening } from "../misc/Helper";
 
 export class AudioList extends Component {
   static contextType = AudioContext;
@@ -118,8 +117,7 @@ export class AudioList extends Component {
       });
 
       //Slider bar için statuyü güncelle
-      playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
-      return storeAudioForNextOpening(audio, index);
+      return playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
     }
 
     //Pause#2: Şarkıyı durdur.
@@ -167,11 +165,6 @@ export class AudioList extends Component {
     }
   };
 
-  //Application yüklendiğinde en son çalınan şarkıyı seçmeye çalış
-  componentDidMount() {
-    this.context.loadPreviousAudio();
-  }
-
   //Şarkıyı listele.
   rowRenderer = (type, item, index, extendedState) => {
     return (
@@ -193,7 +186,6 @@ export class AudioList extends Component {
     return (
       <AudioContext.Consumer>
         {({ dataProvider, isPlaying }) => {
-          if (!dataProvider._data.length) return null;
           return (
             <Screen style={{ flex: 1 }}>
               <RecyclerListView

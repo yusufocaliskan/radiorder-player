@@ -49,7 +49,7 @@ export class AudioProvider extends Component {
   };
 
   /**
-   * Application açıldığında en son şarkıyı seç
+   * Application açıldığında en son şarkıyı
    */
   loadPreviousAudio = async () => {
     let previousAudio = await AsyncStorage.getItem("previousAudio");
@@ -194,7 +194,6 @@ export class AudioProvider extends Component {
           playbackPosition,
           playbackDuration,
           totalAudioCount: this.totalAudioCount,
-          loadPreviousAudio: this.loadPreviousAudio,
           updateState: this.updateState,
         }}
       >
