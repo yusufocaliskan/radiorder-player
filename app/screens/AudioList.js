@@ -41,48 +41,48 @@ export class AudioList extends Component {
    * @param {object} playbackStatus
    * @returns
    */
-  onPlaybackStatusUpdate = async (playbackStatus) => {
-    //Slider için positionı update et
-    if (playbackStatus.isLoaded && playbackStatus.isPlaying) {
-      this.context.updateState(this.context, {
-        playbackPosition: playbackStatus.positionMillis,
-        playbackDuration: playbackStatus.durationMillis,
-      });
-    }
+  // onPlaybackStatusUpdate = async (playbackStatus) => {
+  //   //Slider için positionı update et
+  //   if (playbackStatus.isLoaded && playbackStatus.isPlaying) {
+  //     this.context.updateState(this.context, {
+  //       playbackPosition: playbackStatus.positionMillis,
+  //       playbackDuration: playbackStatus.durationMillis,
+  //     });
+  //   }
 
-    //Şarkı bitti ise diğerine geç
-    if (playbackStatus.didJustFinish) {
-      //Sonraki şarkının id'sini belirle
-      const nextAudioIndex = this.context.currentAudioIndex + 1;
+  //   //Şarkı bitti ise diğerine geç
+  //   if (playbackStatus.didJustFinish) {
+  //     //Sonraki şarkının id'sini belirle
+  //     const nextAudioIndex = this.context.currentAudioIndex + 1;
 
-      //Son şarkıyı bul
-      //Son şarkı ise, çalmayı durdur
-      if (nextAudioIndex >= this.context.totalAudioCount) {
-        this.context.playbackObj.unloadAsync();
-        this.context.updateState(this.context, {
-          soundObj: null,
-          currentAudio: this.context.audioFiles[0],
-          isPlaying: false,
-          currentAudioIndex: 0,
-          playbackPosition: null,
-          playbackDuration: null,
-        });
-        return await storeAudioForNextOpening(this.context.audioFiles[0], 0);
-      }
+  //     //Son şarkıyı bul
+  //     //Son şarkı ise, çalmayı durdur
+  //     if (nextAudioIndex >= this.context.totalAudioCount) {
+  //       this.context.playbackObj.unloadAsync();
+  //       this.context.updateState(this.context, {
+  //         soundObj: null,
+  //         currentAudio: this.context.audioFiles[0],
+  //         isPlaying: false,
+  //         currentAudioIndex: 0,
+  //         playbackPosition: null,
+  //         playbackDuration: null,
+  //       });
+  //       return await storeAudioForNextOpening(this.context.audioFiles[0], 0);
+  //     }
 
-      //Eğer yukarıdaki şart geçerli değil ise sonraki şarkıya geç...
-      //Ve Şarkıya geç ve çal, durumu güncelle
-      const audio = this.context.audioFiles[nextAudioIndex];
-      const status = await playNext(this.context.playbackObj, audio.uri);
-      this.context.updateState(this.context, {
-        soundObj: status,
-        currentAudio: audio,
-        isPlaying: true,
-        currentAudioIndex: nextAudioIndex,
-      });
-      await storeAudioForNextOpening(audio, nextAudioIndex);
-    }
-  };
+  //     //Eğer yukarıdaki şart geçerli değil ise sonraki şarkıya geç...
+  //     //Ve Şarkıya geç ve çal, durumu güncelle
+  //     const audio = this.context.audioFiles[nextAudioIndex];
+  //     const status = await playNext(this.context.playbackObj, audio.uri);
+  //     this.context.updateState(this.context, {
+  //       soundObj: status,
+  //       currentAudio: audio,
+  //       isPlaying: true,
+  //       currentAudioIndex: nextAudioIndex,
+  //     });
+  //     await storeAudioForNextOpening(audio, nextAudioIndex);
+  //   }
+  // };
 
   /**
    * //İlkez: şarkıya çalmak için basıldığında
@@ -114,7 +114,9 @@ export class AudioList extends Component {
       });
 
       //Slider bar için statuyü güncelle
-      playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+      playbackObj.setOnPlaybackStatusUpdate(
+        this.context.onPlaybackStatusUpdate
+      );
 
       //Application açıldığında
       //son çalınna şarkıyı bulmak için kullanırı
