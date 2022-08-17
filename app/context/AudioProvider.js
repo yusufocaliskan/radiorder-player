@@ -1,6 +1,7 @@
 import React, { Component, createContext } from "react";
 import { Text, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
+import { Audio } from "expo-av";
 
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
@@ -50,6 +51,7 @@ export class AudioProvider extends Component {
 
   /**
    * Application açıldığında en son şarkıyı
+   * Alır ve çalar.
    */
   loadPreviousAudio = async () => {
     let previousAudio = await AsyncStorage.getItem("previousAudio");
@@ -144,6 +146,10 @@ export class AudioProvider extends Component {
 
   componentDidMount() {
     this.getPermission();
+
+    if (this.state.playbackObj == null) {
+      this.setState({ ...this.state, playbackObj: new Audio.Sound() });
+    }
   }
 
   /**Kontrollerdan */
@@ -193,6 +199,7 @@ export class AudioProvider extends Component {
           currentAudioIndex,
           playbackPosition,
           playbackDuration,
+          loadPreviousAudio: this.loadPreviousAudio,
           totalAudioCount: this.totalAudioCount,
           updateState: this.updateState,
         }}

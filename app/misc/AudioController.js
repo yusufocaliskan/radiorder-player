@@ -2,7 +2,9 @@
 //Şarkıyı başlatmak için kullanılır
 export const play = async (playbackObj, uri) => {
   try {
+    console.log(playbackObj._loaded);
     console.log("Playing");
+    //if (playbackObj._loaded === true) return resume(playbackObj);
     return await playbackObj.loadAsync({ uri }, { shouldPlay: true });
   } catch (error) {
     console.log("Hata!", error.message);

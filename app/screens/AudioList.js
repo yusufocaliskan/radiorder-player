@@ -1,17 +1,11 @@
 import React, { Component } from "react";
-import {
-  View,
-  StyleSheet,
-  Text,
-  ScrollView,
-  LayoutAnimation,
-  Dimensions,
-} from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
 import { AudioContext } from "../context/AudioProvider";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import AudioListItem from "../components/AudioListItem";
 import Screen from "../components/Screen";
 import OptionModal from "../components/OpstionModal";
+import { storeAudioForNextOpening } from "../misc/Helper";
 
 //Expo-av şarkıları çalar.
 import { Audio } from "expo-av";
@@ -65,7 +59,7 @@ export class AudioList extends Component {
       //Son şarkı ise, çalmayı durdur
       if (nextAudioIndex >= this.context.totalAudioCount) {
         this.context.playbackObj.unloadAsync();
-        return this.context.updateState(this.context, {
+        this.context.updateState(this.context, {
           soundObj: null,
           currentAudio: this.context.audioFiles[0],
           isPlaying: false,
@@ -73,6 +67,7 @@ export class AudioList extends Component {
           playbackPosition: null,
           playbackDuration: null,
         });
+        return await storeAudioForNextOpening(this.context.audioFiles[0], 0);
       }
 
       //Eğer yukarıdaki şart geçerli değil ise sonraki şarkıya geç...
@@ -85,6 +80,7 @@ export class AudioList extends Component {
         isPlaying: true,
         currentAudioIndex: nextAudioIndex,
       });
+      await storeAudioForNextOpening(audio, nextAudioIndex);
     }
   };
 
@@ -96,6 +92,7 @@ export class AudioList extends Component {
   handleAudioPress = async (audio) => {
     const { playbackObj, soundObj, currentAudio, updateState, audioFiles } =
       this.context;
+
     //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
     if (soundObj === null) {
       const playbackObj = new Audio.Sound();
@@ -117,7 +114,11 @@ export class AudioList extends Component {
       });
 
       //Slider bar için statuyü güncelle
-      return playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+      playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+
+      //Application açıldığında
+      //son çalınna şarkıyı bulmak için kullanırı
+      storeAudioForNextOpening(audio, index);
     }
 
     //Pause#2: Şarkıyı durdur.
@@ -156,14 +157,19 @@ export class AudioList extends Component {
     ) {
       const index = audioFiles.indexOf(audio);
       const status = await playNext(playbackObj, audio.uri);
-      return updateState(this.context, {
+      updateState(this.context, {
         currentAudio: audio,
         soundObj: status,
         isPlaying: true,
         currentAudioIndex: index,
       });
+      storeAudioForNextOpening(audio, index);
     }
   };
+
+  componentDidMount() {
+    this.context.loadPreviousAudio();
+  }
 
   //Şarkıyı listele.
   rowRenderer = (type, item, index, extendedState) => {
@@ -186,6 +192,8 @@ export class AudioList extends Component {
     return (
       <AudioContext.Consumer>
         {({ dataProvider, isPlaying }) => {
+          if (!dataProvider._data.length) return null;
+
           return (
             <Screen style={{ flex: 1 }}>
               <RecyclerListView
