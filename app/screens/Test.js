@@ -7,8 +7,13 @@ import { View, Text } from "react-native";
 
 export default function App() {
   return (
-    <AudioProvider>
-      <AppNavigator />
-    </AudioProvider>
+    // <AudioProvider>
+    //   <NavigationContainer>
+    //     <AppNavigator />
+    //   </NavigationContainer>
+    // </AudioProvider>
+    <View>
+      <Text>Silav!</Text>
+    </View>
   );
 }

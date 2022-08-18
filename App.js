@@ -13,7 +13,7 @@ export default function App() {
     //   </NavigationContainer>
     // </AudioProvider>
     <NavigationContainer>
-      <Login />
+      <NavigationStack />
     </NavigationContainer>
   );
 }

@@ -18,7 +18,6 @@ import { BottomTabBar } from "@react-navigation/bottom-tabs";
 
 const Login = () => {
   //Navigation
-  const navigator = useNavigation();
 
   //Logo için yükseklik değerini al
   const { height } = useWindowDimensions();
@@ -26,13 +25,14 @@ const Login = () => {
   //Değişkenleri tanımla
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
+  const navigation = useNavigation();
+
+  const LoginAction = () => {
+    
+    navigation.navigate("MainApp");
+  };
 
   //Giriş Yap buttonuna basıldığında
-  const LoginAction = () => {
-    console.log("hii");
-    console.warn("Giriş yapılıyor...");
-    navigator.navigate("MusicApp");
-  };
 
   return (
     <View style={styles.container}>
