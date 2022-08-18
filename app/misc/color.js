@@ -9,7 +9,7 @@ export default {
   FONT_FONT: "#fff",
   RED: "#DA0037",
   DARK_RED: "#950101",
-  WHITE: "#aaa",
-  BLACK: "#171717",
+  WHITE: "#fafafa",
+  BLACK: "#111",
   GRAY: "#444444",
 };

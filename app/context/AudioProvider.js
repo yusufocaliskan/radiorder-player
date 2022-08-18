@@ -3,6 +3,7 @@ import { Text, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import { Audio } from "expo-av";
 import { playNext } from "../misc/AudioController";
+import { storeAudioForNextOpening } from "../misc/Helper";
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
 import { DataProvider } from "recyclerlistview";
@@ -177,7 +178,6 @@ export class AudioProvider extends Component {
           currentAudioIndex: 0,
           playbackPosition: null,
           playbackDuration: null,
-          
         });
         return await storeAudioForNextOpening(this.state.audioFiles[0], 0);
       }

@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StyleSheet } from "react-native";
 import AudioList from "../screens/AudioList";
 import Player from "../screens/Player";
-import PlayList from "../screens/PlayList";
+import User from "../screens/User";
 import color from "../misc/color";
 
 //Iconları import et.
@@ -47,11 +47,11 @@ const AppNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Çalma Listeleri"
-        component={PlayList}
+        name="Kullanıcı"
+        component={User}
         options={{
           tabBarIcon: ({ color, size }) => {
-            return <Entypo name="folder-music" size={size} color={color} />;
+            return <Entypo name="user" size={size} color={color} />;
           },
         }}
       />
