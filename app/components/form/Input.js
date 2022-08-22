@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, View, Button, TextInput, StyleSheet } from "react-native";
+import { View, TextInput, StyleSheet } from "react-native";
 import color from "../../misc/color";
 import { AntDesign } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";

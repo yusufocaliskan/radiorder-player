@@ -1,19 +1,121 @@
+import React, { useState, useMemo, useEffect, useReducer } from "react";
 import NavigationStack from "./app/navigation/NavigationStack";
-import AppNavigator from "./app/navigation/AppNavigator";
 import { NavigationContainer } from "@react-navigation/native";
 import AudioProvider from "./app/context/AudioProvider";
-import User from "./app/screens/User";
+import AuthProvider from "./app/context/AuthProvider";
+import AppNavigator from "./app/navigation/AppNavigator";
 import Login from "./app/screens/Login";
+import LoadingGif from "./app/components/LoadingGif";
+import { newAuthContext } from "./app/context/newAuthContext";
+import { ActivityIndicatorComponent } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function App() {
+  // const [userData, userDat] = useState(true);
+  // const [userToken, setUserToken] = useState(null);
+
+  const initialLoginState = {
+    isLoading: true,
+    userName: null,
+    userToken: null,
+    userData: null,
+  };
+
+  //REducerları oluştur..
+  const loginReducer = (prevState, action) => {
+    switch (action.type) {
+      //İlk defa giriş yapılıyorsa
+      case "RE_TOKEN":
+        return {
+          ...prevState,
+          userToken: action.token,
+          isLoading: false,
+          userData: action.data,
+        };
+
+      //Kullanıcı giriş
+      case "LOGIN":
+        return {
+          ...prevState,
+          userID: action.id,
+          userToken: action.token,
+          isLoading: false,
+          userData: action.data,
+        };
+
+      //Çıkış yaptığında
+      case "LOGOUT":
+        return {
+          ...prevState,
+          userToken: null,
+          userName: null,
+          isLoading: false,
+        };
+    }
+  };
+
+  const [loadingState, dispatch] = useReducer(loginReducer, initialLoginState);
+
+  const authContext = useMemo(() => ({
+    //Giriş yaptığında alınacak bilgler
+    singIn: async (data) => {
+      try {
+        await AsyncStorage.setItem(
+          "userToken",
+          data.FSL.KullaniciListesi.KullaniciDto.Sifre
+        );
+
+        await AsyncStorage.setItem("userData", JSON.stringify(data.FSL));
+      } catch (e) {
+        console.log(e);
+      }
+
+      dispatch({
+        type: "LOGIN",
+        data: data,
+        id: data.FSL.Id,
+        token: data.FSL.KullaniciListesi.KullaniciDto.Sifre,
+      });
+    },
+
+    //Çıkış yaptığında
+    singOut: async () => {
+      try {
+        await AsyncStorage.removeItem("userToken");
+      } catch (e) {
+        console.log(e);
+      }
+      dispatch({ type: "LOGOUT", id: null, token: null });
+    },
+  }));
+
+  useEffect(() => {
+    setTimeout(async () => {
+      let userToken = null;
+      try {
+        userToken = await AsyncStorage.getItem("userToken");
+      } catch (e) {
+        console.log(e);
+      }
+      dispatch({ type: "LOGIN", token: userToken });
+    }, 1000);
+  }, []);
+
+  if (loadingState.isLoading) {
+    return <LoadingGif />;
+  }
+
   return (
-    // <AudioProvider>
-    //   <NavigationContainer>
-    //     <AppNavigator />
-    //   </NavigationContainer>
-    // </AudioProvider>
-    <NavigationContainer>
-      <NavigationStack />
-    </NavigationContainer>
+    <newAuthContext.Provider value={authContext}>
+      <NavigationContainer>
+        <AudioProvider>
+          {loadingState.userToken == null ? (
+            <NavigationStack />
+          ) : (
+            <AppNavigator />
+          )}
+        </AudioProvider>
+      </NavigationContainer>
+    </newAuthContext.Provider>
   );
 }

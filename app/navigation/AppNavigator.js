@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StyleSheet } from "react-native";
 import AudioList from "../screens/AudioList";
@@ -10,10 +10,11 @@ import color from "../misc/color";
 import { Entypo } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
+import { AudioContext } from "../context/AudioProvider";
 
 const Tab = createBottomTabNavigator();
-
 const AppNavigator = () => {
+  const context = useContext(AudioContext);
   return (
     <Tab.Navigator
       screenOptions={{
@@ -29,6 +30,7 @@ const AppNavigator = () => {
       <Tab.Screen
         name="Şarkılar"
         component={AudioList}
+        context={context}
         options={{
           tabBarIcon: ({ color, size }) => {
             return <FontAwesome name="music" size={size} color={color} />;
@@ -38,6 +40,7 @@ const AppNavigator = () => {
       <Tab.Screen
         name="Müzik Çalar"
         component={Player}
+        context={context}
         options={{
           tabBarIcon: ({ color, size }) => {
             return (
@@ -49,6 +52,7 @@ const AppNavigator = () => {
       <Tab.Screen
         name="Kullanıcı"
         component={User}
+        context={context}
         options={{
           tabBarIcon: ({ color, size }) => {
             return <Entypo name="user" size={size} color={color} />;

@@ -1,14 +1,16 @@
 import React from "react";
-import { Pressable, View, Text, StyleSheet } from "react-native";
+import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import color from "../../misc/color";
-const Button = ({ onPress }) => {
+const Button = ({ onPress, logging, text, style, textStyle }) => {
   return (
-    <View>
-      <View style={styles.formField}>
-        <Pressable onPress={onPress} style={styles.Button}>
-          <Text style={styles.ButtonText}>GİRİŞ YAP</Text>
-        </Pressable>
-      </View>
+    <View style={styles.formField}>
+      <TouchableOpacity
+        onPress={onPress}
+        style={[styles.Button, style]}
+        disabled={logging}
+      >
+        <Text style={[styles.ButtonText, textStyle]}>{text}</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -31,6 +33,7 @@ const styles = StyleSheet.create({
   ButtonText: {
     color: color.WHITE,
     fontWeight: "bold",
+    textTransform: "uppercase",
     fontSize: 15,
   },
 });

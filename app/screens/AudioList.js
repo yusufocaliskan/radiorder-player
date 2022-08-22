@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect } from "react";
 import { StyleSheet, Dimensions } from "react-native";
 import { AudioContext } from "../context/AudioProvider";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
