@@ -25,7 +25,7 @@ class User extends Component {
   render() {
     if (this.state.data) {
       console.log(this.state.data);
-      const a = this.state.data.Ismi;
+
       return (
         <Screen>
           <View style={styles.container}>
@@ -34,6 +34,10 @@ class User extends Component {
               style={styles.userImage}
             />
             <Text style={styles.userName}>{this.state.data.Ismi}</Text>
+            <Text style={styles.Eposta}>
+              {this.state.data.KullaniciListesi.KullaniciDto.Eposta}
+            </Text>
+            <Text style={styles.Sehir}>{this.state.data.Sehir}</Text>
             <Button
               style={styles.logOutButton}
               onPress={this.context.singOut}
@@ -69,11 +73,35 @@ const styles = StyleSheet.create({
 
   userName: {
     color: "white",
-    fontSize: 20,
-    marginVertical: 20,
+    fontSize: 15,
+    marginTop: 20,
+    marginVertical: 4,
+    letterSpacing: 5,
   },
-  logOutButton: { backgroundColor: color.WHITE, marginTop: 50 },
-  buttonTextStyle: { color: color.RED },
+
+  Eposta: {
+    color: color.WHITE,
+    fontSize: 15,
+    marginVertical: 4,
+    backgroundColor: color.GRAY,
+    padding: 2,
+    paddingHorizontal: 10,
+    borderRadius: 100,
+  },
+
+  Sehir: {
+    color: color.FONT_LARGE,
+    fontSize: 15,
+    marginVertical: 4,
+  },
+  logOutButton: {
+    backgroundColor: color.WHITE,
+    marginTop: 50,
+    opacity: 0.5,
+    padding: 5,
+    width: 100,
+  },
+  buttonTextStyle: { color: color.WHITE },
 });
 
 export default User;

@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
+import { Entypo } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import color from "../misc/color";
 
 const PlayerButton = (props) => {
@@ -14,43 +17,78 @@ const PlayerButton = (props) => {
   } = props;
 
   const [bgColor, setBgColor] = useState();
-  console.log(bgColor);
 
+  /**
+   * Icon seçimi yap
+   */
   const getIconName = (type) => {
     switch (type) {
       case "PLAY":
-        return "play-circle";
+        return (
+          <Ionicons
+            name="play-sharp"
+            onPress={onPress}
+            onPressIn={setColor}
+            size={size}
+            color={iconColor}
+            {...props}
+          />
+        );
 
       case "PAUSE":
-        return "pause-circle";
+        return (
+          <Ionicons
+            name="ios-pause-outline"
+            onPress={onPress}
+            onPressIn={setColor}
+            size={size}
+            color={iconColor}
+            {...props}
+          />
+        );
 
       case "NEXT":
-        return "step-forward";
+        return (
+          <AntDesign
+            name="stepforward"
+            onPress={onPress}
+            onPressIn={setColor}
+            size={size}
+            color={iconColor}
+            {...props}
+          />
+        );
 
       case "PREV":
-        return "step-backward";
+        return (
+          <AntDesign
+            name="stepbackward"
+            onPress={onPress}
+            onPressIn={setColor}
+            size={size}
+            color={iconColor}
+            {...props}
+          />
+        );
     }
   };
+
+  /**
+   * Button arkplan ata.
+   */
   const setColor = () => {
     setBgColor(color.GRAY);
     setTimeout(() => {
       setBgColor(null);
     }, 200);
   };
-  console.log("---" + bgColor);
+
   return (
     <TouchableOpacity
       onPressIn={setColor}
       style={[styles.buttonStyle, { backgroundColor: bgColor }]}
     >
-      <FontAwesome5
-        onPress={onPress}
-        onPressIn={setColor}
-        name={getIconName(iconType)}
-        size={size}
-        color={iconColor}
-        {...props}
-      />
+      {getIconName(iconType)}
     </TouchableOpacity>
   );
 };
