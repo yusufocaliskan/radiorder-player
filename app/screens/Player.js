@@ -1,5 +1,11 @@
 import React, { useContext, useEffect } from "react";
-import { View, StyleSheet, Text, Dimensions } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Text,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
 import Screen from "../components/Screen";
 import color from "../misc/color";
 import Slider from "@react-native-community/slider";
@@ -195,19 +201,19 @@ const Player = () => {
           <View style={styles.audioControllers}>
             <PlayerButton
               iconType="PREV"
-              style={{ marginTop: 10 }}
+              style={{ fontSize: 30 }}
               color={color.WHITE}
               onPress={handlePrevious}
             />
             <PlayerButton
-              style={{ marginHorizontal: 30, marginBottom: 20, fontSize: 60 }}
+              style={{ fontSize: 60 }}
               iconType={context.isPlaying ? "PAUSE" : "PLAY"}
               color={color.WHITE}
               onPress={handlePlayPause}
             />
             <PlayerButton
+              style={{ fontSize: 30 }}
               iconType="NEXT"
-              style={{ marginTop: 10 }}
               color={color.WHITE}
               onPress={handleNext}
             />
@@ -249,9 +255,12 @@ const styles = StyleSheet.create({
 
   audioControllers: {
     width: width,
+    paddingHorizontal: 90,
+    marginTop: 10,
+    marginBottom: 30,
+
     flexDirection: "row",
-    justifyContent: "center",
-    paddingVertical: 20,
+    justifyContent: "space-between",
   },
 });
 

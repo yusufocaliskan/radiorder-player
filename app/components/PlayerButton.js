@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import color from "../misc/color";
@@ -12,6 +12,9 @@ const PlayerButton = (props) => {
     otherProps,
     onPress,
   } = props;
+
+  const [bgColor, setBgColor] = useState();
+  console.log(bgColor);
 
   const getIconName = (type) => {
     switch (type) {
@@ -28,20 +31,40 @@ const PlayerButton = (props) => {
         return "step-backward";
     }
   };
-
+  const setColor = () => {
+    setBgColor(color.GRAY);
+    setTimeout(() => {
+      setBgColor(null);
+    }, 200);
+  };
+  console.log("---" + bgColor);
   return (
-    <FontAwesome5
-      onPress={onPress}
-      name={getIconName(iconType)}
-      size={size}
-      color={iconColor}
-      {...props}
-    />
+    <TouchableOpacity
+      onPressIn={setColor}
+      style={[styles.buttonStyle, { backgroundColor: bgColor }]}
+    >
+      <FontAwesome5
+        onPress={onPress}
+        onPressIn={setColor}
+        name={getIconName(iconType)}
+        size={size}
+        color={iconColor}
+        {...props}
+      />
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {},
+  buttonStyle: {
+    borderRadius: 200,
+    width: 80,
+    height: 80,
+    textAlign: "center",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
 
 export default PlayerButton;

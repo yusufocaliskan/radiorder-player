@@ -8,6 +8,9 @@ import { storeAudioForNextOpening } from "../misc/Helper";
 //ScrollView'den daha performanlısdır.
 import { DataProvider } from "recyclerlistview";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { XMLParser } from "fast-xml-parser";
+import axios from "axios";
+import config from "../misc/config";
 
 export const AudioContext = createContext();
 export class AudioProvider extends Component {
@@ -145,8 +148,56 @@ export class AudioProvider extends Component {
     //console.log(media.assets.length);
   };
 
+  getPlaylistFromServer = async () => {
+    //Kullanıcı bilgileri boş mu?
+
+    const xml = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <FSL_SarkiListesi xmlns="http://tempuri.org/">
+      <SertifikaBilgileri>
+        <KullaniciAdi>string</KullaniciAdi>
+        <Sifre>string</Sifre>
+      </SertifikaBilgileri>
+      <LisansBilgileri>
+        <Basarili>boolean</Basarili>
+        <Aciklama>string</Aciklama>
+        <LisansKey>guid</LisansKey>
+        <LisansKeyStr>string</LisansKeyStr>
+        <Bitistarihi>dateTime</Bitistarihi>
+        <BitisTarihiStr>string</BitisTarihiStr>
+        <FslId>int</FslId>
+        <FSL>string</FSL>
+        <MakineKodu>string</MakineKodu>
+        <LisansAciklama>string</LisansAciklama>
+      </LisansBilgileri>
+      <FslId>int</FslId>
+      <PlaylisttanimlamaKodu>string</PlaylisttanimlamaKodu>
+    </FSL_SarkiListesi>
+  </soap:Body>`;
+
+    axios
+      .post(config.SOAP_URL, xml, {
+        headers: { "Content-Type": "text/xml" },
+      })
+      .then((resData) => {
+        const options = {
+          ignoreNameSpace: false,
+          ignoreAttributes: false,
+        };
+        const parser = new XMLParser(options);
+        //const jObj = parser.parse(getSoapBody(resData.data));
+        console.log("----------------------00000-----------------------");
+        console.log(resData);
+      })
+
+      .catch((error) => {
+        console.error(`SOAP FAIL: ${error}`);
+      });
+  };
+
   componentDidMount() {
     this.getPermission();
+    //this.getPlaylistFromServer();
 
     if (this.state.playbackObj == null) {
       this.setState({ ...this.state, playbackObj: new Audio.Sound() });

@@ -15,15 +15,16 @@ class User extends Component {
       data: null,
     };
   }
-  async componentDidMount() {
+  componentDidMount = async () => {
     this.setState({
       ...this.state,
       data: JSON.parse(await AsyncStorage.getItem("userData")),
     });
-  }
+  };
 
   render() {
     if (this.state.data) {
+      console.log(this.state.data);
       const a = this.state.data.Ismi;
       return (
         <Screen>
