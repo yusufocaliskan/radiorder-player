@@ -214,6 +214,7 @@ export class AudioProvider extends Component {
       playbackPosition,
       playbackDuration,
     } = this.state;
+
     if (permissionError)
       return (
         <View
