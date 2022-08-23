@@ -2,12 +2,12 @@ import React from "react";
 import {
   View,
   Text,
-  StatusBar,
   StyleSheet,
   Modal,
   TouchableWithoutFeedback,
   TouchableOpacity,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import color from "../misc/color";
 import { AntDesign } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";

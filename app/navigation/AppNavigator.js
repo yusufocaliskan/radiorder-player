@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useLayoutEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StyleSheet } from "react-native";
 import AudioList from "../screens/AudioList";
@@ -28,7 +28,7 @@ const AppNavigator = () => {
       }}
     >
       <Tab.Screen
-        name="Şarkılar"
+        name="Sarkilar"
         component={AudioList}
         context={context}
         options={{

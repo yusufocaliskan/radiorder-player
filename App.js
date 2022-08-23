@@ -1,6 +1,12 @@
-import React, { useState, useMemo, useEffect, useReducer } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useReducer,
+  useLayoutEffect,
+} from "react";
 import NavigationStack from "./app/navigation/NavigationStack";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import AudioProvider from "./app/context/AudioProvider";
 import AuthProvider from "./app/context/AuthProvider";
 import AppNavigator from "./app/navigation/AppNavigator";
@@ -92,8 +98,11 @@ export default function App() {
   useEffect(() => {
     setTimeout(async () => {
       let userToken = null;
+      let userData = null;
       try {
         userToken = await AsyncStorage.getItem("userToken");
+        userData = await AsyncStorage.getItem("userData");
+        //setUserData(userData);
       } catch (e) {
         console.log(e);
       }

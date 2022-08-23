@@ -1,5 +1,6 @@
 import React from "react";
-import { StatusBar, View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import Logo from "../Logo";
 import Input from "./Input";
 import Input from "./Button";

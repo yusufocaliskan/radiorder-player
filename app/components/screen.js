@@ -1,4 +1,5 @@
-import { View, StatusBar, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import color from "../misc/color";
 
 const Screen = ({ children }) => {

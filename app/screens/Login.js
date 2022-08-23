@@ -7,7 +7,6 @@ import React, {
   useContext,
 } from "react";
 import {
-  StatusBar,
   Image,
   Text,
   View,
@@ -15,7 +14,9 @@ import {
   StyleSheet,
   useWindowDimensions,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import color from "../misc/color";
 import config from "../misc/config";
 import Logo from "../components/Logo";
@@ -114,11 +115,10 @@ const Login = () => {
 
   //Giriş yapılmamış ise giriş formunu
   return (
-    <View style={styles.container}>
-      <StatusBar />
+    <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <StatusBar style="light" />
 
       <Logo styles={styles.logo} />
-
       <Input
         type="text"
         placeholder="Kullanıcı Adı"
@@ -136,7 +136,7 @@ const Login = () => {
       <View style={styles.bottomText}>
         <Text style={{ color: "#666" }}>RADIORDER KURUMSAL</Text>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: color.BLACK,
   },
 
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: 200,
-    marginTop: 20,
+    marginTop: 80,
     marginBottom: 20,
     height: 200,
   },

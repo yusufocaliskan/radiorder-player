@@ -36,6 +36,8 @@ export class AudioProvider extends Component {
       //Slider için
       playbackPosition: null,
       playbackDuration: null,
+
+      userData: null,
     };
 
     this.totalAudioCount = 0;
@@ -74,6 +76,11 @@ export class AudioProvider extends Component {
 
     //Durumu güncelle
     this.setState({ ...this.state, currentAudio, currentAudioIndex });
+  };
+
+  loadUserData = async () => {
+    let userData = JSON.parse(await AsyncStorage.getItem("userData"));
+    this.setState({ ...this.state, userData });
   };
 
   /**
@@ -196,8 +203,12 @@ export class AudioProvider extends Component {
   };
 
   componentDidMount() {
+    //Musiclere erişim izni all
     this.getPermission();
     //this.getPlaylistFromServer();
+
+    //Kullanıcı bilgilerini al.
+    this.loadUserData();
 
     if (this.state.playbackObj == null) {
       this.setState({ ...this.state, playbackObj: new Audio.Sound() });
@@ -261,6 +272,7 @@ export class AudioProvider extends Component {
       soundObj,
       currentAudio,
       isPlaying,
+      userData,
       currentAudioIndex,
       playbackPosition,
       playbackDuration,
@@ -295,6 +307,7 @@ export class AudioProvider extends Component {
           currentAudioIndex,
           playbackPosition,
           playbackDuration,
+          userData,
           loadPreviousAudio: this.loadPreviousAudio,
           totalAudioCount: this.totalAudioCount,
           updateState: this.updateState,

@@ -1,5 +1,6 @@
 import React, { Component, useContext, useEffect } from "react";
-import { StyleSheet, Dimensions } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { Avatar } from "@rneui/base";
 import { AudioContext } from "../context/AudioProvider";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import AudioListItem from "../components/AudioListItem";
@@ -170,6 +171,24 @@ export class AudioList extends Component {
   };
 
   componentDidMount() {
+    //Profile resmini koy
+    this.props.navigation.setOptions({
+      headerLeft: () => {
+        return (
+          <View style={{ marginLeft: 20 }}>
+            <TouchableOpacity>
+              <Avatar
+                rounded
+                source={{
+                  uri: `http://radiorder.online/${this.context.userData?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+        );
+      },
+    });
+
     this.context.loadPreviousAudio();
   }
 

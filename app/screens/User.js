@@ -1,6 +1,7 @@
 import React, { Component } from "react";
-import { View, StyleSheet, Text, Image } from "react-native";
+import { TouchableOpacity, View, StyleSheet, Text, Image } from "react-native";
 import Screen from "../components/Screen";
+import { Avatar } from "@rneui/base";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthContext } from "../context/AuthProvider";
 import Button from "../components/form/Button";
@@ -15,39 +16,59 @@ class User extends Component {
       data: null,
     };
   }
+
+  //Moun olduğuında
   componentDidMount = async () => {
+    //Mount olduğunda verileri storagetan al.
     this.setState({
       ...this.state,
       data: JSON.parse(await AsyncStorage.getItem("userData")),
     });
+
+    //Üstte profile avatarın koy.
+    this.props.navigation.setOptions({
+      title: this.state.data?.Ismi,
+      headerLeft: () => {
+        return (
+          <View style={{ marginLeft: 20 }}>
+            <TouchableOpacity>
+              <Avatar
+                rounded
+                source={{
+                  uri: `http://radiorder.online/${this.state.data?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+        );
+      },
+    });
   };
 
   render() {
-    if (this.state.data) {
-      console.log(this.state.data);
-
-      return (
-        <Screen>
-          <View style={styles.container}>
-            <Image
-              source={{ uri: "http://radiorder.online/File/Profil/nopic.png" }}
-              style={styles.userImage}
-            />
-            <Text style={styles.userName}>{this.state.data.Ismi}</Text>
-            <Text style={styles.Eposta}>
-              {this.state.data.KullaniciListesi.KullaniciDto.Eposta}
-            </Text>
-            <Text style={styles.Sehir}>{this.state.data.Sehir}</Text>
-            <Button
-              style={styles.logOutButton}
-              onPress={this.context.singOut}
-              text="Çıkış Yap"
-              textStyle={styles.buttonTextStyle}
-            />
-          </View>
-        </Screen>
-      );
-    }
+    return (
+      <Screen>
+        <View style={styles.container}>
+          <Image
+            source={{
+              uri: `http://radiorder.online/${this.state.data?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+            }}
+            style={styles.userImage}
+          />
+          <Text style={styles.userName}>{this.state.data?.Ismi}</Text>
+          <Text style={styles.Eposta}>
+            {this.state.data?.KullaniciListesi.KullaniciDto.Eposta}
+          </Text>
+          <Text style={styles.Sehir}>{this.state.data?.Sehir}</Text>
+          <Button
+            style={styles.logOutButton}
+            onPress={this.context.singOut}
+            text="Çıkış Yap"
+            textStyle={styles.buttonTextStyle}
+          />
+        </View>
+      </Screen>
+    );
 
     return <View></View>;
   }
@@ -95,7 +116,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   logOutButton: {
-    backgroundColor: color.WHITE,
+    backgroundColor: color.RED,
     marginTop: 50,
     opacity: 0.5,
     padding: 5,

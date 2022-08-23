@@ -1,4 +1,5 @@
-import React, { useContext, useEffect } from "react";
+import React, { useLayoutEffect, useContext, useEffect } from "react";
+
 import {
   View,
   StyleSheet,
@@ -20,13 +21,17 @@ import { AudioContext } from "../context/AudioProvider";
 import { pause, play, playNext, resume } from "../misc/AudioController";
 import { ComponentCompat } from "recyclerlistview";
 import { storeAudioForNextOpening } from "../misc/Helper";
+import { useNavigation } from "@react-navigation/native";
+import { Avatar } from "@rneui/base";
 const { width } = Dimensions.get("window");
 
 //Müzik Çalar Ekranı
 const Player = () => {
+  const navigation = useNavigation();
   const context = useContext(AudioContext);
   const { playbackPosition, playbackDuration } = context;
 
+  console.log(context.userData);
   //Slider position'ın hesapla
   const calculateSeebBar = () => {
     if (playbackPosition !== null && playbackDuration !== null) {
@@ -38,6 +43,27 @@ const Player = () => {
   useEffect(() => {
     context.loadPreviousAudio();
   }, []);
+
+  //Headera kullanıcı resmini göster
+  useLayoutEffect(() => {
+    //Üstte profile avatarın koy.
+    navigation.setOptions({
+      headerLeft: () => {
+        return (
+          <View style={{ marginLeft: 20 }}>
+            <TouchableOpacity>
+              <Avatar
+                rounded
+                source={{
+                  uri: `http://radiorder.online/${context.userData?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+        );
+      },
+    });
+  });
 
   //PLAY & PAUSE & RESUME
   const handlePlayPause = async () => {
