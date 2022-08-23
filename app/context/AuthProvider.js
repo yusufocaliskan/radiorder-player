@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  createContext,
-  Component,
-} from "react";
+import React, { createContext, Component } from "react";
 import Logo from "../components/Logo";
 import LoadingGif from "../components/LoadingGif";
 import config from "../misc/config";

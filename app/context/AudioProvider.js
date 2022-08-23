@@ -78,6 +78,9 @@ export class AudioProvider extends Component {
     this.setState({ ...this.state, currentAudio, currentAudioIndex });
   };
 
+  /**
+   * Kullanıcı bilgilerini al.
+   */
   loadUserData = async () => {
     let userData = JSON.parse(await AsyncStorage.getItem("userData"));
     this.setState({ ...this.state, userData });
@@ -133,7 +136,23 @@ export class AudioProvider extends Component {
   getAudioFiles = async () => {
     const { dataProvider, audioFiles } = this.state;
 
+    let serverPlaylist = this.getFromServer();
+
+    //Step#1: SErverdan playlisti all.
+    if (serverPlaylist != 0) {
+      console.log("Burası");
+      return;
+    }
+
+    ////Step#2: Serverda bir şey yoksa, yerel klasörü oku.
+
+    //Serdaki playlist boş is.
+    //Mediadakini oku
     let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
+
+    //Eğer hiç ses dosyası yok
+    if (media.totalCount <= 0) {
+    }
 
     //Tüm şarkıları listele.
     media = await MediaLibrary.getAssetsAsync({
@@ -155,6 +174,12 @@ export class AudioProvider extends Component {
     //console.log(media.assets.length);
   };
 
+  getFromServer() {
+    return [];
+  }
+  /**
+   * Şarkıları server'dan al.
+   */
   getPlaylistFromServer = async () => {
     //Kullanıcı bilgileri boş mu?
 

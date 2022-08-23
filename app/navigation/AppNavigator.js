@@ -28,7 +28,7 @@ const AppNavigator = () => {
       }}
     >
       <Tab.Screen
-        name="Sarkilar"
+        name="Şarkılar"
         component={AudioList}
         context={context}
         options={{

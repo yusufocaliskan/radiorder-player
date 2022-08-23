@@ -1,5 +1,11 @@
 import React, { Component, useContext, useEffect } from "react";
-import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import { Avatar } from "@rneui/base";
 import { AudioContext } from "../context/AudioProvider";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
@@ -13,6 +19,7 @@ import { Audio } from "expo-av";
 
 //Controller
 import { play, pause, resume, playNext } from "../misc/AudioController";
+import color from "../misc/color";
 
 export class AudioList extends Component {
   static contextType = AudioContext;
@@ -213,31 +220,42 @@ export class AudioList extends Component {
     return (
       <AudioContext.Consumer>
         {({ dataProvider, isPlaying }) => {
-          if (!dataProvider._data.length) return null;
-
-          return (
-            <Screen style={{ flex: 1 }}>
-              <RecyclerListView
-                dataProvider={dataProvider}
-                layoutProvider={this.layoutProvider}
-                rowRenderer={this.rowRenderer}
-                extendedState={{ isPlaying }}
-              />
-              <OptionModal
-                onPlayPress={() => {
-                  console.log("Playing!");
-                }}
-                onPlayListPress={() => {
-                  console.log("Çalma Listesine ekledin");
-                }}
-                currentItem={this.currentItem}
-                onClose={() =>
-                  this.setState({ ...this.state, optionModalVisible: false })
-                }
-                visible={this.state.optionModalVisible}
-              />
-            </Screen>
-          );
+          console.log(dataProvider);
+          if (dataProvider._data._size <= 0) {
+            return (
+              <Screen style={{ flex: 1 }}>
+                <RecyclerListView
+                  dataProvider={dataProvider}
+                  layoutProvider={this.layoutProvider}
+                  rowRenderer={this.rowRenderer}
+                  extendedState={{ isPlaying }}
+                />
+                <OptionModal
+                  onPlayPress={() => {
+                    console.log("Playing!");
+                  }}
+                  onPlayListPress={() => {
+                    console.log("Çalma Listesine ekledin");
+                  }}
+                  currentItem={this.currentItem}
+                  onClose={() =>
+                    this.setState({ ...this.state, optionModalVisible: false })
+                  }
+                  visible={this.state.optionModalVisible}
+                />
+              </Screen>
+            );
+          } else {
+            return (
+              <Screen>
+                <View style={styles.warning}>
+                  <Text style={styles.warningText}>
+                    Her hangi bir ses dosyası bulunamadı. Bir kaç şarkı yükle.
+                  </Text>
+                </View>
+              </Screen>
+            );
+          }
         }}
       </AudioContext.Consumer>
     );
@@ -249,6 +267,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  warningText: {
+    fontSize: 20,
+    textAlign: "center",
+    backgroundColor: color.RED,
+    color: color.WHITE,
+    padding: 30,
+  },
+  warning: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 30,
   },
 });
 
