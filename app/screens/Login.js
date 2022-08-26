@@ -70,6 +70,7 @@ const Login = () => {
         };
         const parser = new XMLParser(options);
         const jObj = parser.parse(getSoapBody(resData.data));
+        console.log(jObj);
 
         //Giriş Hatalı mı?
         if (jObj.Basarili == false) {
@@ -77,18 +78,13 @@ const Login = () => {
             { text: "Tamam" },
           ]);
 
-          //this.setState({ ...this.state, logging: false });
           return false;
         }
 
         //Giriş başarılı mı?
         if (jObj.Basarili == true) {
-          //Token ata.
-          //this.context.isLoggedIn = true;
-          //this.context.setUserInfo(jObj);
-
-          //console.log(this.context.userData);
           //Sayfaya gönder
+          //Storage'a verileri koy
           singIn(jObj);
 
           return navigation.navigate("MainApp");

@@ -15,7 +15,7 @@ export default function App() {
     isLoading: true,
     userName: null,
     userToken: null,
-    userData: null,
+    userData: "tesrtttt",
   };
 
   //REducerları oluştur..
@@ -32,6 +32,8 @@ export default function App() {
 
       //Kullanıcı giriş
       case "LOGIN":
+        console.log("-------------ACTION ----------------");
+        console.log(action.data);
         return {
           ...prevState,
           userID: action.id,
@@ -61,7 +63,7 @@ export default function App() {
           "userToken",
           data.FSL.KullaniciListesi.KullaniciDto.Sifre
         );
-        console.log(data.FSL);
+
         await AsyncStorage.setItem("userData", JSON.stringify(data.FSL));
       } catch (e) {
         console.log(e);
@@ -85,6 +87,7 @@ export default function App() {
       }
       dispatch({ type: "LOGOUT", id: null, token: null });
     },
+    loadingState: loadingState,
   }));
 
   useEffect(() => {

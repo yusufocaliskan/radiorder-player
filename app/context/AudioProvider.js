@@ -12,9 +12,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { XMLParser } from "fast-xml-parser";
 import axios from "axios";
 import config from "../misc/config";
-
+import { newAuthContext } from "../context/newAuthContext";
 export const AudioContext = createContext();
+
 export class AudioProvider extends Component {
+  static contextType = newAuthContext;
   constructor(props) {
     super(props);
     this.state = {
@@ -42,7 +44,8 @@ export class AudioProvider extends Component {
     };
 
     this.totalAudioCount = 0;
-    this.loadUserData();
+    //this.loadUserData();
+    console.log("-------------------Evder ---------------");
   }
 
   //Hata mesajı göster.
@@ -84,8 +87,8 @@ export class AudioProvider extends Component {
    * Kullanıcı bilgilerini al.
    */
   loadUserData = async () => {
-    let userData = JSON.parse(await AsyncStorage.getItem("userData"));
-    this.setState({ ...this.state, userData });
+    const data = JSON.parse(await AsyncStorage.getItem("userData"));
+    this.setState({ ...this.state, data });
   };
 
   /**
@@ -336,7 +339,8 @@ export class AudioProvider extends Component {
     //Musiclere erişim izni all
     this.getPermission();
     //this.getPlaylistFromServer();
-
+    console.log("--------------HERE--------------");
+    console.log(this.context);
     //Kullanıcı bilgilerini al.
 
     //this.loadUserData();

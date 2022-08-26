@@ -11,15 +11,16 @@ import { stop } from "../misc/AudioController";
 import { useNavigation } from "@react-navigation/native";
 
 const User = () => {
-  const { singOut } = useContext(newAuthContext);
+  const { singOut, loadingState } = useContext(newAuthContext);
   const audioContext = useContext(AudioContext);
-  const [data, setData] = useState(audioContext.userData);
+  const [data, setData] = useState(loadingState?.userData?.FSL);
   const navigation = useNavigation();
 
   //Moun olduğuında
   useEffect(() => {
     //Mount olduğunda verileri storagetan al.
-
+    console.log("Scrennn");
+    console.log(loadingState);
     //Üstte profile avatarın koy.
     navigation.setOptions({
       title: data?.Ismi,

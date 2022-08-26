@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useContext, useEffect } from "react";
+import React, { useLayoutEffect, useContext, useEffect, useState } from "react";
 
 import {
   View,
@@ -23,12 +23,15 @@ import { ComponentCompat } from "recyclerlistview";
 import { storeAudioForNextOpening } from "../misc/Helper";
 import { useNavigation } from "@react-navigation/native";
 import { Avatar } from "@rneui/base";
+import { newAuthContext } from "../context/newAuthContext";
 const { width } = Dimensions.get("window");
 
 //Müzik Çalar Ekranı
 const Player = () => {
   const navigation = useNavigation();
   const context = useContext(AudioContext);
+  const { singOut, loadingState } = useContext(newAuthContext);
+  const [userData, setUserData] = useState(loadingState?.userData?.FSL);
   const { playbackPosition, playbackDuration } = context;
 
   //Slider position'ın hesapla
@@ -43,27 +46,6 @@ const Player = () => {
     context.getUserGroupListFromServer();
     context.loadPreviousAudio();
   }, []);
-
-  //Headera kullanıcı resmini göster
-  useLayoutEffect(() => {
-    //Üstte profile avatarın koy.
-    navigation.setOptions({
-      headerLeft: () => {
-        return (
-          <View style={{ marginLeft: 20 }}>
-            <TouchableOpacity>
-              <Avatar
-                rounded
-                source={{
-                  uri: `http://radiorder.online/${context.userData?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
-                }}
-              />
-            </TouchableOpacity>
-          </View>
-        );
-      },
-    });
-  });
 
   //PLAY & PAUSE & RESUME
   const handlePlayPause = async () => {
