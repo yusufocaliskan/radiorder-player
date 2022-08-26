@@ -14,9 +14,6 @@ const User = () => {
   const audioContext = useContext(AudioContext);
   const navigation = useNavigation();
 
-  console.log("-----------------NÛ : EV DER---------------");
-  console.log(loadingState);
-
   //Moun olduğuında
   useEffect(() => {
     //Mount olduğunda verileri storagetan al.

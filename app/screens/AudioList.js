@@ -51,7 +51,6 @@ export class AudioList extends Component {
 
       //Controllerdan çağır.
       const status = await play(playbackObj, audio.uri);
-
       const index = audioFiles.indexOf(audio);
 
       //Yeni durumu state ata ve ilerlememesi için return'le
@@ -77,6 +76,7 @@ export class AudioList extends Component {
 
     //Pause#2: Şarkıyı durdur.
     if (
+      soundObj != null &&
       soundObj.isLoaded &&
       soundObj.isPlaying &&
       currentAudio.id === audio.id
@@ -90,6 +90,7 @@ export class AudioList extends Component {
 
     //Resume#3 : Şarkı durdurulmuş ise yeniden çalıdrmaya devam ettir
     if (
+      soundObj != null &&
       soundObj.isLoaded &&
       !soundObj.isPlaying &&
       currentAudio.id === audio.id
@@ -105,6 +106,7 @@ export class AudioList extends Component {
 
     //Next#4 : Başka bir şarlkıya geç
     if (
+      soundObj != null &&
       soundObj.isLoaded &&
       soundObj.isPlaying &&
       currentAudio.id !== audio.id
@@ -123,6 +125,22 @@ export class AudioList extends Component {
 
   componentDidMount() {
     //Profile resmini koy
+    this.props.navigation.setOptions({
+      headerLeft: () => {
+        return (
+          <View style={{ marginLeft: 20 }}>
+            <TouchableOpacity>
+              <Avatar
+                rounded
+                source={{
+                  uri: `http://radiorder.online/${this.context.newAuthContext?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+        );
+      },
+    });
 
     this.context.loadPreviousAudio();
   }
@@ -148,7 +166,6 @@ export class AudioList extends Component {
     return (
       <AudioContext.Consumer>
         {({ dataProvider, isPlaying }) => {
-          console.log(dataProvider);
           if (!dataProvider._data.length) return null;
 
           return (

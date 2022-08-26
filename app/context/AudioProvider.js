@@ -442,6 +442,7 @@ export class AudioProvider extends Component {
           playbackPosition,
           playbackDuration,
           userData,
+          newAuthContext: this.context.loadingState.userData,
           loadPreviousAudio: this.loadPreviousAudio,
           totalAudioCount: this.totalAudioCount,
           updateState: this.updateState,

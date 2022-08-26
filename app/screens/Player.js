@@ -43,6 +43,23 @@ const Player = () => {
   };
 
   useEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => {
+        return (
+          <View style={{ marginLeft: 20 }}>
+            <TouchableOpacity>
+              <Avatar
+                rounded
+                source={{
+                  uri: `http://radiorder.online/${loadingState.userData?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+        );
+      },
+    });
+
     context.getUserGroupListFromServer();
     context.loadPreviousAudio();
   }, []);

@@ -70,7 +70,6 @@ const Login = () => {
         };
         const parser = new XMLParser(options);
         const jObj = parser.parse(getSoapBody(resData.data));
-        console.log(jObj);
 
         //Giriş Hatalı mı?
         if (jObj.Basarili == false) {

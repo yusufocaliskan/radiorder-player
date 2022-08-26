@@ -32,8 +32,6 @@ export default function App() {
 
       //Kullanıcı giriş
       case "LOGIN":
-        console.log("---------------LOGIN----------------------");
-        console.log(action.data);
         return {
           ...prevState,
           userID: action.id,
@@ -64,7 +62,7 @@ export default function App() {
           data.FSL.KullaniciListesi.KullaniciDto.Sifre
         );
 
-        await AsyncStorage.setItem("userData", JSON.stringify(data));
+        await AsyncStorage.setItem("userData", JSON.stringify(data.FSL));
       } catch (e) {
         console.log(e);
       }
@@ -99,7 +97,7 @@ export default function App() {
       try {
         userToken = await AsyncStorage.getItem("userToken");
         userData = JSON.parse(await AsyncStorage.getItem("userData"));
-        console.log("----------SILAV----");
+
         dispatch({ type: "LOGIN", token: userToken, data: userData });
       } catch (e) {
         console.log(e);
