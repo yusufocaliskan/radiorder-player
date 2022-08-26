@@ -32,7 +32,7 @@ export default function App() {
 
       //Kullanıcı giriş
       case "LOGIN":
-        console.log("-----------------ACTION-------------");
+        console.log("---------------LOGIN----------------------");
         console.log(action.data);
         return {
           ...prevState,
@@ -64,7 +64,7 @@ export default function App() {
           data.FSL.KullaniciListesi.KullaniciDto.Sifre
         );
 
-        await AsyncStorage.setItem("userData", JSON.stringify(data.FSL));
+        await AsyncStorage.setItem("userData", JSON.stringify(data));
       } catch (e) {
         console.log(e);
       }
@@ -87,6 +87,8 @@ export default function App() {
       }
       dispatch({ type: "LOGOUT", id: null, token: null });
     },
+
+    //Kullanıcı bilgileri
     loadingState: loadingState,
   }));
 
@@ -97,13 +99,11 @@ export default function App() {
       try {
         userToken = await AsyncStorage.getItem("userToken");
         userData = JSON.parse(await AsyncStorage.getItem("userData"));
-        //setUserData(userData);
+        console.log("----------SILAV----");
+        dispatch({ type: "LOGIN", token: userToken, data: userData });
       } catch (e) {
         console.log(e);
       }
-      console.log("-------------------EVEDERRRRR-----");
-      console.log(userData);
-      dispatch({ type: "LOGIN", token: userToken, data: userData });
     }, 1000);
   }, []);
 

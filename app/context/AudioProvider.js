@@ -17,6 +17,7 @@ export const AudioContext = createContext();
 
 export class AudioProvider extends Component {
   static contextType = newAuthContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -44,7 +45,6 @@ export class AudioProvider extends Component {
     };
 
     this.totalAudioCount = 0;
-    //this.loadUserData();
   }
 
   //Hata mesajı göster.
@@ -333,19 +333,20 @@ export class AudioProvider extends Component {
     return soapBody;
   };
 
-  componentDidMount() {
+  componentDidMount = () => {
     //Musiclere erişim izni all
     this.getPermission();
     //this.getPlaylistFromServer();
-    console.log("--------------HERE--------------");
-    console.log(this.context);
-    //Kullanıcı bilgilerini al.
-
-    //this.loadUserData();
 
     if (this.state.playbackObj == null) {
       this.setState({ ...this.state, playbackObj: new Audio.Sound() });
     }
+  };
+
+  componentWillUnmount() {
+    this.setState = (state, callback) => {
+      return;
+    };
   }
 
   onPlaybackStatusUpdate = async (playbackStatus) => {

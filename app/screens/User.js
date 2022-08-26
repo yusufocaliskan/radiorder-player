@@ -2,7 +2,6 @@ import React, { Component, useContext, useEffect, useState } from "react";
 import { TouchableOpacity, View, StyleSheet, Text, Image } from "react-native";
 import Screen from "../components/Screen";
 import { Avatar } from "@rneui/base";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AudioContext } from "../context/AudioProvider";
 import Button from "../components/form/Button";
 import { newAuthContext } from "../context/newAuthContext";
@@ -12,16 +11,18 @@ import { useNavigation } from "@react-navigation/native";
 
 const User = () => {
   const { singOut, loadingState } = useContext(newAuthContext);
-  const [data, setData] = useState(loadingState?.userData?.FSL);
   const audioContext = useContext(AudioContext);
   const navigation = useNavigation();
+
+  console.log("-----------------NÛ : EV DER---------------");
+  console.log(loadingState);
 
   //Moun olduğuında
   useEffect(() => {
     //Mount olduğunda verileri storagetan al.
     //Üstte profile avatarın koy.
     navigation.setOptions({
-      title: data?.Ismi,
+      title: loadingState.userData?.FSL?.Ismi,
       headerLeft: () => {
         return (
           <View style={{ marginLeft: 20 }}>
@@ -29,7 +30,7 @@ const User = () => {
               <Avatar
                 rounded
                 source={{
-                  uri: `http://radiorder.online/${loadingState?.userData?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
+                  uri: `http://radiorder.online/${loadingState.userData?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
                 }}
               />
             </TouchableOpacity>
@@ -40,24 +41,31 @@ const User = () => {
   });
 
   const singOutUser = () => {
-    stop(audioContext.playbackObj);
+    //stop(audioContext.playbackObj);
     singOut();
   };
 
+  if (!loadingState.userData) {
+    return (
+      <View>
+        <Text>VAllaa</Text>
+      </View>
+    );
+  }
   return (
     <Screen>
       <View style={styles.container}>
         <Image
           source={{
-            uri: `http://radiorder.online/${loadingState?.userData?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+            uri: `http://radiorder.online/${loadingState.userData?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
           }}
           style={styles.userImage}
         />
-        <Text style={styles.userName}>{loadingState?.userData?.Ismi}</Text>
+        <Text style={styles.userName}>{loadingState.userData?.FSL?.Ismi}</Text>
         <Text style={styles.Eposta}>
-          {loadingState?.userData?.KullaniciListesi?.KullaniciDto?.Eposta}
+          {loadingState.userData?.FSL?.KullaniciListesi?.KullaniciDto?.Eposta}
         </Text>
-        <Text style={styles.Sehir}>{loadingState?.userData?.Sehir}</Text>
+        <Text style={styles.Sehir}>{loadingState.userData?.FSL?.Sehir}</Text>
         <Button
           style={styles.logOutButton}
           onPress={singOutUser}
