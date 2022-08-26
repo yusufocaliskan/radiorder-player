@@ -29,7 +29,7 @@ const User = () => {
               <Avatar
                 rounded
                 source={{
-                  uri: `http://radiorder.online/${loadingState?.userData?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+                  uri: `http://radiorder.online/${loadingState?.userData?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
                 }}
               />
             </TouchableOpacity>
