@@ -37,8 +37,17 @@ const User = () => {
     });
   });
 
-  const singOutUser = () => {
-    //stop(audioContext.playbackObj);
+  const singOutUser = async () => {
+    //Çalan şarkı varsa durdur..
+    const status = await stop(audioContext.playbackObj);
+    audioContext.updateState(audioContext, {
+      playbackObj: audioContext.playbackObj,
+      soundObj: status,
+      isPlaying: false,
+      playbackPosition: null,
+      playbackDuration: null,
+    });
+
     singOut();
   };
 

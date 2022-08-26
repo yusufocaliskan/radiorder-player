@@ -11,7 +11,7 @@ export const play = async (playbackObj, uri) => {
   }
 };
 
-export const stop = async () => {
+export const stop = async (playbackObj) => {
   try {
     console.log("Stopped");
     //if (playbackObj._loaded === true) return resume(playbackObj);
