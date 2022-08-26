@@ -12,15 +12,14 @@ import { useNavigation } from "@react-navigation/native";
 
 const User = () => {
   const { singOut, loadingState } = useContext(newAuthContext);
-  const audioContext = useContext(AudioContext);
   const [data, setData] = useState(loadingState?.userData?.FSL);
+  const audioContext = useContext(AudioContext);
   const navigation = useNavigation();
-
+  console.log("----------------USER-----------------");
+  console.log(loadingState);
   //Moun olduğuında
   useEffect(() => {
     //Mount olduğunda verileri storagetan al.
-    console.log("Scrennn");
-    console.log(loadingState);
     //Üstte profile avatarın koy.
     navigation.setOptions({
       title: data?.Ismi,
@@ -31,7 +30,7 @@ const User = () => {
               <Avatar
                 rounded
                 source={{
-                  uri: `http://radiorder.online/${data?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+                  uri: `http://radiorder.online/${loadingState?.userData?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
                 }}
               />
             </TouchableOpacity>
@@ -51,15 +50,15 @@ const User = () => {
       <View style={styles.container}>
         <Image
           source={{
-            uri: `http://radiorder.online/${data?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+            uri: `http://radiorder.online/${loadingState?.userData?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
           }}
           style={styles.userImage}
         />
-        <Text style={styles.userName}>{data?.Ismi}</Text>
+        <Text style={styles.userName}>{loadingState?.userData?.Ismi}</Text>
         <Text style={styles.Eposta}>
-          {data?.KullaniciListesi.KullaniciDto.Eposta}
+          {loadingState?.userData?.KullaniciListesi.KullaniciDto.Eposta}
         </Text>
-        <Text style={styles.Sehir}>{data?.Sehir}</Text>
+        <Text style={styles.Sehir}>{loadingState?.userData?.Sehir}</Text>
         <Button
           style={styles.logOutButton}
           onPress={singOutUser}

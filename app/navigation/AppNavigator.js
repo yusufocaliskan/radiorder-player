@@ -1,4 +1,4 @@
-import React, { useContext, useLayoutEffect } from "react";
+import React, { useState, useContext, useEffect, useLayoutEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StyleSheet } from "react-native";
 import AudioList from "../screens/AudioList";
@@ -11,10 +11,17 @@ import { Entypo } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { AudioContext } from "../context/AudioProvider";
+import { newAuthContext } from "../context/newAuthContext";
 
 const Tab = createBottomTabNavigator();
 const AppNavigator = () => {
   const context = useContext(AudioContext);
+  const { loadingState } = useContext(newAuthContext);
+  const [userData, setUserData] = useState(loadingState?.userData?.FSL);
+
+  useEffect(() => {
+    console.log(loadingState);
+  });
   return (
     <Tab.Navigator
       screenOptions={{
@@ -50,7 +57,7 @@ const AppNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Kullanıcı"
+        name={userData?.FSL?.Ismi || "Kullanıcı"}
         component={User}
         context={context}
         options={{

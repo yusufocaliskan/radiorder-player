@@ -15,7 +15,7 @@ export default function App() {
     isLoading: true,
     userName: null,
     userToken: null,
-    userData: "tesrtttt",
+    userData: null,
   };
 
   //REducerları oluştur..
@@ -32,7 +32,7 @@ export default function App() {
 
       //Kullanıcı giriş
       case "LOGIN":
-        console.log("-------------ACTION ----------------");
+        console.log("-----------------ACTION-------------");
         console.log(action.data);
         return {
           ...prevState,
@@ -96,12 +96,14 @@ export default function App() {
       let userData = null;
       try {
         userToken = await AsyncStorage.getItem("userToken");
-        userData = await AsyncStorage.getItem("userData");
+        userData = JSON.parse(await AsyncStorage.getItem("userData"));
         //setUserData(userData);
       } catch (e) {
         console.log(e);
       }
-      dispatch({ type: "LOGIN", token: userToken });
+      console.log("-------------------EVEDERRRRR-----");
+      console.log(userData);
+      dispatch({ type: "LOGIN", token: userToken, data: userData });
     }, 1000);
   }, []);
 

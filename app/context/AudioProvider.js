@@ -45,7 +45,6 @@ export class AudioProvider extends Component {
 
     this.totalAudioCount = 0;
     //this.loadUserData();
-    console.log("-------------------Evder ---------------");
   }
 
   //Hata mesajı göster.
@@ -109,7 +108,6 @@ export class AudioProvider extends Component {
     if (!permission.granted && permission.canAskAgain) {
       const { status, canAskAgain } =
         await MediaLibrary.requestPermissionsAsync();
-      console.log(canAskAgain);
 
       //Bize izin vermedi!
       if (status === "denied" && canAskAgain) {
