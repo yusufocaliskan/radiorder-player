@@ -26,7 +26,12 @@ import Button from "../components/form/Button";
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
 import axios from "axios";
 import { newAuthContext } from "../context/newAuthContext";
+import { AudioContext } from "../context/AudioProvider";
+import { storeAudioForNextOpening } from "../misc/Helper";
 
+//Expo-av şarkıları çalar.
+import { Audio } from "expo-av";
+import { play } from "../misc/AudioController";
 //Navigator.
 import { useNavigation } from "@react-navigation/native";
 
@@ -37,6 +42,7 @@ const Login = () => {
   const [userName, setUserName] = useState();
   const [password, setPassword] = useState();
   const { singIn, test } = useContext(newAuthContext);
+  const audioContext = useContext(AudioContext);
 
   const LoginAction = async () => {
     //Kullanıcı bilgileri boş mu?
@@ -63,7 +69,7 @@ const Login = () => {
       .post(config.SOAP_URL, xml, {
         headers: { "Content-Type": "text/xml" },
       })
-      .then((resData) => {
+      .then(async (resData) => {
         const options = {
           ignoreNameSpace: false,
           ignoreAttributes: false,
@@ -85,6 +91,7 @@ const Login = () => {
           //Sayfaya gönder
           //Storage'a verileri koy
           singIn(jObj);
+          startToPlay();
 
           return navigation.navigate("MainApp");
         }
@@ -93,6 +100,39 @@ const Login = () => {
       .catch((error) => {
         console.error(`SOAP FAIL: ${error}`);
       });
+  };
+
+  //Login olduğunda şarkıyı çalmaya başla..
+  const startToPlay = async () => {
+    const { soundObj, currentAudio, updateState, audioFiles } = audioContext;
+
+    const audio = audioFiles[0];
+
+    //Playlisti oynatmaya başla
+    //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
+    const playbackObj = new Audio.Sound();
+
+    //Controllerdan çağır.
+    const status = await play(playbackObj, audio.uri);
+    const index = audioFiles.indexOf(audio);
+
+    //Yeni durumu state ata ve ilerlememesi için return'le
+    updateState(audioContext, {
+      currentAudio: audio,
+      playbackObj: playbackObj,
+      soundObj: status,
+      currentAudioIndex: index,
+
+      //Çalma-Durdurma iconları için
+      isPlaying: true,
+    });
+
+    //Slider bar için statuyü güncelle
+    playbackObj.setOnPlaybackStatusUpdate(audioContext.onPlaybackStatusUpdate);
+
+    //Application açıldığında
+    //son çalınna şarkıyı bulmak için kullanırı
+    storeAudioForNextOpening(audio, index);
   };
 
   //Gelen bilgileri ayıkla

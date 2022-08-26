@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 import {
   View,

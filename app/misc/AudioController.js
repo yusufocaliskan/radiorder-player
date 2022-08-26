@@ -1,9 +1,14 @@
 //Play#1
+
+import { styleProps } from "react-native-web/dist/cjs/modules/forwardedProps";
+
 //Şarkıyı başlatmak için kullanılır
 export const play = async (playbackObj, uri) => {
   try {
-    console.log(playbackObj._loaded);
-    console.log("Playing");
+    //İlk durur
+    stop(playbackObj);
+
+    //Sonra çalll
     //if (playbackObj._loaded === true) return resume(playbackObj);
     return await playbackObj.loadAsync({ uri }, { shouldPlay: true });
   } catch (error) {
@@ -11,12 +16,11 @@ export const play = async (playbackObj, uri) => {
   }
 };
 
+//Şarkıyı durudur..
 export const stop = async (playbackObj) => {
   try {
-    console.log("Stopped");
-    //if (playbackObj._loaded === true) return resume(playbackObj);
     return await playbackObj.stopAsync({
-      shouldPlay: true,
+      shouldPlay: false,
       positionMillis: false,
     });
   } catch (error) {
