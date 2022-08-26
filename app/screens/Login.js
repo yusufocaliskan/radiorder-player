@@ -90,6 +90,7 @@ const Login = () => {
           //console.log(this.context.userData);
           //Sayfaya gönder
           singIn(jObj);
+
           return navigation.navigate("MainApp");
         }
       })

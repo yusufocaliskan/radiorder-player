@@ -31,7 +31,6 @@ const Player = () => {
   const context = useContext(AudioContext);
   const { playbackPosition, playbackDuration } = context;
 
-  console.log(context.userData);
   //Slider position'ın hesapla
   const calculateSeebBar = () => {
     if (playbackPosition !== null && playbackDuration !== null) {

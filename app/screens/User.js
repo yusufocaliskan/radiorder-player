@@ -1,33 +1,28 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import { TouchableOpacity, View, StyleSheet, Text, Image } from "react-native";
 import Screen from "../components/Screen";
 import { Avatar } from "@rneui/base";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AuthContext } from "../context/AuthProvider";
+import { AudioContext } from "../context/AudioProvider";
 import Button from "../components/form/Button";
 import { newAuthContext } from "../context/newAuthContext";
 import color from "../misc/color";
+import { stop } from "../misc/AudioController";
+import { useNavigation } from "@react-navigation/native";
 
-class User extends Component {
-  static contextType = newAuthContext;
-  constructor(props) {
-    super(props);
-    this.state = {
-      data: null,
-    };
-  }
+const User = () => {
+  const { singOut } = useContext(newAuthContext);
+  const audioContext = useContext(AudioContext);
+  const [data, setData] = useState(audioContext.userData);
+  const navigation = useNavigation();
 
   //Moun olduğuında
-  componentDidMount = async () => {
+  useEffect(() => {
     //Mount olduğunda verileri storagetan al.
-    this.setState({
-      ...this.state,
-      data: JSON.parse(await AsyncStorage.getItem("userData")),
-    });
 
     //Üstte profile avatarın koy.
-    this.props.navigation.setOptions({
-      title: this.state.data?.Ismi,
+    navigation.setOptions({
+      title: data?.Ismi,
       headerLeft: () => {
         return (
           <View style={{ marginLeft: 20 }}>
@@ -35,7 +30,7 @@ class User extends Component {
               <Avatar
                 rounded
                 source={{
-                  uri: `http://radiorder.online/${this.state.data?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+                  uri: `http://radiorder.online/${data?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
                 }}
               />
             </TouchableOpacity>
@@ -43,36 +38,37 @@ class User extends Component {
         );
       },
     });
+  });
+
+  const singOutUser = () => {
+    stop(audioContext.playbackObj);
+    singOut();
   };
 
-  render() {
-    return (
-      <Screen>
-        <View style={styles.container}>
-          <Image
-            source={{
-              uri: `http://radiorder.online/${this.state.data?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
-            }}
-            style={styles.userImage}
-          />
-          <Text style={styles.userName}>{this.state.data?.Ismi}</Text>
-          <Text style={styles.Eposta}>
-            {this.state.data?.KullaniciListesi.KullaniciDto.Eposta}
-          </Text>
-          <Text style={styles.Sehir}>{this.state.data?.Sehir}</Text>
-          <Button
-            style={styles.logOutButton}
-            onPress={this.context.singOut}
-            text="Çıkış Yap"
-            textStyle={styles.buttonTextStyle}
-          />
-        </View>
-      </Screen>
-    );
-
-    return <View></View>;
-  }
-}
+  return (
+    <Screen>
+      <View style={styles.container}>
+        <Image
+          source={{
+            uri: `http://radiorder.online/${data?.KullaniciListesi.KullaniciDto.ProfilResmi}`,
+          }}
+          style={styles.userImage}
+        />
+        <Text style={styles.userName}>{data?.Ismi}</Text>
+        <Text style={styles.Eposta}>
+          {data?.KullaniciListesi.KullaniciDto.Eposta}
+        </Text>
+        <Text style={styles.Sehir}>{data?.Sehir}</Text>
+        <Button
+          style={styles.logOutButton}
+          onPress={singOutUser}
+          text="Çıkış Yap"
+          textStyle={styles.buttonTextStyle}
+        />
+      </View>
+    </Screen>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {

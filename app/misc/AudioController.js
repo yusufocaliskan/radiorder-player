@@ -11,6 +11,19 @@ export const play = async (playbackObj, uri) => {
   }
 };
 
+export const stop = async () => {
+  try {
+    console.log("Stopped");
+    //if (playbackObj._loaded === true) return resume(playbackObj);
+    return await playbackObj.stopAsync({
+      shouldPlay: true,
+      positionMillis: false,
+    });
+  } catch (error) {
+    console.log("Hata!", error.message);
+  }
+};
+
 //Pause#2
 //Şarkıyı durdurmak için kullanırılır
 export const pause = async (playbackObj) => {

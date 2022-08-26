@@ -4,6 +4,7 @@ import * as MediaLibrary from "expo-media-library";
 import { Audio } from "expo-av";
 import { playNext } from "../misc/AudioController";
 import { storeAudioForNextOpening } from "../misc/Helper";
+
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
 import { DataProvider } from "recyclerlistview";
@@ -136,23 +137,7 @@ export class AudioProvider extends Component {
   getAudioFiles = async () => {
     const { dataProvider, audioFiles } = this.state;
 
-    let serverPlaylist = this.getFromServer();
-
-    //Step#1: SErverdan playlisti all.
-    if (serverPlaylist != 0) {
-      console.log("Burası");
-      return;
-    }
-
-    ////Step#2: Serverda bir şey yoksa, yerel klasörü oku.
-
-    //Serdaki playlist boş is.
-    //Mediadakini oku
     let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
-
-    //Eğer hiç ses dosyası yok
-    if (media.totalCount <= 0) {
-    }
 
     //Tüm şarkıları listele.
     media = await MediaLibrary.getAssetsAsync({
@@ -174,11 +159,8 @@ export class AudioProvider extends Component {
     //console.log(media.assets.length);
   };
 
-  getFromServer() {
-    return [];
-  }
   /**
-   * Şarkıları server'dan al.
+   * Şarkıları
    */
   getPlaylistFromServer = async () => {
     //Kullanıcı bilgileri boş mu?

@@ -4,16 +4,14 @@ import React, {
   useEffect,
   useReducer,
   useLayoutEffect,
+  useContext,
 } from "react";
 import NavigationStack from "./app/navigation/NavigationStack";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
-import AudioProvider from "./app/context/AudioProvider";
-import AuthProvider from "./app/context/AuthProvider";
+import { AudioProvider, AudioContext } from "./app/context/AudioProvider";
 import AppNavigator from "./app/navigation/AppNavigator";
-import Login from "./app/screens/Login";
 import LoadingGif from "./app/components/LoadingGif";
 import { newAuthContext } from "./app/context/newAuthContext";
-import { ActivityIndicatorComponent } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function App() {
@@ -70,7 +68,7 @@ export default function App() {
           "userToken",
           data.FSL.KullaniciListesi.KullaniciDto.Sifre
         );
-
+        console.log(data.FSL);
         await AsyncStorage.setItem("userData", JSON.stringify(data.FSL));
       } catch (e) {
         console.log(e);

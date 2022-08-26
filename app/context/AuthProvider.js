@@ -39,9 +39,10 @@ class AuthProvider extends Component {
    * @param {object} data Kullanıcı bilileri
    */
   setUserInfo = async (data) => {
-    console.log("Assininggg.....");
     this.setState({ ...this.state, userFullName: "data.FSL.Ismi" });
     await AsyncStorage.setItem("userData", JSON.stringify({ data }));
+
+    this.state.userData = data;
   };
 
   setLoggedOut = () => {
