@@ -15,8 +15,7 @@ const User = () => {
   const [data, setData] = useState(loadingState?.userData?.FSL);
   const audioContext = useContext(AudioContext);
   const navigation = useNavigation();
-  console.log("----------------USER-----------------");
-  console.log(loadingState);
+
   //Moun olduğuında
   useEffect(() => {
     //Mount olduğunda verileri storagetan al.
@@ -56,7 +55,7 @@ const User = () => {
         />
         <Text style={styles.userName}>{loadingState?.userData?.Ismi}</Text>
         <Text style={styles.Eposta}>
-          {loadingState?.userData?.KullaniciListesi.KullaniciDto.Eposta}
+          {loadingState?.userData?.KullaniciListesi?.KullaniciDto?.Eposta}
         </Text>
         <Text style={styles.Sehir}>{loadingState?.userData?.Sehir}</Text>
         <Button
