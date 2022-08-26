@@ -1,11 +1,4 @@
-import React, {
-  useState,
-  useMemo,
-  useEffect,
-  useReducer,
-  useLayoutEffect,
-  useContext,
-} from "react";
+import React, { useMemo, useEffect, useReducer } from "react";
 import NavigationStack from "./app/navigation/NavigationStack";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { AudioProvider, AudioContext } from "./app/context/AudioProvider";
@@ -86,6 +79,7 @@ export default function App() {
     singOut: async () => {
       try {
         await AsyncStorage.removeItem("userToken");
+        await AsyncStorage.removeItem("userData");
       } catch (e) {
         console.log(e);
       }

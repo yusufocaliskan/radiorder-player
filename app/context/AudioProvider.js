@@ -42,6 +42,7 @@ export class AudioProvider extends Component {
     };
 
     this.totalAudioCount = 0;
+    this.loadUserData();
   }
 
   //Hata mesajı göster.
@@ -160,34 +161,24 @@ export class AudioProvider extends Component {
   };
 
   /**
+   * Step:1
    * Şarkıları
    */
-  getPlaylistFromServer = async () => {
+  getUserGroupListFromServer = async () => {
     //Kullanıcı bilgileri boş mu?
 
     const xml = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <FSL_SarkiListesi xmlns="http://tempuri.org/">
-      <SertifikaBilgileri>
-        <KullaniciAdi>string</KullaniciAdi>
-        <Sifre>string</Sifre>
-      </SertifikaBilgileri>
-      <LisansBilgileri>
-        <Basarili>boolean</Basarili>
-        <Aciklama>string</Aciklama>
-        <LisansKey>guid</LisansKey>
-        <LisansKeyStr>string</LisansKeyStr>
-        <Bitistarihi>dateTime</Bitistarihi>
-        <BitisTarihiStr>string</BitisTarihiStr>
-        <FslId>int</FslId>
-        <FSL>string</FSL>
-        <MakineKodu>string</MakineKodu>
-        <LisansAciklama>string</LisansAciklama>
-      </LisansBilgileri>
-      <FslId>int</FslId>
-      <PlaylisttanimlamaKodu>string</PlaylisttanimlamaKodu>
-    </FSL_SarkiListesi>
-  </soap:Body>`;
+    <soap:Body>
+      <KullaniciGrupListesi xmlns="http://tempuri.org/">
+            <SertifikaBilgileri>
+          <KullaniciAdi>radiorder</KullaniciAdi>
+          <Sifre>1@K_#$159X!</Sifre>
+        </SertifikaBilgileri>
+        <Eposta>info@yusuf.com</Eposta>
+        <Sifre>123456</Sifre>
+      </KullaniciGrupListesi>
+    </soap:Body>
+  </soap:Envelope>`;
 
     axios
       .post(config.SOAP_URL, xml, {
@@ -199,8 +190,129 @@ export class AudioProvider extends Component {
           ignoreAttributes: false,
         };
         const parser = new XMLParser(options);
-        //const jObj = parser.parse(getSoapBody(resData.data));
-        console.log("----------------------00000-----------------------");
+        const parsedData = parser.parse(this.getSoapBody(resData.data));
+        console.log(
+          "---------------------- 1 - GROUP LIST -----------------------"
+        );
+        console.log(parsedData);
+        this.getUserUpdateInformationSongs(parsedData.GrupTanimlamaKodu);
+      })
+
+      .catch((error) => {
+        console.error(`SOAP FAIL: ${error}`);
+      });
+  };
+
+  //Gelen bilgileri ayıkla
+  getSoapBody = (xmlStr) => {
+    let soapBody = null;
+    if (xmlStr) {
+      const soapBodyRegex = /<GrupPlasylist>([\s\S]*)<\/GrupPlasylist>/im;
+      const soapBodyRegexMatchResult = xmlStr.match(soapBodyRegex);
+      soapBody = soapBodyRegexMatchResult[1];
+    }
+    return soapBody;
+  };
+
+  //Step#2
+  getUserUpdateInformationSongs = async (groupCode) => {
+    const xml = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+      <KullnaiciSarkiGuncellemeBilgisi xmlns="http://tempuri.org/">
+        <SertifikaBilgileri>
+        <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
+        <Sifre>${config.SER_PASSWORD}</Sifre>
+      </SertifikaBilgileri>
+      <Eposta>info@yusuf.com</Eposta>
+      <Sifre>123456</Sifre>
+        <GrupTanimlamaKodu>
+          <string>e7cdf403-c93f-44f7-94a5-4929ee5c6d5c</string>
+        </GrupTanimlamaKodu>
+      </KullnaiciSarkiGuncellemeBilgisi>
+    </soap:Body>
+  </soap:Envelope>`;
+
+    axios
+      .post(config.SOAP_URL, xml, {
+        headers: { "Content-Type": "text/xml" },
+      })
+      .then((resData) => {
+        const options = {
+          ignoreNameSpace: false,
+          ignoreAttributes: false,
+        };
+
+        const parser = new XMLParser(options);
+        const parsedData = parser.parse(
+          this.getUpdateGroupListBody(resData.data)
+        );
+        return parsedData;
+
+        console.log();
+      })
+      .then((data) => {
+        console.log(
+          "---------------------- 2 - GROUP LIST -----------------------"
+        );
+        console.log(data);
+        //this.getAllSongs(groupCode, data.Liste, 1);
+      })
+
+      .catch((error) => {
+        console.error(`SOAP FAIL: ${error}`);
+      });
+  };
+
+  getUpdateGroupListBody = (xmlStr) => {
+    let soapBody = null;
+    if (xmlStr) {
+      const soapBodyRegex =
+        /<KullnaiciSarkiGuncellemeBilgisiResult>([\s\S]*)<\/KullnaiciSarkiGuncellemeBilgisiResult>/im;
+      const soapBodyRegexMatchResult = xmlStr.match(soapBodyRegex);
+      soapBody = soapBodyRegexMatchResult[1];
+    }
+    return soapBody;
+  };
+
+  //Step#2
+  getAllSongs = async (groupCode, songIdList, pageNo) => {
+    const xml = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+    <KullnaiciFSLSarkiListesiGuncelleme xmlns="http://tempuri.org/">
+    <SertifikaBilgileri>
+      <KullaniciAdi>radiorder</KullaniciAdi>
+      <Sifre>1@K_#$159X!</Sifre>
+    </SertifikaBilgileri>
+    <GrupTanimlamaKodu>
+        <string>e7cdf403-c93f-44f7-94a5-4929ee5c6d5c</string>
+      </GrupTanimlamaKodu>
+    <SarkiIdListesi>
+    </SarkiIdListesi>
+    <Eposta>info@yusuf.com</Eposta>
+    <Sifre>123456</Sifre>
+    <SayfaNo>1</SayfaNo>
+  </KullnaiciFSLSarkiListesiGuncelleme>
+    </soap:Body>
+  </soap:Envelope>`;
+
+    axios
+      .post(config.SOAP_URL, xml, {
+        headers: { "Content-Type": "text/xml" },
+      })
+      .then((resData) => {
+        const options = {
+          ignoreNameSpace: false,
+          ignoreAttributes: false,
+        };
+
+        const parser = new XMLParser(options);
+        // const parsedData = parser.parse(
+        //   this.getUpdateGroupListBody(resData.data)
+        // );
+        console.log(
+          "---------------------- 3 - GROUP LIST -----------------------"
+        );
+
         console.log(resData);
       })
 
@@ -209,13 +321,25 @@ export class AudioProvider extends Component {
       });
   };
 
+  getUpdateGroupListBody = (xmlStr) => {
+    let soapBody = null;
+    if (xmlStr) {
+      const soapBodyRegex =
+        /<KullnaiciSarkiGuncellemeBilgisiResult>([\s\S]*)<\/KullnaiciSarkiGuncellemeBilgisiResult>/im;
+      const soapBodyRegexMatchResult = xmlStr.match(soapBodyRegex);
+      soapBody = soapBodyRegexMatchResult[1];
+    }
+    return soapBody;
+  };
+
   componentDidMount() {
     //Musiclere erişim izni all
     this.getPermission();
     //this.getPlaylistFromServer();
 
     //Kullanıcı bilgilerini al.
-    this.loadUserData();
+
+    //this.loadUserData();
 
     if (this.state.playbackObj == null) {
       this.setState({ ...this.state, playbackObj: new Audio.Sound() });
@@ -319,6 +443,7 @@ export class AudioProvider extends Component {
           totalAudioCount: this.totalAudioCount,
           updateState: this.updateState,
           onPlaybackStatusUpdate: this.onPlaybackStatusUpdate,
+          getUserGroupListFromServer: this.getUserGroupListFromServer,
         }}
       >
         {this.props.children}

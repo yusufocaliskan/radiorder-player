@@ -40,6 +40,7 @@ const Player = () => {
   };
 
   useEffect(() => {
+    context.getUserGroupListFromServer();
     context.loadPreviousAudio();
   }, []);
 
