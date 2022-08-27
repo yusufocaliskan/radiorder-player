@@ -192,11 +192,13 @@ export class AudioProvider extends Component {
         };
         const parser = new XMLParser(options);
         const parsedData = parser.parse(this.getSoapBody(resData.data));
-        console.log(
-          "---------------------- 1 - GROUP LIST -----------------------"
-        );
-        console.log(parsedData);
-        this.getUserUpdateInformationSongs(parsedData.GrupTanimlamaKodu);
+
+        let allSongs = this.getAllSongs();
+
+        return allSongs;
+      })
+      .then(async (allSong) => {
+        console.log(allSong);
       })
 
       .catch((error) => {
@@ -216,22 +218,24 @@ export class AudioProvider extends Component {
   };
 
   //Step#2
-  getUserUpdateInformationSongs = async (groupCode) => {
-    const xml = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-    <soap:Body>
-      <KullnaiciSarkiGuncellemeBilgisi xmlns="http://tempuri.org/">
-        <SertifikaBilgileri>
-        <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
-        <Sifre>${config.SER_PASSWORD}</Sifre>
-      </SertifikaBilgileri>
-      <Eposta>info@yusuf.com</Eposta>
-      <Sifre>123456</Sifre>
-        <GrupTanimlamaKodu>
-          <string>e7cdf403-c93f-44f7-94a5-4929ee5c6d5c</string>
-        </GrupTanimlamaKodu>
-      </KullnaiciSarkiGuncellemeBilgisi>
-    </soap:Body>
-  </soap:Envelope>`;
+  getAllSongs = async () => {
+    const xml = `<?xml version="1.0" encoding="utf-8"?>
+    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <soap:Body>
+            <KullnaiciFSLSarkiListesiGuncelleme xmlns="http://tempuri.org/"> 
+            <SertifikaBilgileri>
+                    <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
+                    <Sifre>${config.SER_PASSWORD}</Sifre>
+                </SertifikaBilgileri>
+                <Eposta>info@yusuf.com</Eposta>
+                <Sifre>123456</Sifre>
+                <!-- Kullaniczi Grup Listesinden Geliyor -->
+                <GrupTanimlamaKodu>e7cdf403-c93f-44f7-94a5-4929ee5c6d5c</GrupTanimlamaKodu>
+                <SarkiIdListesi />   
+                <SayfaNo>1</SayfaNo>
+            </KullnaiciFSLSarkiListesiGuncelleme>
+        </soap:Body>
+    </soap:Envelope>`;
 
     axios
       .post(config.SOAP_URL, xml, {
@@ -245,92 +249,17 @@ export class AudioProvider extends Component {
 
         const parser = new XMLParser(options);
         const parsedData = parser.parse(
-          this.getUpdateGroupListBody(resData.data)
+          resData.data.match(
+            /<KullnaiciFSLSarkiListesiGuncellemeResult>([\s\S]*)<\/KullnaiciFSLSarkiListesiGuncellemeResult>/im
+          )[1]
         );
+
         return parsedData;
-
-        console.log();
-      })
-      .then((data) => {
-        console.log(
-          "---------------------- 2 - GROUP LIST -----------------------"
-        );
-        console.log(data);
-        //this.getAllSongs(groupCode, data.Liste, 1);
       })
 
       .catch((error) => {
         console.error(`SOAP FAIL: ${error}`);
       });
-  };
-
-  getUpdateGroupListBody = (xmlStr) => {
-    let soapBody = null;
-    if (xmlStr) {
-      const soapBodyRegex =
-        /<KullnaiciSarkiGuncellemeBilgisiResult>([\s\S]*)<\/KullnaiciSarkiGuncellemeBilgisiResult>/im;
-      const soapBodyRegexMatchResult = xmlStr.match(soapBodyRegex);
-      soapBody = soapBodyRegexMatchResult[1];
-    }
-    return soapBody;
-  };
-
-  //Step#2
-  getAllSongs = async (groupCode, songIdList, pageNo) => {
-    const xml = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-    <soap:Body>
-    <KullnaiciFSLSarkiListesiGuncelleme xmlns="http://tempuri.org/">
-    <SertifikaBilgileri>
-      <KullaniciAdi>radiorder</KullaniciAdi>
-      <Sifre>1@K_#$159X!</Sifre>
-    </SertifikaBilgileri>
-    <GrupTanimlamaKodu>
-        <string>e7cdf403-c93f-44f7-94a5-4929ee5c6d5c</string>
-      </GrupTanimlamaKodu>
-    <SarkiIdListesi>
-    </SarkiIdListesi>
-    <Eposta>info@yusuf.com</Eposta>
-    <Sifre>123456</Sifre>
-    <SayfaNo>1</SayfaNo>
-  </KullnaiciFSLSarkiListesiGuncelleme>
-    </soap:Body>
-  </soap:Envelope>`;
-
-    axios
-      .post(config.SOAP_URL, xml, {
-        headers: { "Content-Type": "text/xml" },
-      })
-      .then((resData) => {
-        const options = {
-          ignoreNameSpace: false,
-          ignoreAttributes: false,
-        };
-
-        const parser = new XMLParser(options);
-        // const parsedData = parser.parse(
-        //   this.getUpdateGroupListBody(resData.data)
-        // );
-        console.log(
-          "---------------------- 3 - GROUP LIST -----------------------"
-        );
-
-        console.log(resData);
-      })
-
-      .catch((error) => {
-        console.error(`SOAP FAIL: ${error}`);
-      });
-  };
-
-  getUpdateGroupListBody = (xmlStr) => {
-    let soapBody = null;
-    if (xmlStr) {
-      const soapBodyRegex =
-        /<KullnaiciSarkiGuncellemeBilgisiResult>([\s\S]*)<\/KullnaiciSarkiGuncellemeBilgisiResult>/im;
-      const soapBodyRegexMatchResult = xmlStr.match(soapBodyRegex);
-      soapBody = soapBodyRegexMatchResult[1];
-    }
-    return soapBody;
   };
 
   componentDidMount = () => {

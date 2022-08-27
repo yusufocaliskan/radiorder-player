@@ -94,7 +94,7 @@ export default function App() {
       try {
         userToken = await AsyncStorage.getItem("userToken");
         userData = JSON.parse(await AsyncStorage.getItem("userData"));
-        console.log("-------- HIII ------------------");
+
         dispatch({
           type: "LOGIN",
           isLoading: true,

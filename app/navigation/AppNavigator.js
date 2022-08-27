@@ -19,9 +19,6 @@ const AppNavigator = () => {
   const { loadingState } = useContext(newAuthContext);
   const [userData, setUserData] = useState(loadingState?.userData?.FSL);
 
-  useEffect(() => {
-    console.log(loadingState);
-  });
   return (
     <Tab.Navigator
       screenOptions={{

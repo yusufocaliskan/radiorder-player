@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: color.FONT,
+    textTransform: "uppercase",
   },
 
   titleContainer: {

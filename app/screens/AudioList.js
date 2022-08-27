@@ -22,6 +22,7 @@ export class AudioList extends Component {
     super(props);
     this.state = {
       optionModalVisible: false,
+      finish: true,
     };
 
     this.currentItem = {};
@@ -153,9 +154,6 @@ export class AudioList extends Component {
     const { soundObj, currentAudio, updateState, audioFiles } = this.context;
 
     const audio = audioFiles[0];
-    console.log("------------------AUDIO------------------");
-    console.log(audio);
-    console.log("------------------END:AUDIO------------------");
 
     if (audio && soundObj == null) {
       //Playlisti oynatmaya başla

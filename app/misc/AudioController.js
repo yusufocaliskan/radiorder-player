@@ -6,7 +6,7 @@ import { styleProps } from "react-native-web/dist/cjs/modules/forwardedProps";
 export const play = async (playbackObj, uri) => {
   try {
     //İlk durur
-    stop(playbackObj);
+    //stop(playbackObj);
 
     //Sonra çalll
     //if (playbackObj._loaded === true) return resume(playbackObj);

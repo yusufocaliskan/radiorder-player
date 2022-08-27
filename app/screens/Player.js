@@ -12,10 +12,7 @@ import color from "../misc/color";
 import Slider from "@react-native-community/slider";
 
 //Button ve Iconlar
-import {
-  createIconSetFromFontello,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import PlayerButton from "../components/PlayerButton";
 import { AudioContext } from "../context/AudioProvider";
 import { pause, play, playNext, resume } from "../misc/AudioController";
@@ -30,7 +27,7 @@ const { width } = Dimensions.get("window");
 const Player = () => {
   const navigation = useNavigation();
   const context = useContext(AudioContext);
-  const { singOut, loadingState } = useContext(newAuthContext);
+  const { loadingState } = useContext(newAuthContext);
   const [userData, setUserData] = useState(loadingState?.userData?.FSL);
   const { playbackPosition, playbackDuration } = context;
 
@@ -128,6 +125,7 @@ const Player = () => {
 
     if (isLastAudio) {
       index = 0;
+      setFinish(true);
       audio = context.audioFiles[index];
       if (isLoaded) {
         status = await playNext(context.playbackObj, audio.uri);
@@ -205,7 +203,7 @@ const Player = () => {
         }`}</Text>
         <View style={styles.midBannerContainer}>
           <MaterialCommunityIcons
-            name="music-circle-outline"
+            name="music-circle"
             size={300}
             color={context.isPlaying ? color.RED : color.GRAY}
           />
