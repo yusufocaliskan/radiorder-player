@@ -4,6 +4,7 @@ import * as MediaLibrary from "expo-media-library";
 import { Audio } from "expo-av";
 import { playNext } from "../misc/AudioController";
 import { storeAudioForNextOpening } from "../misc/Helper";
+//import RNFetchBlob from "rn-fetch-blob";
 
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
@@ -254,11 +255,36 @@ export class AudioProvider extends Component {
           )[1]
         );
 
+        for (let i = 0; i <= parsedData.Liste.WsSarkiDto.length; i++) {
+          //this.DownloadSoundFromServer(parsedData.Liste.WsSarkiDto[i]);
+        }
+
         return parsedData;
       })
 
       .catch((error) => {
         console.error(`SOAP FAIL: ${error}`);
+      });
+  };
+
+  DownloadSoundFromServer = (sounds) => {
+    const date = new Date();
+
+    const { DownloadDir } = RNFetchBlob.fs.dirs; // You can check the available directories in the wiki.
+    const options = {
+      fileCache: true,
+      addAndroidDownloads: {
+        useDownloadManager: true, // true will use native manager and be shown on notification bar.
+        notification: true,
+        path: `${DownloadDir}/${sounds.DosyaIsmi}`,
+        description: "Downloading.",
+      },
+    };
+
+    config(options)
+      .fetch("GET", sounds.SesLink)
+      .then((res) => {
+        console.log("do some magic in here");
       });
   };
 
