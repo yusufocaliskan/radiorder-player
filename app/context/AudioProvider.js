@@ -336,6 +336,7 @@ export class AudioProvider extends Component {
   componentDidMount = () => {
     //Musiclere erişim izni all
     this.getPermission();
+
     //this.getPlaylistFromServer();
 
     if (this.state.playbackObj == null) {
@@ -442,6 +443,7 @@ export class AudioProvider extends Component {
           playbackPosition,
           playbackDuration,
           userData,
+          getAudioFiles: this.getAudioFiles,
           newAuthContext: this.context.loadingState.userData,
           loadPreviousAudio: this.loadPreviousAudio,
           totalAudioCount: this.totalAudioCount,

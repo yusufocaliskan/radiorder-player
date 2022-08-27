@@ -123,7 +123,7 @@ export class AudioList extends Component {
     }
   };
 
-  componentDidMount() {
+  componentDidMount = async () => {
     //Profile resmini koy
     this.props.navigation.setOptions({
       headerLeft: () => {
@@ -143,7 +143,50 @@ export class AudioList extends Component {
     });
 
     this.context.loadPreviousAudio();
-  }
+    await this.context.getAudioFiles().then(async () => {
+      await this.startToPlay();
+    });
+  };
+
+  //Login olduğunda şarkıyı çalmaya başla..
+  startToPlay = async () => {
+    const { soundObj, currentAudio, updateState, audioFiles } = this.context;
+
+    const audio = audioFiles[0];
+    console.log("------------------AUDIO------------------");
+    console.log(audio);
+    console.log("------------------END:AUDIO------------------");
+
+    if (audio && soundObj == null) {
+      //Playlisti oynatmaya başla
+      //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
+      const playbackObj = new Audio.Sound();
+
+      //Controllerdan çağır.
+      const status = await play(playbackObj, audio.uri);
+      const index = audioFiles.indexOf(audio);
+
+      //Yeni durumu state ata ve ilerlememesi için return'le
+      updateState(this.context, {
+        currentAudio: audio,
+        playbackObj: playbackObj,
+        soundObj: status,
+        currentAudioIndex: index,
+
+        //Çalma-Durdurma iconları için
+        isPlaying: true,
+      });
+
+      //Slider bar için statuyü güncelle
+      playbackObj.setOnPlaybackStatusUpdate(
+        this.context.onPlaybackStatusUpdate
+      );
+
+      //Application açıldığında
+      //son çalınna şarkıyı bulmak için kullanırı
+      storeAudioForNextOpening(audio, index);
+    }
+  };
 
   //Şarkıyı listele.
   rowRenderer = (type, item, index, extendedState) => {

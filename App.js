@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useReducer } from "react";
+import React, { useContext, useMemo, useEffect, useReducer } from "react";
 import NavigationStack from "./app/navigation/NavigationStack";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { AudioProvider, AudioContext } from "./app/context/AudioProvider";
@@ -8,9 +8,6 @@ import { newAuthContext } from "./app/context/newAuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function App() {
-  // const [userData, userDat] = useState(true);
-  // const [userToken, setUserToken] = useState(null);
-
   const initialLoginState = {
     isLoading: true,
     userName: null,
@@ -62,7 +59,7 @@ export default function App() {
           data.FSL.KullaniciListesi.KullaniciDto.Sifre
         );
 
-        await AsyncStorage.setItem("userData", JSON.stringify(data.FSL));
+        await AsyncStorage.setItem("userData", JSON.stringify(data));
       } catch (e) {
         console.log(e);
       }
@@ -97,8 +94,13 @@ export default function App() {
       try {
         userToken = await AsyncStorage.getItem("userToken");
         userData = JSON.parse(await AsyncStorage.getItem("userData"));
-
-        dispatch({ type: "LOGIN", token: userToken, data: userData });
+        console.log("-------- HIII ------------------");
+        dispatch({
+          type: "LOGIN",
+          isLoading: true,
+          token: userToken,
+          data: userData,
+        });
       } catch (e) {
         console.log(e);
       }
