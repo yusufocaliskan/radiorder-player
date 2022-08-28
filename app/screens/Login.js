@@ -28,6 +28,7 @@ import axios from "axios";
 import { newAuthContext } from "../context/newAuthContext";
 import { AudioContext } from "../context/AudioProvider";
 import { storeAudioForNextOpening } from "../misc/Helper";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 //Expo-av şarkıları çalar.
 import { Audio } from "expo-av";
@@ -94,6 +95,8 @@ const Login = () => {
 
           //İlk şarkıdan çalmaya başla.
           //startToPlay();
+          await AsyncStorage.setItem("username", userName);
+          await AsyncStorage.setItem("password", password);
 
           return navigation.navigate("MainApp");
         }

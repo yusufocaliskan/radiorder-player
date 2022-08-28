@@ -1,10 +1,12 @@
 import React, { Component, createContext } from "react";
-import { Text, View, Alert } from "react-native";
+import { PermissionsAndroid, Text, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import { Audio } from "expo-av";
-import { playNext } from "../misc/AudioController";
 import { storeAudioForNextOpening } from "../misc/Helper";
-//import RNFetchBlob from "rn-fetch-blob";
+import RNFetchBlob from "rn-fetch-blob";
+import LoadingGif from "../components/LoadingGif";
+import DownloadingGif from "../components/DownloadingGif";
+import { play, pause, resume, playNext } from "../misc/AudioController";
 
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
@@ -14,6 +16,7 @@ import { XMLParser } from "fast-xml-parser";
 import axios from "axios";
 import config from "../misc/config";
 import { newAuthContext } from "../context/newAuthContext";
+import { throwIfAudioIsDisabled } from "expo-av/build/Audio/AudioAvailability";
 export const AudioContext = createContext();
 
 export class AudioProvider extends Component {
@@ -43,6 +46,12 @@ export class AudioProvider extends Component {
       playbackDuration: null,
 
       userData: null,
+      totalSongInTheServer: {},
+
+      //Downloads
+      isDownloading: false,
+      currentDownloadedSong: "",
+      currentSongNumber: null,
     };
 
     this.totalAudioCount = 0;
@@ -163,82 +172,32 @@ export class AudioProvider extends Component {
   };
 
   /**
-   * Step:1
-   * Şarkıları
+   * Serverda kaç tane şarkı var, sayısını verrir
+   * @param {string} groupCode Group kkod
+   * @param {string} username Kullanıcı e-postassı
+   * @param {string} password kullanıcı şifresi
    */
-  getUserGroupListFromServer = async () => {
-    //Kullanıcı bilgileri boş mu?
-
-    const xml = `<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  checkHowManySongsInTheServer = async (groupCode, username, password) => {
+    const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <soap:Body>
-      <KullaniciGrupListesi xmlns="http://tempuri.org/">
-            <SertifikaBilgileri>
-          <KullaniciAdi>radiorder</KullaniciAdi>
-          <Sifre>1@K_#$159X!</Sifre>
-        </SertifikaBilgileri>
-        <Eposta>info@yusuf.com</Eposta>
-        <Sifre>123456</Sifre>
-      </KullaniciGrupListesi>
-    </soap:Body>
-  </soap:Envelope>`;
+        <KullnaiciSarkiGuncellemeBilgisi xmlns="http://tempuri.org/">
+             <SertifikaBilgileri>
+                <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
+                <Sifre>${config.SER_PASSWORD}</Sifre>
+            </SertifikaBilgileri>
+            <Eposta>${username}</Eposta>
+            <Sifre>${password}</Sifre>
 
-    axios
-      .post(config.SOAP_URL, xml, {
-        headers: { "Content-Type": "text/xml" },
-      })
-      .then((resData) => {
-        const options = {
-          ignoreNameSpace: false,
-          ignoreAttributes: false,
-        };
-        const parser = new XMLParser(options);
-        const parsedData = parser.parse(this.getSoapBody(resData.data));
+            <!-- Kullanici Grup Listesinden Geliyor -->
+            <GrupTanimlamaKodu>
+                <string>${groupCode}</string>
+            </GrupTanimlamaKodu>         
+                  
+        </KullnaiciSarkiGuncellemeBilgisi>
+      </soap:Body>
+      </soap:Envelope>`;
 
-        let allSongs = this.getAllSongs();
-
-        return allSongs;
-      })
-      .then(async (allSong) => {
-        console.log(allSong);
-      })
-
-      .catch((error) => {
-        console.error(`SOAP FAIL: ${error}`);
-      });
-  };
-
-  //Gelen bilgileri ayıkla
-  getSoapBody = (xmlStr) => {
-    let soapBody = null;
-    if (xmlStr) {
-      const soapBodyRegex = /<GrupPlasylist>([\s\S]*)<\/GrupPlasylist>/im;
-      const soapBodyRegexMatchResult = xmlStr.match(soapBodyRegex);
-      soapBody = soapBodyRegexMatchResult[1];
-    }
-    return soapBody;
-  };
-
-  //Step#2
-  getAllSongs = async () => {
-    const xml = `<?xml version="1.0" encoding="utf-8"?>
-    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-        <soap:Body>
-            <KullnaiciFSLSarkiListesiGuncelleme xmlns="http://tempuri.org/"> 
-            <SertifikaBilgileri>
-                    <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
-                    <Sifre>${config.SER_PASSWORD}</Sifre>
-                </SertifikaBilgileri>
-                <Eposta>info@yusuf.com</Eposta>
-                <Sifre>123456</Sifre>
-                <!-- Kullaniczi Grup Listesinden Geliyor -->
-                <GrupTanimlamaKodu>e7cdf403-c93f-44f7-94a5-4929ee5c6d5c</GrupTanimlamaKodu>
-                <SarkiIdListesi />   
-                <SayfaNo>1</SayfaNo>
-            </KullnaiciFSLSarkiListesiGuncelleme>
-        </soap:Body>
-    </soap:Envelope>`;
-
-    axios
+    await axios
       .post(config.SOAP_URL, xml, {
         headers: { "Content-Type": "text/xml" },
       })
@@ -251,12 +210,160 @@ export class AudioProvider extends Component {
         const parser = new XMLParser(options);
         const parsedData = parser.parse(
           resData.data.match(
+            /<KullnaiciSarkiGuncellemeBilgisiResult>([\s\S]*)<\/KullnaiciSarkiGuncellemeBilgisiResult>/im
+          )[1]
+        );
+
+        this.setState({ ...this, totalSongInTheServer: parsedData });
+        return parsedData;
+      })
+
+      .catch((error) => {
+        console.error(`SOAP FAIL: ${error}`);
+      });
+  };
+
+  /**
+   * Serrverdan kullanıcıya ait playlisti alır ve download eder.
+   * //Storage kayıt eder.
+   */
+  getUserGroupListFromServer = async () => {
+    //Kullanıcı bilgilerini al
+    const username = await AsyncStorage.getItem("username");
+    const password = await AsyncStorage.getItem("password");
+    //const totalUserSong = JSON.parse(await AsyncStorage.getItem("userSongs"));
+
+    const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <soap:Body>
+        <KullaniciGrupListesi xmlns="http://tempuri.org/">
+            <SertifikaBilgileri>
+            <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
+            <Sifre>${config.SER_PASSWORD}</Sifre>
+            </SertifikaBilgileri>
+            <Eposta>${username}</Eposta>
+        <Sifre>${password}</Sifre>
+        </KullaniciGrupListesi>
+    </soap:Body>
+</soap:Envelope>`;
+
+    console.log(`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <soap:Body>
+        <KullaniciGrupListesi xmlns="http://tempuri.org/">
+            <SertifikaBilgileri>
+            <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
+            <Sifre>${config.SER_PASSWORD}</Sifre>
+            </SertifikaBilgileri>
+            <Eposta>${username}</Eposta>
+        <Sifre>${password}</Sifre>
+        </KullaniciGrupListesi>
+    </soap:Body>
+</soap:Envelope>`);
+
+    axios
+      .post(config.SOAP_URL, xml, {
+        headers: { "Content-Type": "text/xml" },
+      })
+      .then((resData) => {
+        const options = {
+          ignoreNameSpace: false,
+          ignoreAttributes: false,
+        };
+
+        const parser = new XMLParser(options);
+        console.log(resData);
+        const parsedData = parser.parse(
+          resData.data.match(/<GrupPlasylist>([\s\S]*)<\/GrupPlasylist>/im)[1]
+        );
+
+        return parsedData;
+      })
+      .then(async (userGroupInfoFromServer) => {
+        const totalSongFromServer = await this.checkHowManySongsInTheServer(
+          userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
+          username,
+          password
+        );
+
+        this.state.totalSongInTheServer.ToplamSayfa;
+        //console.log(this.state.totalSongInTheServer.ToplamSayfa);
+        //for (let i = 1; i <= this.state.totalSongInTheServer.ToplamSayfa; i++) {
+        for (let i = 1; i <= 1; i++) {
+          //Tüm şarkıları indir..
+          this.getAllSongs(
+            userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
+            username,
+            password,
+            i
+          );
+        }
+      })
+
+      .catch((error) => {
+        console.error(`SOAP FAIL: ${error}`);
+      });
+  };
+
+  /**
+   * Serverdan playlisti alır ve download eder.
+   */
+  getAllSongs = async (groupCode, username, password, pageNo = 1) => {
+    const xml = `<?xml version="1.0" encoding="utf-8"?>
+    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <soap:Body>
+            <KullnaiciFSLSarkiListesiGuncelleme xmlns="http://tempuri.org/"> 
+            <SertifikaBilgileri>
+                    <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
+                    <Sifre>${config.SER_PASSWORD}</Sifre>
+                </SertifikaBilgileri>
+                <Eposta>${username}</Eposta>
+                <Sifre>${password}</Sifre>
+                <!-- Kullaniczi Grup Listesinden Geliyor -->
+                <GrupTanimlamaKodu>${groupCode}</GrupTanimlamaKodu>
+                <SarkiIdListesi />   
+                <SayfaNo>${pageNo}</SayfaNo>
+            </KullnaiciFSLSarkiListesiGuncelleme>
+        </soap:Body>
+    </soap:Envelope>`;
+
+    axios
+      .post(config.SOAP_URL, xml, {
+        headers: { "Content-Type": "text/xml" },
+      })
+      .then(async (resData) => {
+        const options = {
+          ignoreNameSpace: false,
+          ignoreAttributes: false,
+        };
+
+        //Seç
+        const parser = new XMLParser(options);
+        const parsedData = parser.parse(
+          resData.data.match(
             /<KullnaiciFSLSarkiListesiGuncellemeResult>([\s\S]*)<\/KullnaiciFSLSarkiListesiGuncellemeResult>/im
           )[1]
         );
 
+        //Şarkıları storage ata.
+        AsyncStorage.setItem(
+          "userSongs",
+          JSON.stringify(parsedData.Liste.WsSarkiDto)
+        );
+
+        //Hepsini indir.
         for (let i = 0; i <= parsedData.Liste.WsSarkiDto.length; i++) {
-          //this.DownloadSoundFromServer(parsedData.Liste.WsSarkiDto[i]);
+          this.setState({ ...this, currentSongNumber: i });
+          if (parsedData.Liste.WsSarkiDto[i]) {
+            //Serverdan cihaza indir.
+            await this.DownloadSoundFromServer(parsedData.Liste.WsSarkiDto[i]);
+
+            //Download işlemi bittikten sonra Çalma Listesini güncelle
+            if (i == parsedData.Liste.WsSarkiDto.length - 1) {
+              //Download işlemi bitti
+              this.setState({ ...this, isDownloading: false });
+              this.setState({ ...this, currentDownloadedSong: "" });
+              this.setState({ ...this, currentSongNumber: null });
+            }
+          }
         }
 
         return parsedData;
@@ -267,32 +374,61 @@ export class AudioProvider extends Component {
       });
   };
 
-  DownloadSoundFromServer = (sounds) => {
-    const date = new Date();
+  /**
+   * Server'dan şarkıları çeker
+   * @param {object} sounds indirilicek şarkı
+   */
+  DownloadSoundFromServer = async (sounds) => {
+    const { DownloadDir } = RNFetchBlob.fs.dirs;
 
-    const { DownloadDir } = RNFetchBlob.fs.dirs; // You can check the available directories in the wiki.
     const options = {
       fileCache: true,
       addAndroidDownloads: {
-        useDownloadManager: true, // true will use native manager and be shown on notification bar.
-        notification: true,
-        path: `${DownloadDir}/${sounds.DosyaIsmi}`,
+        useDownloadManager: true,
+        notification: false,
+        path: `${DownloadDir}/${sounds?.DosyaIsmi}`,
         description: "Downloading.",
       },
     };
 
-    config(options)
-      .fetch("GET", sounds.SesLink)
-      .then((res) => {
-        console.log("do some magic in here");
-      });
+    //Dosya yok is indir.
+    //Dosyayı daha önce indirmişsek, bir şey yapma..
+    if (!(await RNFetchBlob.fs.exists(`${DownloadDir}/${sounds?.DosyaIsmi}`))) {
+      //Şarkıyı indir..
+      await RNFetchBlob.config(options)
+        .fetch("GET", sounds.SesLink)
+        .then(() => {
+          console.log("Downloads finished");
+        });
+
+      this.setState({ ...this, isDownloading: true });
+      this.setState({ ...this, currentDownloadedSong: sounds?.Ismi });
+      this.setState({ ...this, audioFiles: [] });
+      this.getAudioFiles();
+
+      if (this.state.isPlaying == false) {
+        this.playyyy();
+      }
+    }
+  };
+
+  playyyy = async () => {
+    await this.getAudioFiles();
+    await this.startToPlay();
   };
 
   componentDidMount = () => {
+    //this.requestToPermissions();
     //Musiclere erişim izni all
     this.getPermission();
 
-    //this.getPlaylistFromServer();
+    //Ses dosyalarını serverdan indir.
+    this.getUserGroupListFromServer();
+
+    //Çalmaya başla..
+    if (this.state.isPlaying == false) {
+      this.playyyy();
+    }
 
     if (this.state.playbackObj == null) {
       this.setState({ ...this.state, playbackObj: new Audio.Sound() });
@@ -348,6 +484,39 @@ export class AudioProvider extends Component {
     }
   };
 
+  startToPlay = async () => {
+    const audio = this.state.audioFiles[0];
+    if (audio && this.state.soundObj == null) {
+      //Playlisti oynatmaya başla
+      //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
+      const playbackObj = new Audio.Sound();
+
+      //Controllerdan çağır.
+      const status = await play(playbackObj, audio.uri);
+      const index = 0;
+
+      //Yeni durumu state ata ve ilerlememesi için return'le
+      this.updateState(this, {
+        currentAudio: audio,
+        playbackObj: playbackObj,
+        soundObj: status,
+        currentAudioIndex: index,
+
+        // //Çalma-Durdurma iconları için
+        // isPlaying: true,
+      });
+      console.log(index);
+      this.setState({ ...this, isPlaying: true });
+
+      //Slider bar için statuyü güncelle
+      playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+
+      //Application açıldığında
+      //son çalınna şarkıyı bulmak için kullanırı
+      storeAudioForNextOpening(audio, index);
+    }
+  };
+
   /**Kontrollerdan */
   updateState = (prevState, newState = {}) => {
     this.setState({ ...prevState, ...newState });
@@ -385,6 +554,7 @@ export class AudioProvider extends Component {
           </Text>
         </View>
       );
+
     return (
       <AudioContext.Provider
         value={{
@@ -404,9 +574,12 @@ export class AudioProvider extends Component {
           totalAudioCount: this.totalAudioCount,
           updateState: this.updateState,
           onPlaybackStatusUpdate: this.onPlaybackStatusUpdate,
-          getUserGroupListFromServer: this.getUserGroupListFromServer,
         }}
       >
+        {this.state.isDownloading ? (
+          <DownloadingGif songName={this.state.currentDownloadedSong} />
+        ) : null}
+
         {this.props.children}
       </AudioContext.Provider>
     );

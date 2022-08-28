@@ -143,9 +143,10 @@ export class AudioList extends Component {
       },
     });
 
+    //TODO: Re-Check..
     this.context.loadPreviousAudio();
     await this.context.getAudioFiles().then(async () => {
-      await this.startToPlay();
+      //await this.startToPlay();
     });
   };
 

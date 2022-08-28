@@ -57,7 +57,6 @@ const Player = () => {
       },
     });
 
-    context.getUserGroupListFromServer();
     context.loadPreviousAudio();
   }, []);
 
