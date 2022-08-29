@@ -49,7 +49,6 @@ const renderIcon = (isPlaying) => {
 const AudioListItem = ({
   title,
   duration,
-  onOptionPress,
   onAudioPress,
   isPlaying,
   activeListItem,
@@ -76,22 +75,23 @@ const AudioListItem = ({
               </Text>
             </View>
             <View style={styles.titleContainer}>
-              <Text numberOfLines={1} style={styles.title}>
-                {title}
-              </Text>
+              <View style={styles.titleWithLabel}>
+                {/*<View style={styles.anonsLabel}>
+                  <Text style={styles.anonsLabelText}>Anons</Text>
+                </View> */}
+
+                <View>
+                  <Text numberOfLines={1} style={styles.title}>
+                    {title}
+                  </Text>
+                </View>
+              </View>
+
               <Text style={styles.timeText}>{convertTime(duration)}</Text>
             </View>
           </View>
         </TouchableOpacity>
-        <View style={styles.rightContainer}>
-          <Entypo
-            name="dots-three-vertical"
-            size={20}
-            color={color.FONT_MEDIUM}
-            onPress={onOptionPress}
-            style={{ padding: 10 }}
-          />
-        </View>
+        <View style={styles.rightContainer}></View>
       </View>
       <View style={styles.separator}></View>
     </>
@@ -104,7 +104,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignSelf: "center",
-    width: width - 80,
+    width: width - 50,
+    paddingBottom: 5,
   },
 
   leftContainer: {
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
   },
 
   titleContainer: {
-    width: width - 190,
+    width: width - 160,
     paddingLeft: 20,
   },
 
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
   separator: {
     borderBottomWidth: 1,
     borderBottomColor: "#555",
-    width: width - 90,
+    width: width - 60,
     marginTop: 10,
     justifyContent: "center",
     alignSelf: "center",
@@ -157,6 +158,24 @@ const styles = StyleSheet.create({
   timeText: {
     color: color.FONT_LIGHT,
     fontSize: 14,
+  },
+  titleWithLabel: {
+    flexDirection: "row",
+    alignContent: "center",
+    alignItems: "center",
+  },
+  anonsLabel: {
+    backgroundColor: color.GREEN,
+
+    paddingVertical: 0,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    marginRight: 10,
+    paddingTop: -2,
+  },
+  anonsLabelText: {
+    fontSize: 12,
+    color: color.WHITE,
   },
 });
 

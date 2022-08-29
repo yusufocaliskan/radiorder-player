@@ -211,25 +211,13 @@ export class AudioList extends Component {
           if (!dataProvider._data.length) return null;
 
           return (
-            <Screen style={{ flex: 1 }}>
+            <Screen>
               <RecyclerListView
                 dataProvider={dataProvider}
                 layoutProvider={this.layoutProvider}
                 rowRenderer={this.rowRenderer}
                 extendedState={{ isPlaying }}
-              />
-              <OptionModal
-                onPlayPress={() => {
-                  console.log("Playing!");
-                }}
-                onPlayListPress={() => {
-                  console.log("Çalma Listesine ekledin");
-                }}
-                currentItem={this.currentItem}
-                onClose={() =>
-                  this.setState({ ...this.state, optionModalVisible: false })
-                }
-                visible={this.state.optionModalVisible}
+                style={{ paddingTop: 20 }}
               />
             </Screen>
           );
@@ -244,6 +232,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingTop: 20,
   },
 });
 

@@ -1,12 +1,11 @@
 import React, { Component, createContext } from "react";
-import { PermissionsAndroid, Text, View, Alert } from "react-native";
+import { Text, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import { Audio } from "expo-av";
 import { storeAudioForNextOpening } from "../misc/Helper";
 import RNFetchBlob from "rn-fetch-blob";
-import LoadingGif from "../components/LoadingGif";
 import DownloadingGif from "../components/DownloadingGif";
-import { play, pause, resume, playNext } from "../misc/AudioController";
+import { play, playNext } from "../misc/AudioController";
 
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
@@ -16,7 +15,6 @@ import { XMLParser } from "fast-xml-parser";
 import axios from "axios";
 import config from "../misc/config";
 import { newAuthContext } from "../context/newAuthContext";
-import { throwIfAudioIsDisabled } from "expo-av/build/Audio/AudioAvailability";
 export const AudioContext = createContext();
 
 export class AudioProvider extends Component {
@@ -52,6 +50,14 @@ export class AudioProvider extends Component {
       isDownloading: false,
       currentDownloadedSong: "",
       currentSongNumber: null,
+
+      //Song and Anons in the Storage
+      downloadedSongs: [],
+
+      downloadedAnons: [],
+
+      //Playlist
+      currentPlaylist: [],
     };
 
     this.totalAudioCount = 0;
@@ -246,19 +252,6 @@ export class AudioProvider extends Component {
     </soap:Body>
 </soap:Envelope>`;
 
-    console.log(`<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-    <soap:Body>
-        <KullaniciGrupListesi xmlns="http://tempuri.org/">
-            <SertifikaBilgileri>
-            <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
-            <Sifre>${config.SER_PASSWORD}</Sifre>
-            </SertifikaBilgileri>
-            <Eposta>${username}</Eposta>
-        <Sifre>${password}</Sifre>
-        </KullaniciGrupListesi>
-    </soap:Body>
-</soap:Envelope>`);
-
     axios
       .post(config.SOAP_URL, xml, {
         headers: { "Content-Type": "text/xml" },
@@ -270,7 +263,7 @@ export class AudioProvider extends Component {
         };
 
         const parser = new XMLParser(options);
-        console.log(resData);
+
         const parsedData = parser.parse(
           resData.data.match(/<GrupPlasylist>([\s\S]*)<\/GrupPlasylist>/im)[1]
         );
@@ -343,18 +336,19 @@ export class AudioProvider extends Component {
           )[1]
         );
 
-        //Şarkıları storage ata.
-        AsyncStorage.setItem(
-          "userSongs",
-          JSON.stringify(parsedData.Liste.WsSarkiDto)
-        );
-
         //Hepsini indir.
         for (let i = 0; i <= parsedData.Liste.WsSarkiDto.length; i++) {
           this.setState({ ...this, currentSongNumber: i });
+
+          //Push it into the array
+          this.state.downloadedSongs.push(parsedData.Liste.WsSarkiDto[i]);
+
           if (parsedData.Liste.WsSarkiDto[i]) {
             //Serverdan cihaza indir.
-            await this.DownloadSoundFromServer(parsedData.Liste.WsSarkiDto[i]);
+            await this.DownloadSoundFromServer(
+              parsedData.Liste.WsSarkiDto[i],
+              "sound"
+            );
 
             //Download işlemi bittikten sonra Çalma Listesini güncelle
             if (i == parsedData.Liste.WsSarkiDto.length - 1) {
@@ -362,6 +356,12 @@ export class AudioProvider extends Component {
               this.setState({ ...this, isDownloading: false });
               this.setState({ ...this, currentDownloadedSong: "" });
               this.setState({ ...this, currentSongNumber: null });
+
+              //Save it to storage
+              await AsyncStorage.setItem(
+                "downloadedSong",
+                JSON.stringify(this.state.downloadedSongs)
+              );
             }
           }
         }
@@ -378,22 +378,23 @@ export class AudioProvider extends Component {
    * Server'dan şarkıları çeker
    * @param {object} sounds indirilicek şarkı
    */
-  DownloadSoundFromServer = async (sounds) => {
+  DownloadSoundFromServer = async (sounds, downloadType = "sound") => {
     const { DownloadDir } = RNFetchBlob.fs.dirs;
+    const soundName = `${DownloadDir}/${downloadType}_${sounds?.DosyaIsmi}`;
 
     const options = {
       fileCache: true,
       addAndroidDownloads: {
         useDownloadManager: true,
         notification: false,
-        path: `${DownloadDir}/${sounds?.DosyaIsmi}`,
+        path: soundName,
         description: "Downloading.",
       },
     };
 
     //Dosya yok is indir.
     //Dosyayı daha önce indirmişsek, bir şey yapma..
-    if (!(await RNFetchBlob.fs.exists(`${DownloadDir}/${sounds?.DosyaIsmi}`))) {
+    if (!(await RNFetchBlob.fs.exists(soundName))) {
       //Şarkıyı indir..
       await RNFetchBlob.config(options)
         .fetch("GET", sounds.SesLink)
@@ -406,8 +407,121 @@ export class AudioProvider extends Component {
       this.setState({ ...this, audioFiles: [] });
       this.getAudioFiles();
 
-      if (this.state.isPlaying == false) {
+      if (this.state.isPlaying === false) {
         this.playyyy();
+      }
+    }
+  };
+
+  /*********************** ANONS *********************** */
+
+  /**
+   * Kullanıcıya ait tüm anonsları çeker
+   */
+  getAllAnonsFromServer = async () => {
+    //Kullanıcı bilgilerini al
+    const username = await AsyncStorage.getItem("username");
+    const password = await AsyncStorage.getItem("password");
+    //const totalUserSong = JSON.parse(await AsyncStorage.getItem("userSongs"));
+
+    const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <soap:Body>
+        <KullaniciAnonsListesi xmlns="http://tempuri.org/">
+            <SertifikaBilgileri>
+                <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
+                <Sifre>${config.SER_PASSWORD}</Sifre>
+            </SertifikaBilgileri>
+            <Eposta>${username}</Eposta>
+            <Sifre>${password}</Sifre>
+        </KullaniciAnonsListesi>
+    </soap:Body>
+</soap:Envelope>`;
+
+    axios
+      .post(config.SOAP_URL, xml, {
+        headers: { "Content-Type": "text/xml" },
+      })
+      .then((resData) => {
+        const options = {
+          ignoreNameSpace: false,
+          ignoreAttributes: false,
+        };
+
+        const parser = new XMLParser(options);
+
+        //Anonslar
+        const anons = parser.parse(
+          resData.data.match(
+            /<KullaniciAnonsListesiResult>([\s\S]*)<\/KullaniciAnonsListesiResult>/im
+          )[1]
+        );
+
+        return anons;
+      })
+      .then(async (allAnons) => {
+        //DownloadSoundFromServer
+        const anonsResult = [];
+
+        anonsResult[0] = allAnons.AnonsListesi.wsAnonsDto;
+        anonsResult[1] = allAnons.GorevListesi.AnonsGorevTanimDto;
+
+        const anons = [];
+
+        //Anons ve Görevleri ayrışrır.
+        for (let i = 0; i < anonsResult[0].length; i++) {
+          //Anons
+          const anons_group_kodu = anonsResult[0][i].GrupTanimlamaKodu;
+          anons.push(anonsResult[0][i]);
+        }
+
+        for (let b = 0; b < anonsResult[1].length; b++) {
+          //Anons
+          anons.push(anonsResult[1][b]);
+        }
+
+        //Aynı anons ve görev tanımlamaları tek array içine at
+        const pretty_anons = [];
+        const anons2 = anons;
+        for (let r = 0; r < anons.length; r++) {
+          //Anons
+          const anonsEach = anons[r];
+
+          //Aynı koda sahip olan görevi bul
+          const task = anons.find(
+            (anons2) => anons2.GrupTanimlamaKodu === anons[r].GrupTanimlamaKodu
+          );
+          if (
+            !this.lookForDublicatedIndex(
+              pretty_anons,
+              anonsEach.GrupTanimlamaKodu
+            )
+          ) {
+            pretty_anons.push({
+              anons: anonsEach,
+              task: task,
+            });
+          }
+        }
+
+        //Anons array'ini oluştur.
+        console.log(pretty_anons);
+      })
+
+      .catch((error) => {
+        console.error(`SOAP FAIL: ${error}`);
+      });
+  };
+
+  /**
+   * Aynı verileri kotrol eder
+   * @param {object} anons anons
+   * @param {string} data
+   * @returns boolean
+   */
+  lookForDublicatedIndex = (anons, data) => {
+    for (let i = 0; i < anons.length; i++) {
+      if (anons[i].anons.GrupTanimlamaKodu == data) {
+        return true;
       }
     }
   };
@@ -417,17 +531,26 @@ export class AudioProvider extends Component {
     await this.startToPlay();
   };
 
+  getDownloadedSongsFromStorage = async () => {
+    return JSON.parse(await AsyncStorage.getItem("downloadedSong"));
+  };
+
   componentDidMount = () => {
     //this.requestToPermissions();
     //Musiclere erişim izni all
     this.getPermission();
 
+    console.log("----------------ANONS------------------");
+    this.getAllAnonsFromServer();
     //Ses dosyalarını serverdan indir.
     this.getUserGroupListFromServer();
 
+    console.log("-----------DOWNLOADED SONG---------");
+    //this.getDownloadedSongsFromStorage();
+
     //Çalmaya başla..
     if (this.state.isPlaying == false) {
-      this.playyyy();
+      //this.playyyy();
     }
 
     if (this.state.playbackObj == null) {
@@ -505,7 +628,7 @@ export class AudioProvider extends Component {
         // //Çalma-Durdurma iconları için
         // isPlaying: true,
       });
-      console.log(index);
+
       this.setState({ ...this, isPlaying: true });
 
       //Slider bar için statuyü güncelle

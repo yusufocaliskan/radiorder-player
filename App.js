@@ -6,6 +6,7 @@ import AppNavigator from "./app/navigation/AppNavigator";
 import LoadingGif from "./app/components/LoadingGif";
 import { newAuthContext } from "./app/context/newAuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { StatusBar } from "expo-status-bar";
 
 export default function App() {
   const initialLoginState = {
@@ -113,6 +114,7 @@ export default function App() {
 
   return (
     <newAuthContext.Provider value={authContext}>
+      <StatusBar style="light" />
       <NavigationContainer>
         <AudioProvider>
           {loadingState.userToken == null ? (

@@ -7,7 +7,6 @@ import {
   TouchableWithoutFeedback,
   TouchableOpacity,
 } from "react-native";
-import { StatusBar } from "expo-status-bar";
 import color from "../misc/color";
 import { AntDesign } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -22,7 +21,6 @@ const OptionModal = ({
   const { filename } = currentItem;
   return (
     <>
-      <StatusBar />
       <Modal animationType="slide" transparent visible={visible}>
         <View style={styles.modal}>
           <Text numberOfLines={2} style={styles.title}>

@@ -1,38 +1,22 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  createContext,
-  Component,
-  useContext,
-} from "react";
+import React, { useState, useContext } from "react";
 import {
-  Image,
   Text,
   View,
   Alert,
   StyleSheet,
-  useWindowDimensions,
-  ActivityIndicator,
   KeyboardAvoidingView,
 } from "react-native";
-import { StatusBar } from "expo-status-bar";
 import color from "../misc/color";
 import config from "../misc/config";
 import Logo from "../components/Logo";
-import LoadingGif from "../components/LoadingGif";
 import Input from "../components/form/Input";
 import Button from "../components/form/Button";
-import { XMLParser, XMLBuilder } from "fast-xml-parser";
+import { XMLParser } from "fast-xml-parser";
 import axios from "axios";
 import { newAuthContext } from "../context/newAuthContext";
 import { AudioContext } from "../context/AudioProvider";
-import { storeAudioForNextOpening } from "../misc/Helper";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-//Expo-av şarkıları çalar.
-import { Audio } from "expo-av";
-import { play } from "../misc/AudioController";
 //Navigator.
 import { useNavigation } from "@react-navigation/native";
 
@@ -124,8 +108,6 @@ const Login = () => {
   //Giriş yapılmamış ise giriş formunu
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <StatusBar style="light" />
-
       <Logo styles={styles.logo} />
       <Input
         type="text"

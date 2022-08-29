@@ -1,6 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { StatusBar } from "expo-status-bar";
+import { View, Text } from "react-native";
 import Logo from "../Logo";
 import Input from "./Input";
 import Input from "./Button";
@@ -8,8 +7,6 @@ import Input from "./Button";
 const LoadingForm = ({}) => {
   return (
     <View style={styles.container}>
-      <StatusBar />
-
       <Logo styles={styles.logo} />
 
       <Input
