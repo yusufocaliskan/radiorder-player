@@ -52,7 +52,10 @@ const AudioListItem = ({
   onAudioPress,
   isPlaying,
   activeListItem,
+  item,
 }) => {
+  //console.log("---------------ITEM----------------");
+  console.log(item);
   return (
     <>
       <View style={styles.container}>
@@ -76,9 +79,13 @@ const AudioListItem = ({
             </View>
             <View style={styles.titleContainer}>
               <View style={styles.titleWithLabel}>
-                {/*<View style={styles.anonsLabel}>
-                  <Text style={styles.anonsLabelText}>Anons</Text>
-                </View> */}
+                {item.FileType == "anons" ? (
+                  <View style={styles.anonsLabel}>
+                    <Text style={styles.anonsLabelText}>Anons</Text>
+                  </View>
+                ) : (
+                  <Text></Text>
+                )}
 
                 <View>
                   <Text numberOfLines={1} style={styles.title}>
@@ -86,8 +93,18 @@ const AudioListItem = ({
                   </Text>
                 </View>
               </View>
-
-              <Text style={styles.timeText}>{convertTime(duration)}</Text>
+              <View style={styles.titleBottom}>
+                {item.FileType == "audio" ? (
+                  <Text style={styles.timeText}>{convertTime(duration)}</Text>
+                ) : (
+                  <></>
+                )}
+                {item.FileType == "anons" ? (
+                  <Text style={styles.anonsDesc}>{item.Aciklama}</Text>
+                ) : (
+                  <></>
+                )}
+              </View>
             </View>
           </View>
         </TouchableOpacity>
@@ -107,6 +124,7 @@ const styles = StyleSheet.create({
     width: width - 50,
     paddingBottom: 5,
   },
+  containerAnons: {},
 
   leftContainer: {
     flexDirection: "row",
@@ -176,6 +194,11 @@ const styles = StyleSheet.create({
   anonsLabelText: {
     fontSize: 12,
     color: color.WHITE,
+  },
+  anonsDesc: {
+    fontSize: 11,
+    color: color.FONT_LARGE,
+    marginTop: 4,
   },
 });
 

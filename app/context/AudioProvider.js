@@ -15,6 +15,7 @@ import { XMLParser } from "fast-xml-parser";
 import axios from "axios";
 import config from "../misc/config";
 import { newAuthContext } from "../context/newAuthContext";
+import { SocialIcon } from "@rneui/base";
 export const AudioContext = createContext();
 
 export class AudioProvider extends Component {
@@ -51,9 +52,10 @@ export class AudioProvider extends Component {
       currentDownloadedSong: "",
       currentSongNumber: null,
 
+      //AllAnons
+      anons: [],
       //Song and Anons in the Storage
       downloadedSongs: [],
-
       downloadedAnons: [],
 
       //Playlist
@@ -164,8 +166,9 @@ export class AudioProvider extends Component {
     });
 
     this.totalAudioCount = media.totalCount;
-
+    //console.log(fileDetailed);
     //Şarkıları state ata.
+
     this.setState({
       ...this.state,
       dataProvider: dataProvider.cloneWithRows([
@@ -174,6 +177,108 @@ export class AudioProvider extends Component {
       ]),
       audioFiles: [...audioFiles, ...media.assets],
     });
+
+    //Anonsları al
+    const anons = JSON.parse(await AsyncStorage.getItem("anons"));
+    //console.log(anons);
+
+    //Şarkıları da al.
+    const songs = JSON.parse(await AsyncStorage.getItem("songs"));
+
+    const filtered_song = [];
+    for (let i = 0; i < this.state.audioFiles.length; i++) {
+      const file_name = this.state.audioFiles[i].filename;
+
+      //Ses
+      for (let d = 0; d < songs.length; d++) {
+        const dosya_name = songs[d].DosyaIsmi;
+        if (`sound_${dosya_name}` == file_name) {
+          filtered_song.push({
+            albumId: this.state.audioFiles[i].albumId,
+            creationTime: this.state.audioFiles[i].creationTime,
+            duration: this.state.audioFiles[i].duration,
+            filename: this.state.audioFiles[i].filename,
+            height: this.state.audioFiles[i].height,
+            id: this.state.audioFiles[i].id,
+            mediaType: this.state.audioFiles[i].mediaType,
+            modificationTime: this.state.audioFiles[i].modificationTime,
+            uri: this.state.audioFiles[i].uri,
+            width: this.state.audioFiles[i].width,
+            Aktif: songs[d].Aktif,
+            Album: songs[d].Album,
+            DosyaIsmi: songs[d].DosyaIsmi,
+            GrupTanimlamaKodu: songs[d].GrupTanimlamaKodu,
+            Ismi: songs[d].Ismi,
+            IsrcKodu: songs[d].IsrcKodu,
+            PlaylistTanimlamaKodu: songs[d].PlaylistTanimlamaKodu,
+            SarkiId: songs[d].SarkiId,
+            Sarkici: songs[d].Sarkici,
+            SarkiciId: songs[d].SarkiciId,
+            SesLink: songs[d].SesLink,
+            Silindi: songs[d].Silindi,
+            Sure: songs[d].Sure,
+            FileType: "audio",
+          });
+        }
+      }
+
+      //Anons
+      for (let a = 0; a < anons.length; a++) {
+        const dosya_name = anons[a].anons.DosyaIsmi;
+        if (`anons_${dosya_name}` == file_name) {
+          //console.log("------------TASK---------------");
+          console.log(anons[a]);
+          filtered_song.push({
+            albumId: this.state.audioFiles[i].albumId,
+            creationTime: this.state.audioFiles[i].creationTime,
+            duration: this.state.audioFiles[i].duration,
+            filename: this.state.audioFiles[i].filename,
+            height: this.state.audioFiles[i].height,
+            id: this.state.audioFiles[i].id,
+            mediaType: this.state.audioFiles[i].mediaType,
+            modificationTime: this.state.audioFiles[i].modificationTime,
+            uri: this.state.audioFiles[i].uri,
+            width: this.state.audioFiles[i].width,
+            Aciklama: anons[a].task.Aciklama,
+            Aktif: anons[a].task.Aktif,
+            Baslangic: anons[a].task.Baslangic,
+            Bitis: anons[a].task.Bitis,
+            Durumu: anons[a].task.Durumu,
+            GT: anons[a].task.GT,
+            GK: anons[a].task.GK,
+            Ismi: anons[a].task.DosyaIsmi,
+            GorevTipAciklama: anons[a].task.GorevTipAciklama,
+            GorevTipi: anons[a].task.GorevTipi,
+            GrupTanimlamaKodu: anons[a].task.GrupTanimlamaKodu,
+            Id: anons[a].task.Id,
+            KK: anons[a].task.KK,
+            KT: anons[a].task.KT,
+            KayitBilgisi: anons[a].task.KayitBilgisi,
+            SecenekTipi: anons[a].task.SecenekTipi,
+            Silindi: anons[a].task.Silindi,
+            TekrarSayisi: anons[a].task.TekrarSayisi,
+            FileType: "anons",
+          });
+        }
+      }
+    }
+    //console.log(anons);
+
+    //    console.log(filtered_song.length);
+    //this.setState({ ...this.state, audioFiles: filtered_song });
+    this.setState({
+      ...this.state,
+      dataProvider: dataProvider.cloneWithRows([
+        ...audioFiles,
+        ...filtered_song,
+      ]),
+      audioFiles: [...audioFiles, ...filtered_song],
+    });
+
+    //console.log(this.state.audioFiles);
+    //console.log(this.state.audioFiles);
+    //console.log("------------------- PLAYLIST-------------------");
+    //console.log(this.state.playlist);
     //console.log(media.assets.length);
   };
 
@@ -336,6 +441,8 @@ export class AudioProvider extends Component {
           )[1]
         );
 
+        //Şarkıları Playliste ekle
+
         //Hepsini indir.
         for (let i = 0; i <= parsedData.Liste.WsSarkiDto.length; i++) {
           this.setState({ ...this, currentSongNumber: i });
@@ -359,8 +466,8 @@ export class AudioProvider extends Component {
 
               //Save it to storage
               await AsyncStorage.setItem(
-                "downloadedSong",
-                JSON.stringify(this.state.downloadedSongs)
+                "songs",
+                JSON.stringify(parsedData.Liste.WsSarkiDto)
               );
             }
           }
@@ -380,7 +487,8 @@ export class AudioProvider extends Component {
    */
   DownloadSoundFromServer = async (sounds, downloadType = "sound") => {
     const { DownloadDir } = RNFetchBlob.fs.dirs;
-    const soundName = `${DownloadDir}/${downloadType}_${sounds?.DosyaIsmi}`;
+
+    let soundName = `${DownloadDir}/${downloadType}_${sounds?.DosyaIsmi}`;
 
     const options = {
       fileCache: true,
@@ -396,19 +504,21 @@ export class AudioProvider extends Component {
     //Dosyayı daha önce indirmişsek, bir şey yapma..
     if (!(await RNFetchBlob.fs.exists(soundName))) {
       //Şarkıyı indir..
-      await RNFetchBlob.config(options)
-        .fetch("GET", sounds.SesLink)
-        .then(() => {
-          console.log("Downloads finished");
-        });
+      if (sounds.SesLink) {
+        await RNFetchBlob.config(options)
+          .fetch("GET", sounds.SesLink)
+          .then(() => {
+            console.log("Downloads finished");
+          });
 
-      this.setState({ ...this, isDownloading: true });
-      this.setState({ ...this, currentDownloadedSong: sounds?.Ismi });
-      this.setState({ ...this, audioFiles: [] });
-      this.getAudioFiles();
+        this.setState({ ...this, isDownloading: true });
+        this.setState({ ...this, currentDownloadedSong: sounds?.Ismi });
+        this.setState({ ...this, audioFiles: [] });
+        this.getAudioFiles();
 
-      if (this.state.isPlaying === false) {
-        this.playyyy();
+        if (this.state.isPlaying === false) {
+          this.playyyy();
+        }
       }
     }
   };
@@ -441,7 +551,7 @@ export class AudioProvider extends Component {
       .post(config.SOAP_URL, xml, {
         headers: { "Content-Type": "text/xml" },
       })
-      .then((resData) => {
+      .then(async (resData) => {
         const options = {
           ignoreNameSpace: false,
           ignoreAttributes: false,
@@ -459,52 +569,47 @@ export class AudioProvider extends Component {
         return anons;
       })
       .then(async (allAnons) => {
-        //DownloadSoundFromServer
         const anonsResult = [];
 
         anonsResult[0] = allAnons.AnonsListesi.wsAnonsDto;
         anonsResult[1] = allAnons.GorevListesi.AnonsGorevTanimDto;
 
-        const anons = [];
+        let theGrader =
+          anonsResult[0].length > anonsResult[1].length ? true : false;
+        let theLooper = theGrader ? anonsResult[0] : anonsResult[1];
 
-        //Anons ve Görevleri ayrışrır.
-        for (let i = 0; i < anonsResult[0].length; i++) {
-          //Anons
-          const anons_group_kodu = anonsResult[0][i].GrupTanimlamaKodu;
-          anons.push(anonsResult[0][i]);
-        }
-
-        for (let b = 0; b < anonsResult[1].length; b++) {
-          //Anons
-          anons.push(anonsResult[1][b]);
-        }
-
-        //Aynı anons ve görev tanımlamaları tek array içine at
         const pretty_anons = [];
-        const anons2 = anons;
-        for (let r = 0; r < anons.length; r++) {
-          //Anons
-          const anonsEach = anons[r];
+        try {
+          for (let i = 0; i < theLooper.length; i++) {
+            //LoperGorevler
+            if (!theLooper[i].Isim) {
+              for (let a = 0; a < anonsResult[1].length; a++) {
+                if (
+                  anonsResult[0][i].GrupTanimlamaKodu ==
+                  anonsResult[1][a].GrupTanimlamaKodu
+                ) {
+                  pretty_anons.push({
+                    anons: anonsResult[0][i],
+                    task: anonsResult[1][a],
+                  });
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.log("Bir fazla görevvv");
+        }
 
-          //Aynı koda sahip olan görevi bul
-          const task = anons.find(
-            (anons2) => anons2.GrupTanimlamaKodu === anons[r].GrupTanimlamaKodu
-          );
-          if (
-            !this.lookForDublicatedIndex(
-              pretty_anons,
-              anonsEach.GrupTanimlamaKodu
-            )
-          ) {
-            pretty_anons.push({
-              anons: anonsEach,
-              task: task,
-            });
+        for (let p = 0; p < pretty_anons.length; p++) {
+          if (pretty_anons[p].anons != "undefined") {
+            await this.DownloadSoundFromServer(pretty_anons[p].anons, "anons");
           }
         }
 
         //Anons array'ini oluştur.
-        console.log(pretty_anons);
+        //console.log(pretty_anons);
+        AsyncStorage.setItem("anons", JSON.stringify(pretty_anons));
+        //console.log(this.state.playlist);
       })
 
       .catch((error) => {
@@ -535,17 +640,22 @@ export class AudioProvider extends Component {
     return JSON.parse(await AsyncStorage.getItem("downloadedSong"));
   };
 
+  getSoundsAndAnonsFromServer = async () => {
+    //Ses dosyalarını serverdan indir.
+    await this.getUserGroupListFromServer();
+
+    await this.getAllAnonsFromServer();
+
+    //console.log(this.state.playlist);
+  };
   componentDidMount = () => {
     //this.requestToPermissions();
     //Musiclere erişim izni all
     this.getPermission();
 
-    console.log("----------------ANONS------------------");
-    this.getAllAnonsFromServer();
-    //Ses dosyalarını serverdan indir.
-    this.getUserGroupListFromServer();
+    //Serverdan şarkı ve anonsları al
+    this.getSoundsAndAnonsFromServer();
 
-    console.log("-----------DOWNLOADED SONG---------");
     //this.getDownloadedSongsFromStorage();
 
     //Çalmaya başla..

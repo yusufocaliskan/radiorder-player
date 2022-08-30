@@ -195,6 +195,7 @@ export class AudioList extends Component {
         duration={item.duration}
         isPlaying={extendedState.isPlaying}
         activeListItem={this.context.currentAudioIndex === index}
+        item={item}
         onAudioPress={() => this.handleAudioPress(item)}
         onOptionPress={() => {
           this.currentItem = item;
