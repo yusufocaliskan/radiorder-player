@@ -8,32 +8,13 @@ import {
   TouchableOpacity,
 } from "react-native";
 import color from "../misc/color";
-
+import { convertTime } from "../misc/Helper";
 //Icon
 import { Entypo } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 
 //Şarkının ilk harfını al.
 const getThumnailText = (filename) => filename[0];
-
-//Dakika dönüştürücü
-const convertTime = (minutes) => {
-  if (minutes) {
-    const hrs = minutes / 60;
-    const minute = hrs.toString().split(".")[0];
-    const percent = parseInt(hrs.toString().split(".")[1].slice(0, 2));
-    const sec = Math.ceil((60 * percent) / 100);
-
-    if (parseInt(minute) < 10 && sec < 10) {
-      return `0${minute}:0${sec}`;
-    }
-
-    if (parseInt(minute) < 10) {
-      return `0${minute}:${sec}`;
-    }
-    return `${minute}:${sec}`;
-  }
-};
 
 const renderIcon = (isPlaying) => {
   //Playing: Şarkı çalıyorlar
@@ -55,7 +36,7 @@ const AudioListItem = ({
   item,
 }) => {
   //console.log("---------------ITEM----------------");
-  console.log(item);
+  //  console.log(item);
   return (
     <>
       <View style={styles.container}>

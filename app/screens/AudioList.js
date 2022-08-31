@@ -5,9 +5,8 @@ import { AudioContext } from "../context/AudioProvider";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import AudioListItem from "../components/AudioListItem";
 import Screen from "../components/Screen";
-import OptionModal from "../components/OpstionModal";
 import { storeAudioForNextOpening } from "../misc/Helper";
-
+import AnonsModal from "../components/AnonsModal";
 //Expo-av şarkıları çalar.
 import { Audio } from "expo-av";
 
@@ -124,7 +123,47 @@ export class AudioList extends Component {
     }
   };
 
+  /**
+   * Bir anons çalar.
+   * @param {object} audio Anons objesi
+   */
+  playAnons = async (audio) => {
+    setTimeout(async () => {
+      const anonsPlaylist = this.context.anonsPlaylist;
+      //Herhangi bir anons çalmıyorsa
+
+      if (this.context.anonsSoundObj == null) {
+        const playbackObj = new Audio.Sound();
+        //Controllerdan çağır.
+        const status = await play(playbackObj, anonsPlaylist[0].uri);
+        this.setState({ ...this.state, anonsIsPlaying: true });
+
+        this.context.updateState({ ...this.context, anonsSoundObj: status });
+        this.context.updateState({
+          ...this.context,
+          currentPlayingAnons: anonsPlaylist[0],
+        });
+
+        //Anons bittikten sonra tekrar durumu güncelle
+        setTimeout(async () => {
+          const status = await playbackObj.stopAsync({
+            shouldPlay: false,
+            positionMillis: false,
+          });
+
+          this.context.updateState({
+            ...this.context,
+            anonsSoundObj: status,
+            currentPlayingAnons: null,
+          });
+        }, status.durationMillis + 100);
+      }
+    }, 500);
+  };
+
   componentDidMount = async () => {
+    //this.playAnons();
+
     //Profile resmini koy
     this.props.navigation.setOptions({
       headerLeft: () => {
@@ -145,9 +184,9 @@ export class AudioList extends Component {
 
     //TODO: Re-Check..
     this.context.loadPreviousAudio();
-    await this.context.getAudioFiles().then(async () => {
-      //await this.startToPlay();
-    });
+    // await this.context.getAudioFiles().then(async () => {
+    //   //await this.startToPlay();
+    // });
   };
 
   //Login olduğunda şarkıyı çalmaya başla..
@@ -208,19 +247,27 @@ export class AudioList extends Component {
   render() {
     return (
       <AudioContext.Consumer>
-        {({ dataProvider, isPlaying }) => {
+        {({ dataProvider, isPlaying, anonsSoundObj, currentPlayingAnons }) => {
           if (!dataProvider._data.length) return null;
 
           return (
-            <Screen>
-              <RecyclerListView
-                dataProvider={dataProvider}
-                layoutProvider={this.layoutProvider}
-                rowRenderer={this.rowRenderer}
-                extendedState={{ isPlaying }}
-                style={{ paddingTop: 20 }}
-              />
-            </Screen>
+            <>
+              <Screen>
+                <RecyclerListView
+                  dataProvider={dataProvider}
+                  layoutProvider={this.layoutProvider}
+                  rowRenderer={this.rowRenderer}
+                  extendedState={{ isPlaying }}
+                  style={{ paddingTop: 20 }}
+                />
+              </Screen>
+
+              {anonsSoundObj != null &&
+              currentPlayingAnons != null &&
+              anonsSoundObj.isPlaying ? (
+                <AnonsModal anons={currentPlayingAnons} />
+              ) : null}
+            </>
           );
         }}
       </AudioContext.Consumer>

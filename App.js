@@ -105,7 +105,7 @@ export default function App() {
       } catch (e) {
         console.log(e);
       }
-    }, 3000);
+    }, 1000);
   }, []);
 
   if (loadingState.isLoading) {

@@ -2,7 +2,11 @@ import React, { Component, createContext } from "react";
 import { Text, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import { Audio } from "expo-av";
-import { storeAudioForNextOpening } from "../misc/Helper";
+import {
+  devideEqualParts,
+  shuffleArray,
+  storeAudioForNextOpening,
+} from "../misc/Helper";
 import RNFetchBlob from "rn-fetch-blob";
 import DownloadingGif from "../components/DownloadingGif";
 import { play, playNext } from "../misc/AudioController";
@@ -54,12 +58,18 @@ export class AudioProvider extends Component {
 
       //AllAnons
       anons: [],
+      anonsIsPlaying: true,
+      anonsSoundObj: null,
+      currentAnons: null,
+      currentPlayingAnons: null,
+
       //Song and Anons in the Storage
       downloadedSongs: [],
       downloadedAnons: [],
 
       //Playlist
       currentPlaylist: [],
+      anonsPlaylist: [],
     };
 
     this.totalAudioCount = 0;
@@ -184,8 +194,9 @@ export class AudioProvider extends Component {
 
     //Şarkıları da al.
     const songs = JSON.parse(await AsyncStorage.getItem("songs"));
-
     const filtered_song = [];
+    let anons_must_be_shown = [];
+
     for (let i = 0; i < this.state.audioFiles.length; i++) {
       const file_name = this.state.audioFiles[i].filename;
 
@@ -199,7 +210,7 @@ export class AudioProvider extends Component {
             duration: this.state.audioFiles[i].duration,
             filename: this.state.audioFiles[i].filename,
             height: this.state.audioFiles[i].height,
-            id: this.state.audioFiles[i].id,
+            //id: this.state.audioFiles[i].id,
             mediaType: this.state.audioFiles[i].mediaType,
             modificationTime: this.state.audioFiles[i].modificationTime,
             uri: this.state.audioFiles[i].uri,
@@ -223,18 +234,27 @@ export class AudioProvider extends Component {
       }
 
       //Anons
+
       for (let a = 0; a < anons.length; a++) {
         const dosya_name = anons[a].anons.DosyaIsmi;
         if (`anons_${dosya_name}` == file_name) {
           //console.log("------------TASK---------------");
-          console.log(anons[a]);
-          filtered_song.push({
+
+          const start = new Date(
+            anons[a].task.Baslangic.split("T")[0]
+          ).getTime();
+          const end = new Date(anons[a].task.Bitis.split("T")[0]).getTime();
+          const today = new Date().getTime();
+          const optionType = anons[a].task.SecenekTipi.split(",");
+          let isAnonsShowable = today >= start && today <= end;
+
+          const anons_container = {
             albumId: this.state.audioFiles[i].albumId,
             creationTime: this.state.audioFiles[i].creationTime,
             duration: this.state.audioFiles[i].duration,
             filename: this.state.audioFiles[i].filename,
             height: this.state.audioFiles[i].height,
-            id: this.state.audioFiles[i].id,
+            //id: this.state.audioFiles[i].id,
             mediaType: this.state.audioFiles[i].mediaType,
             modificationTime: this.state.audioFiles[i].modificationTime,
             uri: this.state.audioFiles[i].uri,
@@ -258,13 +278,37 @@ export class AudioProvider extends Component {
             Silindi: anons[a].task.Silindi,
             TekrarSayisi: anons[a].task.TekrarSayisi,
             FileType: "anons",
-          });
+
+            //Anons Playlistte gösterilsin mi?
+            Show: today >= start && today <= end,
+          };
+          //console.log(anons_container);
+
+          //Anons date
+          //const start = new Date(anons_container.Baslangic);
+          //const end = new Date(anons_container.Bitis);
+
+          //Anons gösterilmesi gerekiyorsa..
+          //Anonsu playlistin içine at.
+          //     anons_must_be_shown.push(anons_container);
+          //Ama kaç defa?
+          // for (let t = 0; t < anons_container.TekrarSayisi; t++) {
+          //   //console.log(anons_container.TekrarSayisi);
+          //   if (anons_container.Show) {
+          //     anons_must_be_shown.push(anons_container);
+          //   }
+          // }
+
+          //;
+          anons_must_be_shown.push(anons_container);
         }
       }
     }
-    //console.log(anons);
 
-    //    console.log(filtered_song.length);
+    //Toplam şarkı sayısını anons kadar eşit parçallara böl
+    //console.log(JSON.stringify(devideEqualParts(500, 2)));
+    //Anonsları karıştır
+
     //this.setState({ ...this.state, audioFiles: filtered_song });
     this.setState({
       ...this.state,
@@ -274,6 +318,8 @@ export class AudioProvider extends Component {
       ]),
       audioFiles: [...audioFiles, ...filtered_song],
     });
+
+    this.setState({ ...this.state, anonsPlaylist: anons_must_be_shown });
 
     //console.log(this.state.audioFiles);
     //console.log(this.state.audioFiles);
@@ -385,7 +431,7 @@ export class AudioProvider extends Component {
         this.state.totalSongInTheServer.ToplamSayfa;
         //console.log(this.state.totalSongInTheServer.ToplamSayfa);
         //for (let i = 1; i <= this.state.totalSongInTheServer.ToplamSayfa; i++) {
-        for (let i = 1; i <= 1; i++) {
+        for (let i = 1; i < 2; i++) {
           //Tüm şarkıları indir..
           this.getAllSongs(
             userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
@@ -505,17 +551,12 @@ export class AudioProvider extends Component {
     if (!(await RNFetchBlob.fs.exists(soundName))) {
       //Şarkıyı indir..
       if (sounds.SesLink) {
-        await RNFetchBlob.config(options)
-          .fetch("GET", sounds.SesLink)
-          .then(() => {
-            console.log("Downloads finished");
-          });
+        await RNFetchBlob.config(options).fetch("GET", sounds.SesLink);
 
         this.setState({ ...this, isDownloading: true });
         this.setState({ ...this, currentDownloadedSong: sounds?.Ismi });
         this.setState({ ...this, audioFiles: [] });
         this.getAudioFiles();
-
         if (this.state.isPlaying === false) {
           this.playyyy();
         }
@@ -597,7 +638,7 @@ export class AudioProvider extends Component {
             }
           }
         } catch (error) {
-          console.log("Bir fazla görevvv");
+          //console.log("Bir fazla görevvv");
         }
 
         for (let p = 0; p < pretty_anons.length; p++) {
@@ -632,7 +673,7 @@ export class AudioProvider extends Component {
   };
 
   playyyy = async () => {
-    await this.getAudioFiles();
+    //  await this.getAudioFiles();
     await this.startToPlay();
   };
 
@@ -719,6 +760,7 @@ export class AudioProvider extends Component {
 
   startToPlay = async () => {
     const audio = this.state.audioFiles[0];
+
     if (audio && this.state.soundObj == null) {
       //Playlisti oynatmaya başla
       //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
@@ -750,6 +792,11 @@ export class AudioProvider extends Component {
     }
   };
 
+  playAnAnons = async (audio) => {
+    const playbackObj = new Audio.Sound();
+    const uri = audio.uri;
+    await play(playbackObj, uri);
+  };
   /**Kontrollerdan */
   updateState = (prevState, newState = {}) => {
     this.setState({ ...prevState, ...newState });
@@ -768,6 +815,7 @@ export class AudioProvider extends Component {
       currentAudioIndex,
       playbackPosition,
       playbackDuration,
+      anonsSoundObj,
     } = this.state;
 
     if (permissionError)
@@ -806,7 +854,13 @@ export class AudioProvider extends Component {
           loadPreviousAudio: this.loadPreviousAudio,
           totalAudioCount: this.totalAudioCount,
           updateState: this.updateState,
+
           onPlaybackStatusUpdate: this.onPlaybackStatusUpdate,
+
+          //ANONS
+          anonsSoundObj: this.state.anonsSoundObj,
+          currentPlayingAnons: this.state.currentPlayingAnons,
+          anonsPlaylist: this.state.anonsPlaylist,
         }}
       >
         {this.state.isDownloading ? (
