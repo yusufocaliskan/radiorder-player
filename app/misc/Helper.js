@@ -65,3 +65,62 @@ export const convertTime = (minutes) => {
     return `${minute}:${sec}`;
   }
 };
+
+export const issetInArray = (array, data) => {
+  for (let i = 0; i < array.length; i++) {
+    if (array[i] == data) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+export const howManyTimeSingToday = (AnonsRepeats, AnonsId) => {
+  if (AnonsRepeats.length != 0) {
+    for (let i = 0; i < AnonsRepeats.length; i++) {
+      if (AnonsRepeats[i].AnonsId == AnonsId) {
+        return AnonsRepeats[i].Repeats;
+      }
+    }
+  }
+};
+
+//Anons çalma sayısını günceller.
+export const updateAnonsSingRepeatTimes = async (AnonsId, repeat) => {
+  const AnonsRepeats = JSON.parse(await AsyncStorage.getItem("AnonsRepeats"));
+
+  const newAnonsUpdate = [];
+  for (let i = 0; i < AnonsRepeats.length; i++) {
+    if (AnonsRepeats[i].AnonsId) {
+      delete AnonsRepeats[i];
+      newAnonsUpdate.push({
+        AnonsId: AnonsId,
+        Repeats: AnonsRepeats[i].Repeats + 1,
+      });
+    }
+  }
+
+  //Update New vallue.
+  AnonsRepeats.push(newAnonsUpdate);
+  await AsyncStorage.setItem(
+    "AnonsRepeats",
+    JSON.stringify(AnonsRepeats.push(newAnonsUpdate))
+  );
+};
+
+export const setAnonsRepeatTimes = async (AnonsId, repeat) => {
+  const AnonsRepeats = JSON.parse(await AsyncStorage.getItem("AnonsRepeats"));
+
+  //console.log(AnonsRepeats);
+
+  if (AnonsRepeats.length == 0) {
+    const AnonsRepeats = [];
+    AnonsRepeats.push({ AnonsId: AnonsId, repeat });
+    await AsyncStorage.setItem("AnonsRepeats", JSON.stringify(AnonsRepeats));
+  } else {
+    updateAnonsSingRepeatTimes(AnonsId, repeat);
+  }
+
+  //Update
+};

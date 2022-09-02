@@ -7,6 +7,7 @@ import LoadingGif from "./app/components/LoadingGif";
 import { newAuthContext } from "./app/context/newAuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
+import { DBContext, Database } from "./app/context/Database";
 
 export default function App() {
   const initialLoginState = {
@@ -111,7 +112,6 @@ export default function App() {
   if (loadingState.isLoading) {
     return <LoadingGif />;
   }
-
   return (
     <newAuthContext.Provider value={authContext}>
       <StatusBar style="light" />

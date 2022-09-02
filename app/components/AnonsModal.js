@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, View, Text, Modal } from "react-native";
+import { ActivityIndicator, StyleSheet, View, Text, Modal } from "react-native";
 import color from "../misc/color";
 import { Ionicons } from "@expo/vector-icons";
 import { convertTime } from "../misc/Helper";
@@ -12,6 +12,7 @@ import { convertTime } from "../misc/Helper";
 const AnonsModal = ({ anons }) => {
   const minute = convertTime(anons.duration).split(":")[1];
   const [time, setTime] = useState(minute);
+
   const timerRef = useRef(time);
 
   useEffect(() => {
@@ -31,11 +32,13 @@ const AnonsModal = ({ anons }) => {
   return (
     <Modal style={styles.anonsModal} transparent={true} animationType="slide">
       <View style={styles.modalView}>
+        <ActivityIndicator style={styles.spinner} color={color.WHITE} />
+
         <View style={styles.icon}>
           <Ionicons name="volume-high-outline" size={70} color={color.WHITE} />
         </View>
         <View>
-          <Text style={styles.title}>Reklamlar</Text>
+          <Text style={styles.title}>Anons</Text>
           <Text style={styles.description}>{anons.Aciklama}</Text>
         </View>
 
@@ -48,6 +51,13 @@ const AnonsModal = ({ anons }) => {
 };
 
 const styles = StyleSheet.create({
+  spinner: {
+    position: "absolute",
+    zIndex: 999,
+    elevation: 999,
+    top: 20,
+    right: 20,
+  },
   modalView: {
     backgroundColor: color.BLUE,
     opacity: 0.9,

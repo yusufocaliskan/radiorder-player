@@ -1,17 +1,30 @@
 import React, { Component, useContext, useEffect } from "react";
-import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import { Avatar } from "@rneui/base";
 import { AudioContext } from "../context/AudioProvider";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import AudioListItem from "../components/AudioListItem";
 import Screen from "../components/Screen";
-import { storeAudioForNextOpening } from "../misc/Helper";
+import {
+  updateAnonsSingRepeatTimes,
+  storeAudioForNextOpening,
+} from "../misc/Helper";
 import AnonsModal from "../components/AnonsModal";
+import ModalPlayer from "../components/ModalPlayer";
 //Expo-av şarkıları çalar.
 import { Audio } from "expo-av";
 
 //Controller
 import { play, pause, resume, playNext } from "../misc/AudioController";
+
+import "react-native-get-random-values";
+import Realm, { BSON } from "realm";
 
 export class AudioList extends Component {
   static contextType = AudioContext;
@@ -95,6 +108,7 @@ export class AudioList extends Component {
       !soundObj.isPlaying &&
       currentAudio.id === audio.id
     ) {
+      console.log(audio);
       const status = await resume(playbackObj);
 
       //Yeni durumu state ata ve ilerlememesi için return'le
@@ -121,47 +135,91 @@ export class AudioList extends Component {
       });
       storeAudioForNextOpening(audio, index);
     }
+
+    if (
+      soundObj != null &&
+      soundObj.isLoaded &&
+      !soundObj.isPlaying &&
+      currentAudio.id !== audio.id
+    ) {
+      const index = audioFiles.indexOf(audio);
+      const status = await playNext(playbackObj, audio.uri);
+      updateState(this.context, {
+        currentAudio: audio,
+        soundObj: status,
+        isPlaying: true,
+        currentAudioIndex: index,
+      });
+      storeAudioForNextOpening(audio, index);
+    }
   };
 
   /**
    * Bir anons çalar.
-   * @param {object} audio Anons objesi
    */
-  playAnons = async (audio) => {
+  playAnons = async () => {
     setTimeout(async () => {
       const anonsPlaylist = this.context.anonsPlaylist;
-      //Herhangi bir anons çalmıyorsa
+      let isPlaying = null;
+      console.log("--------ANONS LIST----------");
+      console.log(anonsPlaylist);
+      for (let i = 0; i < anonsPlaylist.length; i++) {
+        //Çalan bir şarkı varsa onu durdur
+        if (this.context.soundObj != null && this.context.soundObj.isPlaying) {
+          pause(this.context.playbackObj);
+          isPlaying = false;
+        }
 
-      if (this.context.anonsSoundObj == null) {
-        const playbackObj = new Audio.Sound();
-        //Controllerdan çağır.
-        const status = await play(playbackObj, anonsPlaylist[0].uri);
-        this.setState({ ...this.state, anonsIsPlaying: true });
+        //Herhangi bir anons çalmıyorsa
+        if (this.context.anonsSoundObj == null) {
+          const playbackObj = new Audio.Sound();
 
-        this.context.updateState({ ...this.context, anonsSoundObj: status });
-        this.context.updateState({
-          ...this.context,
-          currentPlayingAnons: anonsPlaylist[0],
-        });
+          //console.log(anonsPlaylist[5]);
+          //Controllerdan çağır.
+          const status = await play(playbackObj, anonsPlaylist[i].uri);
 
-        //Anons bittikten sonra tekrar durumu güncelle
-        setTimeout(async () => {
-          const status = await playbackObj.stopAsync({
-            shouldPlay: false,
-            positionMillis: false,
-          });
-
+          //Anons Tekrar sayısını güncelle
+          //updateAnonsSingRepeatTimes(anonsPlaylist[5].Id);
           this.context.updateState({
             ...this.context,
+            isPlaying: isPlaying,
             anonsSoundObj: status,
-            currentPlayingAnons: null,
+            currentPlayingAnons: anonsPlaylist[i],
           });
-        }, status.durationMillis + 100);
+
+          //Anons bittikten sonra tekrar durumu güncelle
+          setTimeout(async () => {
+            const status = await playbackObj.stopAsync({
+              shouldPlay: false,
+              positionMillis: false,
+            });
+
+            //Şarkıya kaldığı yerden davem ettir
+            //Herhangi bir şarkı çalıyorsa
+            if (
+              this.context.soundObj != null &&
+              this.context.soundObj.isPlaying == true
+            );
+            {
+              resume(this.context.playbackObj);
+              isPlaying = true;
+            }
+
+            //State'i güncelle
+            this.context.updateState({
+              ...this.context,
+              anonsSoundObj: status,
+              isPlaying: isPlaying,
+              currentPlayingAnons: null,
+            });
+          }, status.durationMillis + 100);
+        }
       }
-    }, 500);
+    }, 1000);
   };
 
   componentDidMount = async () => {
+    //Anonsu çal
     //this.playAnons();
 
     //Profile resmini koy
@@ -183,9 +241,9 @@ export class AudioList extends Component {
     });
 
     //TODO: Re-Check..
-    this.context.loadPreviousAudio();
+    //this.context.loadPreviousAudio();
     // await this.context.getAudioFiles().then(async () => {
-    //   //await this.startToPlay();
+    //   await this.startToPlay();
     // });
   };
 
@@ -202,7 +260,7 @@ export class AudioList extends Component {
 
       //Controllerdan çağır.
       const status = await play(playbackObj, audio.uri);
-      const index = audioFiles.indexOf(audio);
+      const index = 0;
 
       //Yeni durumu state ata ve ilerlememesi için return'le
       updateState(this.context, {
@@ -261,7 +319,6 @@ export class AudioList extends Component {
                   style={{ paddingTop: 20 }}
                 />
               </Screen>
-
               {anonsSoundObj != null &&
               currentPlayingAnons != null &&
               anonsSoundObj.isPlaying ? (
