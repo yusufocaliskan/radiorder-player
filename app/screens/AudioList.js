@@ -108,7 +108,7 @@ export class AudioList extends Component {
       !soundObj.isPlaying &&
       currentAudio.id === audio.id
     ) {
-      console.log(audio);
+      //console.log(audio);
       const status = await resume(playbackObj);
 
       //Yeni durumu state ata ve ilerlememesi için return'le
@@ -161,11 +161,10 @@ export class AudioList extends Component {
     setTimeout(async () => {
       const anonsPlaylist = this.context.anonsPlaylist;
       let isPlaying = null;
-      console.log("--------ANONS LIST----------");
-      console.log(anonsPlaylist);
+
       for (let i = 0; i < anonsPlaylist.length; i++) {
         //Çalan bir şarkı varsa onu durdur
-        if (this.context.soundObj != null && this.context.soundObj.isPlaying) {
+        if (this.context.soundObj != null) {
           pause(this.context.playbackObj);
           isPlaying = false;
         }
@@ -197,7 +196,7 @@ export class AudioList extends Component {
             //Şarkıya kaldığı yerden davem ettir
             //Herhangi bir şarkı çalıyorsa
             if (
-              this.context.soundObj != null &&
+              this.context.soundObj != null ||
               this.context.soundObj.isPlaying == true
             );
             {
@@ -208,7 +207,7 @@ export class AudioList extends Component {
             //State'i güncelle
             this.context.updateState({
               ...this.context,
-              anonsSoundObj: status,
+              anonsSoundObj: null,
               isPlaying: isPlaying,
               currentPlayingAnons: null,
             });
@@ -220,7 +219,11 @@ export class AudioList extends Component {
 
   componentDidMount = async () => {
     //Anonsu çal
-    //this.playAnons();
+    //TODO
+    // setInterval(() => {
+    //   console.log("Test");
+    //   this.playAnons();
+    // }, 5000);
 
     //Profile resmini koy
     this.props.navigation.setOptions({

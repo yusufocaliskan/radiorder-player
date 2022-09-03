@@ -12,7 +12,7 @@ export const getCurrentDate = (customDate, separator = "-") => {
     newDate = customDate;
   }
   let date_raw = newDate.getDate();
-  let month_raw = newDate.getMonth();
+  let month_raw = newDate.getMonth() + 1;
   if (!customDate) {
     month_raw = newDate.getMonth() + 1;
   }
@@ -123,4 +123,17 @@ export const setAnonsRepeatTimes = async (AnonsId, repeat) => {
   }
 
   //Update
+};
+
+//İlki saat arasındaki farkı bul
+export const getDifferenceBetweenTwoHours = (time1, time2) => {
+  return time1 - time2;
+};
+
+export const whatIsTheDate = () => {
+  return `${new Date().toLocaleDateString()}T${new Date().toLocaleTimeString()}`;
+};
+
+export const whatIsTheTime = () => {
+  return `${new Date().toLocaleTimeString()}`;
 };

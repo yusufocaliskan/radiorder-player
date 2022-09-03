@@ -5391,7 +5391,14 @@
   "resolved" "https://registry.npmjs.org/mkdirp/-/mkdirp-1.0.4.tgz"
   "version" "1.0.4"
 
-"moment@^2.18.1", "moment@^2.29.4":
+"moment-timezone@^0.5.37":
+  "integrity" "sha512-uEDzDNFhfaywRl+vwXxffjjq1q0Vzr+fcQpQ1bU0kbzorfS7zVtZnCnGc8mhWmF39d4g4YriF6kwA75mJKE/Zg=="
+  "resolved" "https://registry.npmjs.org/moment-timezone/-/moment-timezone-0.5.37.tgz"
+  "version" "0.5.37"
+  dependencies:
+    "moment" ">= 2.9.0"
+
+"moment@^2.18.1", "moment@^2.29.0", "moment@^2.29.4", "moment@>= 2.9.0":
   "integrity" "sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w=="
   "resolved" "https://registry.npmjs.org/moment/-/moment-2.29.4.tgz"
   "version" "2.29.4"
@@ -5994,7 +6001,7 @@
     "kleur" "^3.0.3"
     "sisteransi" "^1.0.5"
 
-"prop-types@*", "prop-types@^15.6.0", "prop-types@^15.6.2", "prop-types@^15.7.2", "prop-types@15.8.1":
+"prop-types@*", "prop-types@^15.6.0", "prop-types@^15.6.2", "prop-types@^15.7.0", "prop-types@^15.7.2", "prop-types@15.8.1":
   "integrity" "sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg=="
   "resolved" "https://registry.npmjs.org/prop-types/-/prop-types-15.8.1.tgz"
   "version" "15.8.1"
@@ -6127,6 +6134,11 @@
   "integrity" "sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ=="
   "resolved" "https://registry.npmjs.org/react-is/-/react-is-16.13.1.tgz"
   "version" "16.13.1"
+
+"react-moment@^1.1.2":
+  "integrity" "sha512-lfb+shYXI2tXlQrNUpNr05/1D/kzFj8Isbfp89DQrpZk0fs2JIAnLHWETR0hQS9zvtzwLWlVv0wKLffbue5HoA=="
+  "resolved" "https://registry.npmjs.org/react-moment/-/react-moment-1.1.2.tgz"
+  "version" "1.1.2"
 
 "react-native-codegen@^0.0.17":
   "integrity" "sha512-7GIEUmAemH9uWwB6iYXNNsPoPgH06pxzGRmdBzK98TgFBdYJZ7CBuZFPMe4jmHQTPOkQazKZ/w5O6/71JBixmw=="
@@ -6291,7 +6303,7 @@
   "resolved" "https://registry.npmjs.org/react-xml-parser/-/react-xml-parser-1.1.8.tgz"
   "version" "1.1.8"
 
-"react@*", "react@^16.0.0 || ^17.0.0", "react@^16.8.0 || ^17.0.0", "react@>= 15.2.1", "react@>=16.0.0", "react@>=17.0.0", "react@>=17.0.1", "react@17.0.2":
+"react@*", "react@^16.0 || ^17.0.0 || ^18.0.0", "react@^16.0.0 || ^17.0.0", "react@^16.8.0 || ^17.0.0", "react@>= 15.2.1", "react@>=16.0.0", "react@>=17.0.0", "react@>=17.0.1", "react@17.0.2":
   "integrity" "sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA=="
   "resolved" "https://registry.npmjs.org/react/-/react-17.0.2.tgz"
   "version" "17.0.2"

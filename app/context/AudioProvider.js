@@ -7,6 +7,7 @@ import {
   howManyTimeSingToday,
   getCurrentDate,
   storeAudioForNextOpening,
+  getDifferenceBetweenTwoHours,
   setAnonsRepeatTimes,
 } from "../misc/Helper";
 import RNFetchBlob from "rn-fetch-blob";
@@ -26,6 +27,16 @@ import { v4 as uuidv4 } from "uuid";
 import "react-native-get-random-values";
 import Realm, { BSON } from "realm";
 
+//Time
+//import moment from "moment";
+import moment from "moment-timezone";
+require("moment/locale/tr.js");
+require("moment/locale/en-gb.js");
+
+//Test Anonslar
+import TestAnons from "../TestAnons";
+import { readFileRes } from "react-native-fs";
+
 export const AudioContext = createContext();
 
 export class AudioProvider extends Component {
@@ -37,7 +48,6 @@ export class AudioProvider extends Component {
     this.state = {
       //Mediadan alınan şarkılar
       audioFiles: [],
-      dbConnection: null,
 
       //Permission hataları
       permissionError: false,
@@ -78,16 +88,31 @@ export class AudioProvider extends Component {
       //Playlist
       currentPlaylist: [],
       anonsPlaylist: [],
+
+      //time
+      // whatTimeIsIt: moment().locale("tr").utcOffset("+03:00").format("h:m:s"),
+      // whatTheDateIs: moment().utcOffset("+03:00").format("YYYY-MM-DD"),
+      // whatTimeWithHours: moment().utcOffset("+03:00").format("YYYY-MM-DD h:m"),
+
+      AnonsDBConnection: null,
+
+      //Güncel tarih
+      whatIsTheDate: `${getCurrentDate(
+        new Date()
+      )}T${new Date().toLocaleTimeString({
+        hour12: false,
+      })}`,
     };
 
     this.totalAudioCount = 0;
 
     this.AnonsShema = {
-      name: "AnonsTest",
+      name: "AnonsDocs",
       properties: {
         _id: "objectId",
         repeats: "int",
         anonsId: "int",
+        repeatDate: "mixed",
       },
     };
   }
@@ -198,8 +223,8 @@ export class AudioProvider extends Component {
     });
 
     //Anonsları al
-    const anons = JSON.parse(await AsyncStorage.getItem("anons"));
-    //console.log(anons);
+    //const anons = JSON.parse(await AsyncStorage.getItem("anons"));
+    const anons = TestAnons;
 
     //Şarkıları da al.
     const songs = JSON.parse(await AsyncStorage.getItem("songs"));
@@ -252,29 +277,10 @@ export class AudioProvider extends Component {
       //Anons
       for (let a = 0; a < anons.length; a++) {
         const dosya_name = anons[a].anons.DosyaIsmi;
-
         if (`anons_${dosya_name}` == file_name) {
-          //console.log("------------ANONS---------------");
-          //console.log(anons[a]);
-          //console.log("------------TASK---------------");
-
-          // const start = new Date(anons[a].task.Baslangic.split("T")[0]);
-          // const option = anons[a].task.Secenek;
-          // const end = new Date(anons[a].task.Bitis.split("T")[0]);
-          // const today = new Date();
-          // const currentHours = new Date().getHours();
-          // const currentMinutes = new Date().getMinutes();
-
-          // const anonsHours =
-          //   anons[a].task.Baslangic.split("T")[1].split(":")[0];
-          // const anonsMinutes =
-          //   anons[a].task.Baslangic.split("T")[1].split(":")[1];
-          // const optionType = anons[a].task.SecenekTipi.split(",");
-
           const start = getCurrentDate(
             new Date(anons[a].task.Baslangic.split("T")[0])
           );
-          console.log(anons[a].task.Bitis.split("T")[0]);
           const end = getCurrentDate(
             new Date(anons[a].task.Bitis.split("T")[0])
           );
@@ -293,18 +299,83 @@ export class AudioProvider extends Component {
           const currentDay = new Date().getDay();
           let singItToday = issetInArray(option, currentDay);
 
-          //Local databaseden tekrar sayısını al.
+          // this.state.AnonsDBConnection.write(() => {
+          //   let anons = this.state.AnonsDBConnection.objects("AnonsDocs");
+          //   this.state.AnonsDBConnection.delete(anons);
+          //   anons = null;
+          // });
+
+          // Local databaseden tekrar sayısını al.
           const AnonsRepeats = this.getAnonRepeatsFromDatabase(
             anons[a].anons.Id
           );
 
-          // this.state.dbConnection.write(() => {
-          //   let anons = this.state.dbConnection.objects("AnonsTest");
-          //   this.state.dbConnection.delete(anons);
-          //   anons = null;
-          // });
+          console.log(AnonsRepeats);
+
+          // const start = getCurrentDate(new Date(2022, 8, 1));
+          // const end = getCurrentDate(new Date(2022, 9, 21));
+          // const today = getCurrentDate(new Date(2022, 9, 2));
+          // const repeatServer = anons[a].task.TekrarSayisi || 1;
+          // const option = anons[a].task.Secenek
+          //   ? anons[a].task.Secenek.split(",")
+          //   : [];
+          // const anonsHours = 21;
+          // const anonsMinutes = 16;
+          // const currentHours = 21;
+          // const currentMinutes = 16;
+          // const optionType = anons[a].task.SecenekTipi.split(",");
+          // const currentDay = new Date().getDay();
+          // let singItToday = issetInArray(option, currentDay);
+
+          // //Local databaseden tekrar sayısını al.
+          // const AnonsRepeats = this.getAnonRepeatsFromDatabase(
+          //   anons[a].anons.Id
+          // );
+
+          //Bu anons çalınması gerekiyor mu?
+          //Şartları kontrol et.
+          let isAnonsShowable =
+            today >= start && //Başlangıç tarihi geldi mi?
+            today <= end && //Bittiiş tarihi geldi mi?
+            currentHours == anonsHours && //Saatleri uyuşuyor mu?
+            currentMinutes == anonsMinutes && //Anons dakikları uyuşuyor mu?
+            singItToday == true && //Bu gün çalınması gerekiyor mu?
+            repeatServer <= AnonsRepeats.repeats; //Çalma sayısı doldu mu?
+
+          //Anons saati var m?
+          //Haftalık mı çalınacak?
+          if (option.length == 0) {
+            singItToday = true;
+            isAnonsShowable =
+              today >= start && today <= end && singItToday == true;
+          }
+
+          //YOKSA anons saati
+          //O zaman son çaldığı zamandan bu yana REPEAT_PERIOT_TIME saat geçmiş ise yeniden çal
+          if (anonsHours == "00" && anonsMinutes == "00") {
+            isAnonsShowable =
+              today >= start &&
+              today <= end &&
+              singItToday == true &&
+              AnonsRepeats.repeats <= repeatServer;
+            //AnonsRepeats.repeatDate < REPEAT_PERIOT_TIME
+          }
+          console.log(new Date(AnonsRepeats.repeatDate));
+
+          console.log(this.state.whatIsTheDate);
+          console.log(
+            new Date(
+              getDifferenceBetweenTwoHours(
+                new Date().getTime(),
+                new Date(AnonsRepeats.repeatDate).getTime()
+              )
+            )
+          );
+
+          //console.log(this.state.whatTimeIsIt);
 
           const showIt = {
+            AnonsName: anons[a].anons.AnonsIsmi,
             Start: start,
             Today: today,
             End: end,
@@ -318,32 +389,9 @@ export class AudioProvider extends Component {
             anonsMinutes: anonsMinutes,
             singItToday: singItToday,
             repeat: repeatServer,
-            anonsRepeated: AnonsRepeats,
+            anonsRepeated: AnonsRepeats.repeats,
+            lastAnonsRepeatTime: AnonsRepeats.repeatDate,
           };
-
-          //Bu anons çalınması gerekiyor mu?
-          //Şartları kontrol et.
-          let isAnonsShowable =
-            today >= start && //Başlangıç tarihi geldi mi?
-            today <= end && //Bittiiş tarihi geldi mi?
-            currentHours == anonsHours && //Saatleri uyuşuyor mu?
-            currentMinutes == anonsMinutes && //Anons dakikları uyuşuyor mu?
-            singItToday == true && //Bu gün çalınması gerekiyor mu?
-            AnonsRepeats <= repeatServer; //Çalma sayısı doldu mu?
-
-          //Anons saati var m?
-          //Haftalık mı çalınacak?
-          if (option.length == 0) {
-            singItToday = true;
-            isAnonsShowable =
-              today >= start && today <= end && singItToday == true;
-          }
-
-          //YOKSA anons saati
-          if (anonsHours == "00" || anonsMinutes == "00") {
-            isAnonsShowable =
-              today >= start && today <= end && singItToday == true;
-          }
 
           //Bu gün yeterince çaldı mı?
 
@@ -368,7 +416,7 @@ export class AudioProvider extends Component {
             Durumu: anons[a].task.Durumu,
             GT: anons[a].task.GT,
             GK: anons[a].task.GK,
-            Ismi: anons[a].task.DosyaIsmi,
+            Ismi: anons[a].anons.AnonsIsmi,
             GorevTipAciklama: anons[a].task.GorevTipAciklama,
             GorevTipi: anons[a].task.GorevTipi,
             GrupTanimlamaKodu: anons[a].task.GrupTanimlamaKodu,
@@ -384,7 +432,7 @@ export class AudioProvider extends Component {
             FileType: "anons",
             timeLineMinutes: 0,
             timeLineHours: 0,
-            anonsRepeated: AnonsRepeats,
+            anonsRepeated: AnonsRepeats.repeats,
 
             //Anons Playlistte gösterilsin mi?
             Show: isAnonsShowable,
@@ -393,20 +441,19 @@ export class AudioProvider extends Component {
           //Çalma sayısını ekle database e
           this.writeAnonsToDatabase(
             anons[a].anons.Id,
-            AnonsRepeats,
+            AnonsRepeats.repeats,
             repeatServer
           );
 
-          // this.state.dbConnection.write(() => {
-          //   let anons = this.state.dbConnection.objects("AnonsTest");
-          //   this.state.dbConnection.delete(anons);
+          // this.state.AnonsDBConnection.write(() => {
+          //   let anons = this.state.AnonsDBConnection.objects("AnonsDocs");
+          //   this.state.AnonsDBConnection.delete(anons);
           //   anons = null;
           // });
           //this.saveAnonsRepeatsToDatabase();
 
           anons_must_be_shown.push(anons_container);
           console.log(showIt);
-          console.log(isAnonsShowable);
         }
       }
     }
@@ -431,15 +478,6 @@ export class AudioProvider extends Component {
     //console.log("------------------- PLAYLIST-------------------");
     //console.log(this.state.playlist);
     //console.log(media.assets.length);
-  };
-
-  saveAnonsRepeatsToDatabase = () => {
-    const insert = this.state.dbConnection.write(() => {
-      const anAnons = this.state.dbConnection
-        .objects("AnonsTest")
-        .filtered("anonsId=17795")[0];
-      anAnons.repeats += 1;
-    });
   };
 
   /**
@@ -759,7 +797,8 @@ export class AudioProvider extends Component {
         } catch (error) {
           //console.log("Bir fazla görevvv");
         }
-        //console.log(pretty_anons);
+        // console.log("--------------PRETYYY----------------------");
+        // console.log(pretty_anons);
 
         for (let p = 0; p < pretty_anons.length; p++) {
           if (pretty_anons[p].anons != "undefined") {
@@ -792,63 +831,85 @@ export class AudioProvider extends Component {
     //console.log(this.state.playlist);
   };
 
-  connectToDabase = async () => {
+  //Aanons Realm'e bağlan
+  connectToAnonsDatabaseDoc = async () => {
     //Anonslar için bir bağlantı aç
-    this.state.dbConnection = await Realm.open({
+    this.state.AnonsDBConnection = await Realm.open({
       schema: [this.AnonsShema],
+      deleteRealmIfMigrationNeeded: true,
     });
   };
 
   //Anons Tekrarlarını veri sakla.
   writeAnonsToDatabase = (anonsId, repeats = 0, localRepeat) => {
     //Check is there is any anons equal to anonsId
+    try {
+      let checkAnons = this.state.AnonsDBConnection.objects(
+        "AnonsDocs"
+      ).filtered(`anonsId=${anonsId}`)[0];
 
-    let checkAnons = this.state.dbConnection
-      .objects("AnonsTest")
-      .filtered(`anonsId=${anonsId}`)[0];
-    //Anons daha önce varsa
-    if ((checkAnons = undefined || checkAnons == NaN)) {
-      this.state.dbConnection.write(() => {
-        //YOKSA EKLE
-        const insert = this.state.dbConnection.create("AnonsTest", {
-          _id: new BSON.ObjectID(),
-          repeats: repeats,
-          anonsId: anonsId,
+      //Anons daha önce varsa
+      if (checkAnons == undefined || checkAnons == NaN) {
+        this.state.AnonsDBConnection.write(() => {
+          //YOKSA EKLE
+          const insert = this.state.AnonsDBConnection.create("AnonsDocs", {
+            _id: new BSON.ObjectID(),
+            repeats: repeats,
+            anonsId: anonsId,
+            repeatDate: this.state.whatIsTheDate,
+          });
         });
-      });
-    } else {
-      //Güncelleme yap
-      let anons = this.state.dbConnection
-        .objects("AnonsTest")
-        .filtered(`anonsId=${anonsId}`)[0];
-      this.state.dbConnection.write(() => {
-        //VAR GUNCELLE
+      } else {
+        //Güncelleme yap
 
-        //Güncellemeyi en fazla serverdaki kadar yap.
-        if (anons.repeats < localRepeat) {
-          anons.repeats += 1;
-        }
-      });
-    }
+        this.state.AnonsDBConnection.write(() => {
+          let anons = this.state.AnonsDBConnection.objects(
+            "AnonsDocs"
+          ).filtered(`anonsId=${anonsId}`)[0];
+          //VAR GUNCELLE
+          //Güncellemeyi en fazla serverdaki kadar yap.
+          //if (anons.repeats < localRepeat + 1) {
+          console.log(anons);
+          if (anons.repeats) {
+            anons.repeats += 1;
+
+            //Enson tekrar ettiği tarih
+            anons.repeatDate = this.state.whatIsTheDate;
+          }
+        });
+      }
+    } catch (error) {}
   };
 
   //Anons Tekrarını al
   //Anons Kaç defa tekrar ettti
+  //Database'den al
+  //@anonsId
   getAnonRepeatsFromDatabase = (anonsId) => {
-    return this.state.dbConnection.write(() => {
-      const repeats = this.state.dbConnection
-        .objects("AnonsTest")
-        .filtered(`anonsId=${anonsId}`);
+    try {
+      return this.state.AnonsDBConnection.write(() => {
+        const repeats = this.state.AnonsDBConnection.objects(
+          "AnonsDocs"
+        ).filtered(`anonsId=${anonsId}`);
 
-      if (repeats.length != 0) {
-        return repeats[0].repeats;
-      }
-      if (!repeats) return 0;
-    });
+        if (repeats.length !== 0) {
+          return repeats[0];
+        }
+
+        //Boş iswe
+        if (repeats.length === 0) {
+          return {
+            repeats: 0,
+            repeatDate: null,
+          };
+        }
+      });
+    } catch (er) {}
   };
 
   componentDidMount = () => {
-    this.connectToDabase();
+    //Anons documations..
+    this.connectToAnonsDatabaseDoc();
 
     //this.requestToPermissions();
     //Musiclere erişim izni all

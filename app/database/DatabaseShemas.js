@@ -6,6 +6,7 @@ export const AnonsShema = {
   properties: {
     _id: "objectId",
     repeats: "int",
+    repeatDate: "date",
     anonsId: "int",
     albumId: "int",
     creationTime: "date",
