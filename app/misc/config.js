@@ -9,7 +9,7 @@ export default {
   REPEAT_PERIOT_TIME: 60000,
 
   //Tekrarlı anonslarda ilk çalma saati
-  FIRST_PERIOT_TIME: "18:02",
+  FIRST_PERIOT_TIME: "18:34",
 
   //SOAP QUERY
   SOAP_URL: "https://www.radiorder.online/ws/radi.asmx",

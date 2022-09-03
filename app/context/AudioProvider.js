@@ -116,6 +116,7 @@ export class AudioProvider extends Component {
         repeats: "int",
         anonsId: "int",
         repeatDate: "mixed",
+        date: "mixed",
       },
     };
   }
@@ -314,14 +315,7 @@ export class AudioProvider extends Component {
             anons[a].anons.Id
           );
 
-          console.log(new Date(AnonsRepeats.repeatDate));
-          console.log(new Date(this.state.whatIsTheDate));
-          // console.log(
-          //   getDifferenceBetweenTwoHours(
-          //     new Date(AnonsRepeats.repeatDate).getTime(),
-          //     new Date(this.state.whatIsTheDate).getTime()
-          //   )
-          // );
+          // Ikı zaman arasındaki farkı al.
           const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
             new Date(AnonsRepeats.repeatDate).getTime(),
             new Date(this.state.whatIsTheDate).getTime()
@@ -451,13 +445,6 @@ export class AudioProvider extends Component {
             );
           }
 
-          // this.state.AnonsDBConnection.write(() => {
-          //   let anons = this.state.AnonsDBConnection.objects("AnonsDocs");
-          //   this.state.AnonsDBConnection.delete(anons);
-          //   anons = null;
-          // });
-          //this.saveAnonsRepeatsToDatabase();
-
           anons_must_be_shown.push(anons_container);
           console.log(showIt);
         }
@@ -478,12 +465,6 @@ export class AudioProvider extends Component {
     });
 
     this.setState({ ...this.state, anonsPlaylist: anons_must_be_shown });
-
-    //console.log(this.state.audioFiles);
-    //console.log(this.state.audioFiles);
-    //console.log("------------------- PLAYLIST-------------------");
-    //console.log(this.state.playlist);
-    //console.log(media.assets.length);
   };
 
   /**
@@ -848,6 +829,7 @@ export class AudioProvider extends Component {
 
   //Anons Tekrarlarını veri sakla.
   writeAnonsToDatabase = (anonsId, repeats = 0, localRepeat) => {
+    const date = getCurrentDate(new Date());
     //Check is there is any anons equal to anonsId
     try {
       let checkAnons = this.state.AnonsDBConnection.objects(
@@ -863,6 +845,7 @@ export class AudioProvider extends Component {
             repeats: repeats,
             anonsId: anonsId,
             repeatDate: this.state.whatIsTheDate,
+            date: date,
           });
         });
       } else {
@@ -876,6 +859,7 @@ export class AudioProvider extends Component {
           //Güncellemeyi en fazla serverdaki kadar yap.
           if (anons.repeats < localRepeat + 1) {
             anons.repeats += 1;
+            anons.date = date;
 
             //Enson tekrar ettiği tarih
             anons.repeatDate = this.state.whatIsTheDate;
@@ -891,11 +875,13 @@ export class AudioProvider extends Component {
   //@anonsId
   getAnonRepeatsFromDatabase = (anonsId) => {
     try {
+      const date = getCurrentDate(new Date());
+      console.log(date);
       return this.state.AnonsDBConnection.write(() => {
         const repeats = this.state.AnonsDBConnection.objects(
           "AnonsDocs"
-        ).filtered(`anonsId=${anonsId}`);
-
+        ).filtered(`anonsId=${anonsId} && date='${date}'`);
+        console.log(repeats);
         if (repeats.length !== 0) {
           return repeats[0];
         }
