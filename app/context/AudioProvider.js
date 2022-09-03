@@ -36,6 +36,7 @@ require("moment/locale/en-gb.js");
 //Test Anonslar
 import TestAnons from "../TestAnons";
 import { readFileRes } from "react-native-fs";
+import { parseString } from "react-native-xml2js";
 
 export const AudioContext = createContext();
 
@@ -299,6 +300,7 @@ export class AudioProvider extends Component {
           const currentMinutes = new Date().getMinutes();
           const optionType = anons[a].task.SecenekTipi.split(",");
           const currentDay = new Date().getDay();
+
           let singItToday = issetInArray(option, currentDay);
 
           // this.state.AnonsDBConnection.write(() => {
@@ -312,28 +314,6 @@ export class AudioProvider extends Component {
             anons[a].anons.Id
           );
 
-          console.log(AnonsRepeats);
-
-          // const start = getCurrentDate(new Date(2022, 8, 1));
-          // const end = getCurrentDate(new Date(2022, 9, 21));
-          // const today = getCurrentDate(new Date(2022, 9, 2));
-          // const repeatServer = anons[a].task.TekrarSayisi || 1;
-          // const option = anons[a].task.Secenek
-          //   ? anons[a].task.Secenek.split(",")
-          //   : [];
-          // const anonsHours = 21;
-          // const anonsMinutes = 16;
-          // const currentHours = 21;
-          // const currentMinutes = 16;
-          // const optionType = anons[a].task.SecenekTipi.split(",");
-          // const currentDay = new Date().getDay();
-          // let singItToday = issetInArray(option, currentDay);
-
-          // //Local databaseden tekrar sayısını al.
-          // const AnonsRepeats = this.getAnonRepeatsFromDatabase(
-          //   anons[a].anons.Id
-          // );
-
           console.log(new Date(AnonsRepeats.repeatDate));
           console.log(new Date(this.state.whatIsTheDate));
           // console.log(
@@ -343,40 +323,58 @@ export class AudioProvider extends Component {
           //   )
           // );
           const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
-            new Date("2022-09-03T15:04:29.000Z").getTime(),
-            new Date("2022-09-03T17:03:29.000Z").getTime()
+            new Date(AnonsRepeats.repeatDate).getTime(),
+            new Date(this.state.whatIsTheDate).getTime()
           );
 
           //Bu anons çalınması gerekiyor mu?
           //Şartları kontrol et.
-          let isAnonsShowable =
-            today >= start && //Başlangıç tarihi geldi mi?
-            today <= end && //Bittiiş tarihi geldi mi?
-            currentHours == anonsHours && //Saatleri uyuşuyor mu?
-            currentMinutes == anonsMinutes && //Anons dakikları uyuşuyor mu?
-            singItToday == true && //Bu gün çalınması gerekiyor mu?
-            repeatServer <= AnonsRepeats.repeats; //Çalma sayısı doldu mu?
+          let isAnonsShowable = false;
 
           //Anons saati var m?
           //Haftalık mı çalınacak?
-          if (option.length == 0) {
-            singItToday = true;
-            isAnonsShowable =
-              today >= start && today <= end && singItToday == true;
-          }
-
-          //YOKSA anons saati
-          //O zaman son çaldığı zamandan bu yana REPEAT_PERIOT_TIME saat geçmiş ise yeniden çal
-          if (anonsHours == "00" && anonsMinutes == "00") {
+          //Sepesifik saatler için
+          if (option.length != 0) {
             isAnonsShowable =
               today >= start &&
               today <= end &&
               singItToday == true &&
-              AnonsRepeats.repeats <= repeatServer &&
-              diffBetweenLastAnons >= REPEAT_PERIOT_TIME; //Son çalınan anonsun üzerinden x kadar geçti ise.
+              currentHours == anonsHours &&
+              currentMinutes == anonsMinutes;
           }
 
-          //console.log(this.state.whatTimeIsIt);
+          //Tekrarlı anons gün içinde ikince defa çalıyor
+          //YOKSA anons saati
+          //O zaman son çaldığı zamandan bu yana REPEAT_PERIOT_TIME saat geçmiş ise yeniden çal
+          //Başlangıç saati belirle.
+          if (
+            anonsHours == "00" &&
+            anonsMinutes == "00" &&
+            option.length == 0
+          ) {
+            isAnonsShowable =
+              today >= start &&
+              today <= end &&
+              AnonsRepeats.repeats <= repeatServer &&
+              diffBetweenLastAnons >= config.REPEAT_PERIOT_TIME; //Son çalınan anonsun üzerinden x kadar geçti ise.
+          }
+
+          //Tekrarlı anons gün için de ilk defa çalıyorsa.
+          if (
+            AnonsRepeats.repeats == 0 &&
+            anonsHours == "00" &&
+            anonsMinutes == "00" &&
+            option.length == 0
+          ) {
+            //Ilk defa çalıyorsa saatin kaç olduğuna bak.
+            isAnonsShowable =
+              today >= start &&
+              today <= end &&
+              AnonsRepeats.repeats <= repeatServer &&
+              diffBetweenLastAnons >= config.REPEAT_PERIOT_TIME &&
+              currentHours == config.FIRST_PERIOT_TIME.split(":")[0] &&
+              currentMinutes == config.FIRST_PERIOT_TIME.split(":")[1]; //Son çalınan anonsun üzerinden x kadar geçti ise.
+          }
 
           const showIt = {
             AnonsName: anons[a].anons.AnonsIsmi,
@@ -442,12 +440,16 @@ export class AudioProvider extends Component {
             Show: isAnonsShowable,
           };
 
+          //Eğer çaldı ise ekle
+
           //Çalma sayısını ekle database e
-          this.writeAnonsToDatabase(
-            anons[a].anons.Id,
-            AnonsRepeats.repeats,
-            repeatServer
-          );
+          if (isAnonsShowable == true) {
+            this.writeAnonsToDatabase(
+              anons[a].anons.Id,
+              AnonsRepeats.repeats,
+              repeatServer
+            );
+          }
 
           // this.state.AnonsDBConnection.write(() => {
           //   let anons = this.state.AnonsDBConnection.objects("AnonsDocs");
@@ -872,9 +874,7 @@ export class AudioProvider extends Component {
           ).filtered(`anonsId=${anonsId}`)[0];
           //VAR GUNCELLE
           //Güncellemeyi en fazla serverdaki kadar yap.
-          //if (anons.repeats < localRepeat + 1) {
-          console.log(anons);
-          if (anons.repeats) {
+          if (anons.repeats < localRepeat + 1) {
             anons.repeats += 1;
 
             //Enson tekrar ettiği tarih

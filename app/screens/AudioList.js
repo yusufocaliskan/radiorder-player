@@ -161,16 +161,16 @@ export class AudioList extends Component {
     setTimeout(async () => {
       const anonsPlaylist = this.context.anonsPlaylist;
       let isPlaying = null;
-
+      console.log(anonsPlaylist.Show);
       for (let i = 0; i < anonsPlaylist.length; i++) {
-        //Çalan bir şarkı varsa onu durdur
-        if (this.context.soundObj != null) {
-          pause(this.context.playbackObj);
-          isPlaying = false;
-        }
-
         //Herhangi bir anons çalmıyorsa
-        if (this.context.anonsSoundObj == null) {
+        if (this.context.anonsSoundObj == null && anonsPlaylist.Show == true) {
+          //Çalan bir şarkı varsa onu durdur
+          if (this.context.soundObj != null) {
+            pause(this.context.playbackObj);
+            isPlaying = false;
+          }
+
           const playbackObj = new Audio.Sound();
 
           //console.log(anonsPlaylist[5]);
@@ -196,7 +196,7 @@ export class AudioList extends Component {
             //Şarkıya kaldığı yerden davem ettir
             //Herhangi bir şarkı çalıyorsa
             if (
-              this.context.soundObj != null ||
+              this.context.soundObj != null &&
               this.context.soundObj.isPlaying == true
             );
             {
@@ -223,7 +223,7 @@ export class AudioList extends Component {
     // setInterval(() => {
     //   console.log("Test");
     //   this.playAnons();
-    // }, 5000);
+    // }, 10000);
 
     //Profile resmini koy
     this.props.navigation.setOptions({

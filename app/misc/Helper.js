@@ -67,13 +67,13 @@ export const convertTime = (minutes) => {
 };
 
 export const issetInArray = (array, data) => {
-  for (let i = 0; i < array.length; i++) {
-    if (array[i] == data) {
-      return true;
+  if (array.length != 0) {
+    for (let i = 0; i < array.length; i++) {
+      if (parseInt(array[i]) === data) {
+        return true;
+      }
     }
   }
-
-  return false;
 };
 
 export const howManyTimeSingToday = (AnonsRepeats, AnonsId) => {

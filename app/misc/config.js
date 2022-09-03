@@ -5,8 +5,11 @@ export default {
   //Tekrarlı anonslar arasındaki zaman dilimi.
   //Her x saate bir tekrarı yap
   //Milisaniye cinsinden belirt
-  // 60000 = 5dk.
+  // 60000 = 1dk.
   REPEAT_PERIOT_TIME: 60000,
+
+  //Tekrarlı anonslarda ilk çalma saati
+  FIRST_PERIOT_TIME: "18:02",
 
   //SOAP QUERY
   SOAP_URL: "https://www.radiorder.online/ws/radi.asmx",
