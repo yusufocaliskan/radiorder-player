@@ -127,7 +127,7 @@ export const setAnonsRepeatTimes = async (AnonsId, repeat) => {
 
 //İlki saat arasındaki farkı bul
 export const getDifferenceBetweenTwoHours = (time1, time2) => {
-  return time1 - time2;
+  return Math.abs(time1 - time2);
 };
 
 export const whatIsTheDate = () => {

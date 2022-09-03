@@ -101,6 +101,8 @@ export class AudioProvider extends Component {
         new Date()
       )}T${new Date().toLocaleTimeString({
         hour12: false,
+        hour: "2-digit",
+        timeZone: "Europe/Istanbul",
       })}`,
     };
 
@@ -332,6 +334,19 @@ export class AudioProvider extends Component {
           //   anons[a].anons.Id
           // );
 
+          console.log(new Date(AnonsRepeats.repeatDate));
+          console.log(new Date(this.state.whatIsTheDate));
+          // console.log(
+          //   getDifferenceBetweenTwoHours(
+          //     new Date(AnonsRepeats.repeatDate).getTime(),
+          //     new Date(this.state.whatIsTheDate).getTime()
+          //   )
+          // );
+          const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
+            new Date("2022-09-03T15:04:29.000Z").getTime(),
+            new Date("2022-09-03T17:03:29.000Z").getTime()
+          );
+
           //Bu anons çalınması gerekiyor mu?
           //Şartları kontrol et.
           let isAnonsShowable =
@@ -357,20 +372,9 @@ export class AudioProvider extends Component {
               today >= start &&
               today <= end &&
               singItToday == true &&
-              AnonsRepeats.repeats <= repeatServer;
-            //AnonsRepeats.repeatDate < REPEAT_PERIOT_TIME
+              AnonsRepeats.repeats <= repeatServer &&
+              diffBetweenLastAnons >= REPEAT_PERIOT_TIME; //Son çalınan anonsun üzerinden x kadar geçti ise.
           }
-          console.log(new Date(AnonsRepeats.repeatDate));
-
-          console.log(this.state.whatIsTheDate);
-          console.log(
-            new Date(
-              getDifferenceBetweenTwoHours(
-                new Date().getTime(),
-                new Date(AnonsRepeats.repeatDate).getTime()
-              )
-            )
-          );
 
           //console.log(this.state.whatTimeIsIt);
 
