@@ -27,17 +27,8 @@ import { v4 as uuidv4 } from "uuid";
 import "react-native-get-random-values";
 import Realm, { BSON } from "realm";
 
-//Time
-//import moment from "moment";
-import moment from "moment-timezone";
-require("moment/locale/tr.js");
-require("moment/locale/en-gb.js");
-
 //Test Anonslar
 import TestAnons from "../TestAnons";
-import { readFileRes } from "react-native-fs";
-import { parseString } from "react-native-xml2js";
-
 export const AudioContext = createContext();
 
 export class AudioProvider extends Component {
@@ -446,7 +437,7 @@ export class AudioProvider extends Component {
           }
 
           anons_must_be_shown.push(anons_container);
-          console.log(showIt);
+          //console.log(showIt);
         }
       }
     }
@@ -876,12 +867,12 @@ export class AudioProvider extends Component {
   getAnonRepeatsFromDatabase = (anonsId) => {
     try {
       const date = getCurrentDate(new Date());
-      console.log(date);
+      //console.log(date);
       return this.state.AnonsDBConnection.write(() => {
         const repeats = this.state.AnonsDBConnection.objects(
           "AnonsDocs"
         ).filtered(`anonsId=${anonsId} && date='${date}'`);
-        console.log(repeats);
+        //console.log(repeats);
         if (repeats.length !== 0) {
           return repeats[0];
         }
