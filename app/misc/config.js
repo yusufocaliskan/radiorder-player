@@ -1,5 +1,3 @@
-import { gerCurrentDate } from "./Helper";
-console.log("---------CONFOOOOG-------------");
 let date = new Date().toLocaleTimeString().split(":").slice(0, -1);
 let date_string = `${date[0]}:${date[1]}`;
 
@@ -25,8 +23,8 @@ const configs = {
 };
 
 //Eğer ilk çalma saati şuanki saate küçükse
-//İlk tekraralı anonusun ilk çalma saatini şimdi+ 25dk ya eşitle.
-if (configs.FIRST_PERIOT_TIME < date_string) {
-  configs.FIRST_PERIOT_TIME = `${parseInt(date[0])}:${parseInt(date[1] + 25)}`;
-}
+//İlk tekraralı anonusun ilk çalma saatini şimdiye eşitle.
+// if (configs.FIRST_PERIOT_TIME < date_string) {
+//   configs.FIRST_PERIOT_TIME = `${parseInt(date[0])}:${parseInt(date[1])}`;
+// }
 export default configs;

@@ -12,7 +12,6 @@ import { convertTime } from "../misc/Helper";
 //Icon
 import { Entypo } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
-
 //Şarkının ilk harfını al.
 const getThumnailText = (filename) => filename[0];
 
@@ -34,30 +33,33 @@ const AudioListItem = ({
   isPlaying,
   activeListItem,
   item,
+  style,
 }) => {
   //console.log("---------------ITEM----------------");
   //  console.log(item);
   return (
     <>
       <View style={styles.container}>
-        <TouchableOpacity onPress={onAudioPress}>
+        <TouchableOpacity onPress={onAudioPress} style={style}>
           <View style={styles.leftContainer}>
-            <View
-              style={[
-                styles.thumbnail,
-                {
-                  backgroundColor: activeListItem
-                    ? color.RED
-                    : color.FONT_LARGE,
-                },
-              ]}
-            >
-              <Text style={styles.thumbnailText}>
-                {activeListItem
-                  ? renderIcon(isPlaying)
-                  : getThumnailText(title)}
-              </Text>
-            </View>
+            {item.FileType != "anons" ? (
+              <View
+                style={[
+                  styles.thumbnail,
+                  {
+                    backgroundColor: activeListItem
+                      ? color.RED
+                      : color.FONT_LARGE,
+                  },
+                ]}
+              >
+                <Text style={styles.thumbnailText}>
+                  {activeListItem
+                    ? renderIcon(isPlaying)
+                    : getThumnailText(title)}
+                </Text>
+              </View>
+            ) : null}
             <View style={styles.titleContainer}>
               <View style={styles.titleWithLabel}>
                 {item.FileType == "anons" ? (
@@ -70,7 +72,7 @@ const AudioListItem = ({
 
                 <View>
                   <Text numberOfLines={1} style={styles.title}>
-                    {title}
+                    {item.Ismi}
                   </Text>
                 </View>
               </View>
@@ -81,7 +83,60 @@ const AudioListItem = ({
                   <></>
                 )}
                 {item.FileType == "anons" ? (
-                  <Text style={styles.anonsDesc}>{item.Aciklama}</Text>
+                  <View>
+                    <Text style={styles.anonsDesc}>{item.Aciklama}</Text>
+                    <Text style={styles.anonsDesc}>
+                      <Ionicons
+                        name="checkmark"
+                        size={14}
+                        color={color.FONT_LIGHT}
+                      />{" "}
+                      Bir Sonraki Anons: {item.showIt.lastAnonsRepeatTime}
+                    </Text>
+                    <Text style={styles.anonsDesc}>
+                      <Ionicons
+                        name="checkmark"
+                        size={14}
+                        color={color.FONT_LIGHT}
+                      />{" "}
+                      Son Anons Saati: {item.showIt.lastAnonsRepeatTime}
+                    </Text>
+
+                    <Text style={styles.anonsDesc}>
+                      <Ionicons
+                        name="checkmark"
+                        size={14}
+                        color={color.FONT_LIGHT}
+                      />{" "}
+                      Başlangıç {item.showIt.Start}
+                    </Text>
+                    <Text style={styles.anonsDesc}>
+                      <Ionicons
+                        name="checkmark"
+                        size={14}
+                        color={color.FONT_LIGHT}
+                      />{" "}
+                      Bitiş {item.showIt.End}
+                    </Text>
+                    <Text style={styles.anonsDesc}>
+                      <Ionicons
+                        name="checkmark"
+                        size={14}
+                        color={color.FONT_LIGHT}
+                      />{" "}
+                      {`Bu gün ${item.showIt.anonsRepeated} kez anons yapıldı`}
+                    </Text>
+                    <Text style={styles.anonsDesc}>
+                      <Ionicons
+                        name="checkmark"
+                        size={14}
+                        color={color.FONT_LIGHT}
+                      />{" "}
+                      {!item.SecenekAciklama
+                        ? `Günde ${item.showIt.repeat} kez anons yapılıcak`
+                        : item.SecenekAciklama}
+                    </Text>
+                  </View>
                 ) : (
                   <></>
                 )}
@@ -178,7 +233,7 @@ const styles = StyleSheet.create({
   },
   anonsDesc: {
     fontSize: 11,
-    color: color.FONT_LARGE,
+    color: "#999",
     marginTop: 4,
   },
 });

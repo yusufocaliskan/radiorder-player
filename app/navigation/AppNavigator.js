@@ -5,6 +5,7 @@ import AudioList from "../screens/AudioList";
 import Player from "../screens/Player";
 import User from "../screens/User";
 import color from "../misc/color";
+import Anons from "../screens/Anons";
 
 //Iconları import et.
 import { Entypo } from "@expo/vector-icons";
@@ -54,7 +55,19 @@ const AppNavigator = () => {
         }}
       />
       <Tab.Screen
-        name={userData?.FSL?.Ismi || "Kullanıcı"}
+        name="Anons"
+        component={Anons}
+        context={context}
+        options={{
+          tabBarIcon: ({ color, size }) => {
+            return (
+              <Ionicons name="volume-high-outline" size={size} color={color} />
+            );
+          },
+        }}
+      />
+      <Tab.Screen
+        name={loadingState.userData?.FSL?.Ismi.split(" ")[0]}
         component={User}
         context={context}
         options={{

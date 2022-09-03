@@ -4,7 +4,6 @@ import * as MediaLibrary from "expo-media-library";
 import { Audio } from "expo-av";
 import {
   issetInArray,
-  howManyTimeSingToday,
   getCurrentDate,
   storeAudioForNextOpening,
   getDifferenceBetweenTwoHours,
@@ -22,7 +21,6 @@ import { XMLParser } from "fast-xml-parser";
 import axios from "axios";
 import config from "../misc/config";
 import { newAuthContext } from "../context/newAuthContext";
-//import { DBContext } from "./Database";
 import { v4 as uuidv4 } from "uuid";
 import "react-native-get-random-values";
 import Realm, { BSON } from "realm";
@@ -218,8 +216,8 @@ export class AudioProvider extends Component {
     });
 
     //Anonsları al
-    //const anons = JSON.parse(await AsyncStorage.getItem("anons"));
-    const anons = TestAnons;
+    const anons = JSON.parse(await AsyncStorage.getItem("anons"));
+    //const anons = TestAnons;
 
     //Şarkıları da al.
     const songs = JSON.parse(await AsyncStorage.getItem("songs"));
@@ -383,7 +381,6 @@ export class AudioProvider extends Component {
           //Bu gün yeterince çaldı mı?
 
           // console.log(isAnonsShowable);
-          // console.log(showIt);
 
           const anons_container = {
             albumId: this.state.audioFiles[i].albumId,
@@ -413,6 +410,7 @@ export class AudioProvider extends Component {
             KayitBilgisi: anons[a].task.KayitBilgisi,
             SecenekTipi: anons[a].task.SecenekTipi,
             Secenek: anons[a].task.Secenek,
+            Secenek: anons[a].task.Secenek,
             SecenekAciklama: anons[a].task.SecenekAciklama,
             Silindi: anons[a].task.Silindi,
             TekrarSayisi: anons[a].task.TekrarSayisi,
@@ -423,6 +421,7 @@ export class AudioProvider extends Component {
 
             //Anons Playlistte gösterilsin mi?
             Show: isAnonsShowable,
+            showIt: showIt,
           };
 
           //Eğer çaldı ise ekle

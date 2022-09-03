@@ -161,10 +161,13 @@ export class AudioList extends Component {
     setTimeout(async () => {
       const anonsPlaylist = this.context.anonsPlaylist;
       let isPlaying = null;
-      console.log(anonsPlaylist.Show);
+      console.log(anonsPlaylist);
       for (let i = 0; i < anonsPlaylist.length; i++) {
         //Herhangi bir anons çalmıyorsa
-        if (this.context.anonsSoundObj == null && anonsPlaylist.Show == true) {
+        if (
+          this.context.anonsSoundObj == null &&
+          anonsPlaylist[i].Show == true
+        ) {
           //Çalan bir şarkı varsa onu durdur
           if (this.context.soundObj != null) {
             pause(this.context.playbackObj);
@@ -223,7 +226,7 @@ export class AudioList extends Component {
     // setInterval(() => {
     //   console.log("Test");
     //   this.playAnons();
-    // }, 10000);
+    // }, 50000);
 
     //Profile resmini koy
     this.props.navigation.setOptions({

@@ -66,6 +66,7 @@ export const convertTime = (minutes) => {
   }
 };
 
+//Arayde var mı?
 export const issetInArray = (array, data) => {
   if (array.length != 0) {
     for (let i = 0; i < array.length; i++) {

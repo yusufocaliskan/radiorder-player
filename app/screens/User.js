@@ -19,7 +19,6 @@ const User = () => {
     //Mount olduğunda verileri storagetan al.
     //Üstte profile avatarın koy.
     navigation.setOptions({
-      title: loadingState.userData?.FSL?.Ismi,
       headerLeft: () => {
         return (
           <View style={{ marginLeft: 20 }}>
