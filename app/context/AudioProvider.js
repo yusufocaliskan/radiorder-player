@@ -104,6 +104,7 @@ export class AudioProvider extends Component {
         _id: "objectId",
         repeats: "int",
         anonsId: "int",
+        anonsName: "string",
         repeatDate: "mixed",
         date: "mixed",
       },
@@ -323,7 +324,8 @@ export class AudioProvider extends Component {
               today <= end &&
               singItToday == true &&
               currentHours == anonsHours &&
-              currentMinutes == anonsMinutes;
+              currentMinutes == anonsMinutes &&
+              AnonsRepeats.repeats <= repeatServer;
           }
 
           //Tekrarlı anons gün içinde ikince defa çalıyor
@@ -376,6 +378,7 @@ export class AudioProvider extends Component {
             repeat: repeatServer,
             anonsRepeated: AnonsRepeats.repeats,
             lastAnonsRepeatTime: AnonsRepeats.repeatDate,
+            anonsPeriotTime: config.REPEAT_PERIOT_TIME,
           };
 
           //Bu gün yeterince çaldı mı?
@@ -431,18 +434,16 @@ export class AudioProvider extends Component {
             this.writeAnonsToDatabase(
               anons[a].anons.Id,
               AnonsRepeats.repeats,
-              repeatServer
+              repeatServer,
+              anons[a].anons.AnonsIsmi
             );
           }
 
           anons_must_be_shown.push(anons_container);
-          //console.log(showIt);
+          console.log(showIt);
         }
       }
     }
-    //Toplam şarkı sayısını anons kadar eşit parçallara böl
-    //console.log(JSON.stringify(devideEqualParts(500, 2)));
-    //Anonsları karıştır
 
     //this.setState({ ...this.state, audioFiles: filtered_song });
     this.setState({
@@ -559,8 +560,8 @@ export class AudioProvider extends Component {
 
         this.state.totalSongInTheServer.ToplamSayfa;
         //console.log(this.state.totalSongInTheServer.ToplamSayfa);
-        //for (let i = 1; i <= this.state.totalSongInTheServer.ToplamSayfa; i++) {
-        for (let i = 1; i < 2; i++) {
+        for (let i = 1; i <= this.state.totalSongInTheServer.ToplamSayfa; i++) {
+          //for (let i = 1; i < 2; i++) {
           //Tüm şarkıları indir..
           this.getAllSongs(
             userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
@@ -640,7 +641,7 @@ export class AudioProvider extends Component {
               this.setState({ ...this, currentSongNumber: null });
 
               //TODO:START
-              //this.startToPlay();
+              this.startToPlay();
 
               //Save it to storage
               await AsyncStorage.setItem(
@@ -692,8 +693,8 @@ export class AudioProvider extends Component {
         this.setState({ ...this, audioFiles: [] });
 
         //TODO: START
-        // await this.getAudioFiles();
-        //await this.playyyy();
+        await this.getAudioFiles();
+        await this.playyyy();
       }
     }
   };
@@ -818,33 +819,41 @@ export class AudioProvider extends Component {
   };
 
   //Anons Tekrarlarını veri sakla.
-  writeAnonsToDatabase = (anonsId, repeats = 0, localRepeat) => {
+  writeAnonsToDatabase = (anonsId, repeats = 0, localRepeat, name) => {
     const date = getCurrentDate(new Date());
     //Check is there is any anons equal to anonsId
     try {
       let checkAnons = this.state.AnonsDBConnection.objects(
         "AnonsDocs"
-      ).filtered(`anonsId=${anonsId}`)[0];
+      ).filtered(`anonsId=${anonsId} && date='${date}'`);
 
       //Anons daha önce varsa
-      if (checkAnons == undefined || checkAnons == NaN) {
+      if (
+        typeof checkAnons == undefined ||
+        checkAnons == NaN ||
+        checkAnons.length == 0
+      ) {
+        //Yeni veriyi ekkle
+        let insert;
         this.state.AnonsDBConnection.write(() => {
           //YOKSA EKLE
-          const insert = this.state.AnonsDBConnection.create("AnonsDocs", {
+          insert = this.state.AnonsDBConnection.create("AnonsDocs", {
             _id: new BSON.ObjectID(),
-            repeats: repeats,
+            repeats: 1,
             anonsId: anonsId,
             repeatDate: this.state.whatIsTheDate,
             date: date,
+            anonsName: name,
           });
         });
       } else {
         //Güncelleme yap
+        console.log("---------//VAR GUNCELLE 2------------");
 
         this.state.AnonsDBConnection.write(() => {
-          let anons = this.state.AnonsDBConnection.objects(
+          const anons = this.state.AnonsDBConnection.objects(
             "AnonsDocs"
-          ).filtered(`anonsId=${anonsId}`)[0];
+          ).filtered(`anonsId=${anonsId} && date='${date}'`)[0];
           //VAR GUNCELLE
           //Güncellemeyi en fazla serverdaki kadar yap.
           if (anons.repeats < localRepeat + 1) {
@@ -866,12 +875,11 @@ export class AudioProvider extends Component {
   getAnonRepeatsFromDatabase = (anonsId) => {
     try {
       const date = getCurrentDate(new Date());
-      //console.log(date);
+
       return this.state.AnonsDBConnection.write(() => {
         const repeats = this.state.AnonsDBConnection.objects(
           "AnonsDocs"
         ).filtered(`anonsId=${anonsId} && date='${date}'`);
-        //console.log(repeats);
         if (repeats.length !== 0) {
           return repeats[0];
         }

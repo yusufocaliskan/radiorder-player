@@ -159,9 +159,10 @@ export class AudioList extends Component {
    */
   playAnons = async () => {
     setTimeout(async () => {
+      this.context.getAudioFiles();
       const anonsPlaylist = this.context.anonsPlaylist;
       let isPlaying = null;
-      console.log(anonsPlaylist);
+
       for (let i = 0; i < anonsPlaylist.length; i++) {
         //Herhangi bir anons çalmıyorsa
         if (
@@ -223,10 +224,10 @@ export class AudioList extends Component {
   componentDidMount = async () => {
     //Anonsu çal
     //TODO
-    // setInterval(() => {
-    //   console.log("Test");
-    //   this.playAnons();
-    // }, 50000);
+    setInterval(() => {
+      console.log("Anons Kontrol 1-2 1-2");
+      this.playAnons();
+    }, 75000);
 
     //Profile resmini koy
     this.props.navigation.setOptions({
@@ -248,9 +249,9 @@ export class AudioList extends Component {
 
     //TODO: Re-Check..
     //this.context.loadPreviousAudio();
-    // await this.context.getAudioFiles().then(async () => {
-    //   await this.startToPlay();
-    // });
+    await this.context.getAudioFiles().then(async () => {
+      await this.startToPlay();
+    });
   };
 
   //Login olduğunda şarkıyı çalmaya başla..

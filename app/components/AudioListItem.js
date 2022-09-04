@@ -118,6 +118,7 @@ const AudioListItem = ({
                       />{" "}
                       Bitiş {item.showIt.End}
                     </Text>
+
                     <Text style={styles.anonsDesc}>
                       <Ionicons
                         name="checkmark"
@@ -133,8 +134,8 @@ const AudioListItem = ({
                         color={color.FONT_LIGHT}
                       />{" "}
                       {!item.SecenekAciklama
-                        ? `Günde ${item.showIt.repeat} kez anons yapılıcak`
-                        : item.SecenekAciklama}
+                        ? `${item.showIt.repeat} kez anons yapılıcak`
+                        : item.SecenekAciklama.split(",").map((x) => `${x} `)}
                     </Text>
                   </View>
                 ) : (

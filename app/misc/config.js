@@ -10,10 +10,10 @@ const configs = {
   //Milisaniye cinsinden belirt
   // 60000 = 1dk.
   //21600000 = 6 saat
-  REPEAT_PERIOT_TIME: 21600000,
+  REPEAT_PERIOT_TIME: 120000,
 
   //Tekrarlı anonslarda ilk çalma saati
-  FIRST_PERIOT_TIME: "10:20",
+  FIRST_PERIOT_TIME: "03:00",
 
   //SOAP QUERY
   SOAP_URL: "https://www.radiorder.online/ws/radi.asmx",
@@ -24,7 +24,7 @@ const configs = {
 
 //Eğer ilk çalma saati şuanki saate küçükse
 //İlk tekraralı anonusun ilk çalma saatini şimdiye eşitle.
-// if (configs.FIRST_PERIOT_TIME < date_string) {
-//   configs.FIRST_PERIOT_TIME = `${parseInt(date[0])}:${parseInt(date[1])}`;
-// }
+if (configs.FIRST_PERIOT_TIME < date_string) {
+  configs.FIRST_PERIOT_TIME = `${parseInt(date[0])}:${parseInt(date[1])}`;
+}
 export default configs;

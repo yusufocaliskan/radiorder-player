@@ -15,6 +15,7 @@ import { newAuthContext } from "../context/newAuthContext";
 import { Avatar } from "@rneui/base";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import AudioListItem from "../components/AudioListItem";
+import color from "../misc/color";
 
 const Anons = () => {
   const audioContext = useContext(AudioContext);
@@ -79,7 +80,7 @@ const Anons = () => {
         anonsSoundObj,
         currentPlayingAnons,
       }) => {
-        console.log(anonsPlaylist);
+        //console.log(anonsPlaylist);
         return (
           <Screen>
             <FlatList
