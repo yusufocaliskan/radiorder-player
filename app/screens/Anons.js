@@ -80,7 +80,6 @@ const Anons = () => {
         anonsSoundObj,
         currentPlayingAnons,
       }) => {
-        //console.log(anonsPlaylist);
         return (
           <Screen>
             <FlatList

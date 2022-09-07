@@ -5,11 +5,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { Avatar } from "@rneui/base";
 import { AudioContext } from "../context/AudioProvider";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import AudioListItem from "../components/AudioListItem";
+import color from "../misc/color";
 import Screen from "../components/Screen";
 import {
   updateAnonsSingRepeatTimes,
@@ -224,10 +226,13 @@ export class AudioList extends Component {
   componentDidMount = async () => {
     //Anonsu çal
     //TODO
-    setInterval(() => {
-      console.log("Anons Kontrol 1-2 1-2");
-      this.playAnons();
-    }, 75000);
+    //Eğer indirme işlemi devam ediyorsa anons çalma.
+    // if (!this.context.isDownloading) {
+    //   setInterval(() => {
+    //     console.log("Anons Kontrol 1-2 1-2");
+    //     this.playAnons();
+    //   }, 75000);
+    // }
 
     //Profile resmini koy
     this.props.navigation.setOptions({
@@ -249,47 +254,50 @@ export class AudioList extends Component {
 
     //TODO: Re-Check..
     //this.context.loadPreviousAudio();
-    await this.context.getAudioFiles().then(async () => {
-      await this.startToPlay();
-    });
+    //çalma işlemi ve download işlemi yoksa
+
+    // if (!this.context.isDownloading && this.context.soundObj == null) {
+    //   await this.context.startToPlay();
+    // }
   };
 
-  //Login olduğunda şarkıyı çalmaya başla..
-  startToPlay = async () => {
-    const { soundObj, currentAudio, updateState, audioFiles } = this.context;
+  // //Login olduğunda şarkıyı çalmaya başla..
+  // startToPlay = async () => {
+  //   const { soundObj, currentAudio, updateState, audioFiles } = this.context;
 
-    const audio = audioFiles[0];
+  //   const audio = audioFiles[0];
 
-    if (audio && soundObj == null) {
-      //Playlisti oynatmaya başla
-      //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
-      const playbackObj = new Audio.Sound();
+  //   if (audio && soundObj == null) {
+  //     console.log("---BURA");
+  //     //Playlisti oynatmaya başla
+  //     //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
+  //     const playbackObj = new Audio.Sound();
 
-      //Controllerdan çağır.
-      const status = await play(playbackObj, audio.uri);
-      const index = 0;
+  //     //Controllerdan çağır.
+  //     const status = await play(playbackObj, audio.uri);
+  //     const index = 0;
 
-      //Yeni durumu state ata ve ilerlememesi için return'le
-      updateState(this.context, {
-        currentAudio: audio,
-        playbackObj: playbackObj,
-        soundObj: status,
-        currentAudioIndex: index,
+  //     //Yeni durumu state ata ve ilerlememesi için return'le
+  //     updateState(this.context, {
+  //       currentAudio: audio,
+  //       playbackObj: playbackObj,
+  //       soundObj: status,
+  //       currentAudioIndex: index,
 
-        //Çalma-Durdurma iconları için
-        isPlaying: true,
-      });
+  //       //Çalma-Durdurma iconları için
+  //       isPlaying: true,
+  //     });
 
-      //Slider bar için statuyü güncelle
-      playbackObj.setOnPlaybackStatusUpdate(
-        this.context.onPlaybackStatusUpdate
-      );
+  //     //Slider bar için statuyü güncelle
+  //     playbackObj.setOnPlaybackStatusUpdate(
+  //       this.context.onPlaybackStatusUpdate
+  //     );
 
-      //Application açıldığında
-      //son çalınna şarkıyı bulmak için kullanırı
-      storeAudioForNextOpening(audio, index);
-    }
-  };
+  //     //Application açıldığında
+  //     //son çalınna şarkıyı bulmak için kullanırı
+  //     storeAudioForNextOpening(audio, index);
+  //   }
+  // };
 
   //Şarkıyı listele.
   rowRenderer = (type, item, index, extendedState) => {
@@ -345,6 +353,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingTop: 20,
+  },
+  spinnerView: {
+    backgroundColor: color.APP_BG,
+    padding: 50,
+  },
+  spinnerText: {
+    color: color.WHITE,
+    textAlign: "center",
+  },
+  spinner: {
+    marginBottom: 20,
   },
 });
 

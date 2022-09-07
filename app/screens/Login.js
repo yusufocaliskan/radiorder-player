@@ -76,9 +76,7 @@ const Login = () => {
           //Sayfaya gönder
           //Storage'a verileri koy
           singIn(jObj);
-
-          //İlk şarkıdan çalmaya başla.
-          //startToPlay();
+          //audioContext.getSoundsAndAnonsFromServer();
           await AsyncStorage.setItem("username", userName);
           await AsyncStorage.setItem("password", password);
 

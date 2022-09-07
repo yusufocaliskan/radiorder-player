@@ -23,8 +23,11 @@ const configs = {
 };
 
 //Eğer ilk çalma saati şuanki saate küçükse
-//İlk tekraralı anonusun ilk çalma saatini şimdiye eşitle.
+//İlk tekraralı anonusun ilk çalma saatini şimdiye +1 saate eşitle.
 if (configs.FIRST_PERIOT_TIME < date_string) {
+  let currentTime = new Date().getTime();
+  let updatedTime = new Date(currentTime + 1 * 60 * 60 * 1000);
+
   configs.FIRST_PERIOT_TIME = `${parseInt(date[0])}:${parseInt(date[1])}`;
 }
 export default configs;

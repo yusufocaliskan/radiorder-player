@@ -16,7 +16,6 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import PlayerButton from "../components/PlayerButton";
 import { AudioContext } from "../context/AudioProvider";
 import { pause, play, playNext, resume } from "../misc/AudioController";
-import { ComponentCompat } from "recyclerlistview";
 import { storeAudioForNextOpening } from "../misc/Helper";
 import { useNavigation } from "@react-navigation/native";
 import { Avatar } from "@rneui/base";
@@ -66,7 +65,7 @@ const Player = () => {
     //Play#1 : İlk çalıyor.
     if (context.soundObj === null) {
       const audio = context.currentAudio;
-      const status = await play(context.playbackObj, audio.uri);
+      const status = await play(context.playbackObj, audio?.uri);
 
       context.playbackObj.setOnPlaybackStatusUpdate(
         context.setPlaybackStatusUpdate
@@ -114,12 +113,12 @@ const Player = () => {
 
     if (!isLoaded && !isLastAudio) {
       index = context.currentAudioIndex + 1;
-      status = await play(context.playbackObj, audio.uri);
+      status = await play(context.playbackObj, audio?.uri);
     }
 
     if (isLoaded && !isLastAudio) {
       index = context.currentAudioIndex + 1;
-      status = await playNext(context.playbackObj, audio.uri);
+      status = await playNext(context.playbackObj, audio?.uri);
     }
 
     if (isLastAudio) {
@@ -127,9 +126,9 @@ const Player = () => {
       setFinish(true);
       audio = context.audioFiles[index];
       if (isLoaded) {
-        status = await playNext(context.playbackObj, audio.uri);
+        status = await playNext(context.playbackObj, audio?.uri);
       } else {
-        status = await play(context.playbackObj, audio.uri);
+        status = await play(context.playbackObj, audio?.uri);
       }
     }
 
@@ -159,12 +158,12 @@ const Player = () => {
 
     if (!isLoaded && !isFirstAudio) {
       index = context.currentAudioIndex - 1;
-      status = await play(context.playbackObj, audio.uri);
+      status = await play(context.playbackObj, audio?.uri);
     }
 
     if (isLoaded && !isFirstAudio) {
       index = context.currentAudioIndex - 1;
-      status = await playNext(context.playbackObj, audio.uri);
+      status = await playNext(context.playbackObj, audio?.uri);
     }
 
     if (isFirstAudio) {
@@ -172,9 +171,9 @@ const Player = () => {
 
       audio = context.audioFiles[index];
       if (isLoaded) {
-        status = await playNext(context.playbackObj, audio.uri);
+        status = await playNext(context.playbackObj, audio?.uri);
       } else {
-        status = await play(context.playbackObj, audio.uri);
+        status = await play(context.playbackObj, audio?.uri);
       }
     }
 
@@ -209,7 +208,7 @@ const Player = () => {
         </View>
         <View style={styles.audioPlayerContainer}>
           <Text numberOfLines={1} style={styles.audioName}>
-            {context.currentAudio.filename}
+            {context.currentAudio?.Ismi.split("_")[1]}
           </Text>
           <Slider
             style={{ width: width, height: 20, padding: 20 }}

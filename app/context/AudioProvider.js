@@ -1,5 +1,5 @@
 import React, { useContext, Component, createContext } from "react";
-import { Text, View, Alert } from "react-native";
+import { Text, StyleSheet, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import { Audio } from "expo-av";
 import {
@@ -7,7 +7,6 @@ import {
   getCurrentDate,
   storeAudioForNextOpening,
   getDifferenceBetweenTwoHours,
-  setAnonsRepeatTimes,
 } from "../misc/Helper";
 import RNFetchBlob from "rn-fetch-blob";
 import DownloadingGif from "../components/DownloadingGif";
@@ -24,9 +23,11 @@ import { newAuthContext } from "../context/newAuthContext";
 import { v4 as uuidv4 } from "uuid";
 import "react-native-get-random-values";
 import Realm, { BSON } from "realm";
+import { AnonsShema, AppSettings } from "../database/DatabaseShemas";
 
 //Test Anonslar
 import TestAnons from "../TestAnons";
+import color from "../misc/color";
 export const AudioContext = createContext();
 
 export class AudioProvider extends Component {
@@ -51,6 +52,7 @@ export class AudioProvider extends Component {
       currentAudio: {},
       isPlaying: false,
       currentAudioIndex: null,
+      howManySongPlayed: 0,
 
       //Slider için
       playbackPosition: null,
@@ -79,12 +81,9 @@ export class AudioProvider extends Component {
       currentPlaylist: [],
       anonsPlaylist: [],
 
-      //time
-      // whatTimeIsIt: moment().locale("tr").utcOffset("+03:00").format("h:m:s"),
-      // whatTheDateIs: moment().utcOffset("+03:00").format("YYYY-MM-DD"),
-      // whatTimeWithHours: moment().utcOffset("+03:00").format("YYYY-MM-DD h:m"),
-
-      AnonsDBConnection: null,
+      //Anons Database bağlantısı
+      DBConnection: null,
+      AppSettingsConnection: null,
 
       //Güncel tarih
       whatIsTheDate: `${getCurrentDate(
@@ -97,18 +96,6 @@ export class AudioProvider extends Component {
     };
 
     this.totalAudioCount = 0;
-
-    this.AnonsShema = {
-      name: "AnonsDocs",
-      properties: {
-        _id: "objectId",
-        repeats: "int",
-        anonsId: "int",
-        anonsName: "string",
-        repeatDate: "mixed",
-        date: "mixed",
-      },
-    };
   }
 
   //Hata mesajı göster.
@@ -151,41 +138,63 @@ export class AudioProvider extends Component {
    */
   getPermission = async () => {
     //Erişim al.
-    const permission = await MediaLibrary.getPermissionsAsync();
+    this.state.DBConnection.write(() => {
+      let appSettings = this.state.DBConnection.objects("AppSettings");
+      this.state.DBConnection.delete(appSettings);
+      appSettings = null;
+    });
 
-    //İzin verildiy mi?
-    if (permission.granted) {
-      //izin verildi tüm şarkıları aall
-      this.getAudioFiles();
-    }
+    const permissionStored = this.state.DBConnection.objects("AppSettings")[0];
 
-    //İzin verilmedi ama yeniden sorulabilir.
-    //O zaman soralım!
-    if (!permission.granted && permission.canAskAgain) {
-      const { status, canAskAgain } =
-        await MediaLibrary.requestPermissionsAsync();
+    if (
+      !permissionStored ||
+      typeof permissionStored.AudioFilePermission == undefined
+    ) {
+      const permission = await MediaLibrary.getPermissionsAsync();
 
-      //Bize izin vermedi!
-      if (status === "denied" && canAskAgain) {
-        //Bir hata göster
-        this.permissionAlert();
+      //İzin verildiy mi?
+      if (permission.granted) {
+        //izin verildi tüm şarkıları aall
+        this.savePermission("granted");
       }
-
-      //Izin verildi..
-      if (status === "granted") {
-        //Tüm şarkıları all..
-        this.getAudioFiles();
-      }
-
-      if (!permission.canAskAgain && !permission.granted) {
+      if (!permission.granted && !permission.canAskAgain) {
         this.setState({ ...this.state, permissionError: true });
+        return;
       }
+      //İzin verilmedi ama yeniden sorulabilir.
+      //O zaman soralım!
+      if (!permission.granted && permission.canAskAgain) {
+        const { status, canAskAgain } =
+          await MediaLibrary.requestPermissionsAsync();
 
-      //izin verilmedi ve yeniden sormamızı mı engelledi!!
-      if (status === "denied" && !canAskAgain) {
-        //Ona bir şeyler söyle..
-        this.setState({ ...this.state, permissionError: true });
+        //Bize izin vermedi!
+        if (status === "denied" && canAskAgain) {
+          //Bir hata göster
+          this.permissionAlert();
+        }
+
+        //Izin verildi..
+        if (status === "granted") {
+          //Tüm şarkıları all..
+          this.savePermission("granted");
+        }
+
+        if (!permission.canAskAgain && !permission.granted) {
+          this.setState({ ...this.state, permissionError: true });
+          this.savePermission("denied");
+        }
+
+        //izin verilmedi ve yeniden sormamızı mı engelledi!!
+        if (status === "denied" && !canAskAgain) {
+          //Ona bir şeyler söyle..
+          this.setState({ ...this.state, permissionError: true });
+          this.savePermission("denied");
+        }
+
+        //Database kayıt et.
+        //Save the result
       }
+      //AsyncStorage.setItem("permission", "granted");
     }
   };
 
@@ -194,7 +203,6 @@ export class AudioProvider extends Component {
    */
   getAudioFiles = async () => {
     const { dataProvider, audioFiles } = this.state;
-
     let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
 
     //Tüm şarkıları listele.
@@ -234,7 +242,7 @@ export class AudioProvider extends Component {
       const file_name = this.state.audioFiles[i].filename;
 
       //Ses
-      for (let d = 0; d < songs.length; d++) {
+      for (let d = 0; d < songs?.length; d++) {
         const dosya_name = songs[d].DosyaIsmi;
         if (`sound_${dosya_name}` == file_name) {
           filtered_song.push({
@@ -269,7 +277,7 @@ export class AudioProvider extends Component {
       }
 
       //Anons
-      for (let a = 0; a < anons.length; a++) {
+      for (let a = 0; a < anons?.length; a++) {
         const dosya_name = anons[a].anons.DosyaIsmi;
         if (`anons_${dosya_name}` == file_name) {
           const start = getCurrentDate(
@@ -294,9 +302,9 @@ export class AudioProvider extends Component {
 
           let singItToday = issetInArray(option, currentDay);
 
-          // this.state.AnonsDBConnection.write(() => {
-          //   let anons = this.state.AnonsDBConnection.objects("AnonsDocs");
-          //   this.state.AnonsDBConnection.delete(anons);
+          // this.state.DBConnection.write(() => {
+          //   let anons = this.state.DBConnection.objects("AnonsDocs");
+          //   this.state.DBConnection.delete(anons);
           //   anons = null;
           // });
 
@@ -440,7 +448,7 @@ export class AudioProvider extends Component {
           }
 
           anons_must_be_shown.push(anons_container);
-          console.log(showIt);
+          //console.log(showIt);
         }
       }
     }
@@ -465,7 +473,8 @@ export class AudioProvider extends Component {
    * @param {string} password kullanıcı şifresi
    */
   checkHowManySongsInTheServer = async (groupCode, username, password) => {
-    const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    try {
+      const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <soap:Body>
         <KullnaiciSarkiGuncellemeBilgisi xmlns="http://tempuri.org/">
              <SertifikaBilgileri>
@@ -484,30 +493,29 @@ export class AudioProvider extends Component {
       </soap:Body>
       </soap:Envelope>`;
 
-    await axios
-      .post(config.SOAP_URL, xml, {
-        headers: { "Content-Type": "text/xml" },
-      })
-      .then((resData) => {
-        const options = {
-          ignoreNameSpace: false,
-          ignoreAttributes: false,
-        };
+      await axios
+        .post(config.SOAP_URL, xml, {
+          headers: { "Content-Type": "text/xml" },
+        })
+        .then((resData) => {
+          const options = {
+            ignoreNameSpace: false,
+            ignoreAttributes: false,
+          };
 
-        const parser = new XMLParser(options);
-        const parsedData = parser.parse(
-          resData.data.match(
-            /<KullnaiciSarkiGuncellemeBilgisiResult>([\s\S]*)<\/KullnaiciSarkiGuncellemeBilgisiResult>/im
-          )[1]
-        );
+          const parser = new XMLParser(options);
+          const parsedData = parser.parse(
+            resData.data.match(
+              /<KullnaiciSarkiGuncellemeBilgisiResult>([\s\S]*)<\/KullnaiciSarkiGuncellemeBilgisiResult>/im
+            )[1]
+          );
 
-        this.setState({ ...this, totalSongInTheServer: parsedData });
-        return parsedData;
-      })
-
-      .catch((error) => {
-        console.error(`SOAP FAIL: ${error}`);
-      });
+          this.setState({ ...this, totalSongInTheServer: parsedData });
+          return parsedData;
+        });
+    } catch (error) {
+      console.error(`SOAP FAIL: ${error}`);
+    }
   };
 
   /**
@@ -520,7 +528,8 @@ export class AudioProvider extends Component {
     const password = await AsyncStorage.getItem("password");
     //const totalUserSong = JSON.parse(await AsyncStorage.getItem("userSongs"));
 
-    const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    try {
+      const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <soap:Body>
         <KullaniciGrupListesi xmlns="http://tempuri.org/">
             <SertifikaBilgileri>
@@ -533,55 +542,67 @@ export class AudioProvider extends Component {
     </soap:Body>
 </soap:Envelope>`;
 
-    axios
-      .post(config.SOAP_URL, xml, {
-        headers: { "Content-Type": "text/xml" },
-      })
-      .then((resData) => {
-        const options = {
-          ignoreNameSpace: false,
-          ignoreAttributes: false,
-        };
+      axios
+        .post(config.SOAP_URL, xml, {
+          headers: { "Content-Type": "text/xml" },
+        })
+        .then((resData) => {
+          const options = {
+            ignoreNameSpace: false,
+            ignoreAttributes: false,
+          };
 
-        const parser = new XMLParser(options);
+          const parser = new XMLParser(options);
 
-        const parsedData = parser.parse(
-          resData.data.match(/<GrupPlasylist>([\s\S]*)<\/GrupPlasylist>/im)[1]
-        );
+          const parsedData = parser.parse(
+            resData.data.match(/<GrupPlasylist>([\s\S]*)<\/GrupPlasylist>/im)[1]
+          );
 
-        return parsedData;
-      })
-      .then(async (userGroupInfoFromServer) => {
-        const totalSongFromServer = await this.checkHowManySongsInTheServer(
-          userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
-          username,
-          password
-        );
-
-        this.state.totalSongInTheServer.ToplamSayfa;
-        //console.log(this.state.totalSongInTheServer.ToplamSayfa);
-        for (let i = 1; i <= this.state.totalSongInTheServer.ToplamSayfa; i++) {
-          //for (let i = 1; i < 2; i++) {
-          //Tüm şarkıları indir..
-          this.getAllSongs(
+          return parsedData;
+        })
+        .then(async (userGroupInfoFromServer) => {
+          const totalSongFromServer = await this.checkHowManySongsInTheServer(
             userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
             username,
-            password,
-            i
+            password
           );
-        }
-      })
 
-      .catch((error) => {
-        console.error(`SOAP FAIL: ${error}`);
-      });
+          //console.log(this.state.totalSongInTheServer.ToplamSayfa);
+          // for (
+          //   let i = 1;
+          //   i <= this.state.totalSongInTheServer.ToplamSayfa;
+          //   i++
+          // ) {
+          let waitSome = 0;
+          for (let i = 1; i <= 3; i++) {
+            //İlk sayfadan sonra 5dk bekle
+            if (i > 1) {
+              waitSome = 60000;
+            }
+            //Her sayfa başına 1dk bekledikten sonra indirme işlemini yap.
+            setTimeout(() => {
+              this.getAllSongs(
+                userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
+                username,
+                password,
+                i
+              );
+              console.log("----------------", i);
+              this.startToPlay();
+            }, waitSome);
+          }
+        });
+    } catch (error) {
+      console.error(`SOAP FAIL: ${error}`);
+    }
   };
 
   /**
    * Serverdan playlisti alır ve download eder.
    */
   getAllSongs = async (groupCode, username, password, pageNo = 1) => {
-    const xml = `<?xml version="1.0" encoding="utf-8"?>
+    try {
+      const xml = `<?xml version="1.0" encoding="utf-8"?>
     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
         <soap:Body>
             <KullnaiciFSLSarkiListesiGuncelleme xmlns="http://tempuri.org/"> 
@@ -599,65 +620,71 @@ export class AudioProvider extends Component {
         </soap:Body>
     </soap:Envelope>`;
 
-    axios
-      .post(config.SOAP_URL, xml, {
-        headers: { "Content-Type": "text/xml" },
-      })
-      .then(async (resData) => {
-        const options = {
-          ignoreNameSpace: false,
-          ignoreAttributes: false,
-        };
+      axios
+        .post(config.SOAP_URL, xml, {
+          headers: { "Content-Type": "text/xml" },
+        })
+        .then(async (resData) => {
+          const options = {
+            ignoreNameSpace: false,
+            ignoreAttributes: false,
+          };
 
-        //Seç
-        const parser = new XMLParser(options);
-        const parsedData = parser.parse(
-          resData.data.match(
-            /<KullnaiciFSLSarkiListesiGuncellemeResult>([\s\S]*)<\/KullnaiciFSLSarkiListesiGuncellemeResult>/im
-          )[1]
-        );
+          //Seç
+          const parser = new XMLParser(options);
+          const parsedData = parser.parse(
+            resData.data.match(
+              /<KullnaiciFSLSarkiListesiGuncellemeResult>([\s\S]*)<\/KullnaiciFSLSarkiListesiGuncellemeResult>/im
+            )[1]
+          );
 
-        //Şarkıları Playliste ekle
+          //Şarkıları Playliste ekle
 
-        //Hepsini indir.
-        for (let i = 0; i <= parsedData.Liste.WsSarkiDto.length; i++) {
-          this.setState({ ...this, currentSongNumber: i });
+          //Hepsini indir.
+          for (let i = 0; i <= parsedData.Liste.WsSarkiDto.length; i++) {
+            this.setState({ ...this, currentSongNumber: i });
+            console.log(i);
 
-          //Push it into the array
-          this.state.downloadedSongs.push(parsedData.Liste.WsSarkiDto[i]);
+            //Push it into the array
+            this.state.downloadedSongs.push(parsedData.Liste.WsSarkiDto[i]);
 
-          if (parsedData.Liste.WsSarkiDto[i]) {
             //Serverdan cihaza indir.
-            await this.DownloadSoundFromServer(
-              parsedData.Liste.WsSarkiDto[i],
-              "sound"
-            );
-
-            //Download işlemi bittikten sonra Çalma Listesini güncelle
-            if (i == parsedData.Liste.WsSarkiDto.length - 1) {
-              //Download işlemi bitti
-              this.setState({ ...this, isDownloading: false });
-              this.setState({ ...this, currentDownloadedSong: "" });
-              this.setState({ ...this, currentSongNumber: null });
-
-              //TODO:START
-              this.startToPlay();
-
-              //Save it to storage
-              await AsyncStorage.setItem(
-                "songs",
-                JSON.stringify(parsedData.Liste.WsSarkiDto)
+            if (parsedData.Liste.WsSarkiDto[i]) {
+              //Download işlemini başlat
+              await this.DownloadSoundFromServer(
+                parsedData.Liste.WsSarkiDto[i],
+                "sound"
               );
+
+              //Download işlemi bittikten sonra Çalma Listesini güncelle
+              if (i == parsedData.Liste.WsSarkiDto.length - 1) {
+                //Download işlemi bitti
+                this.setState({ ...this, isDownloading: false });
+                this.setState({ ...this, currentDownloadedSong: "" });
+                this.setState({ ...this, currentSongNumber: null });
+
+                //TODO:START
+                //await this.getAudioFiles();
+                //Dosya varsa çalmaya çalış.
+                //eğer çalmıyorsa tabi.
+                this.setState({ ...this.state, audioFiles: [] });
+                //this.startToPlay();
+                console.log("----WVVVDDERR???---");
+
+                //Save it to storage
+                await AsyncStorage.setItem(
+                  "songs",
+                  JSON.stringify(parsedData.Liste.WsSarkiDto)
+                );
+              }
             }
           }
-        }
 
-        return parsedData;
-      })
-
-      .catch((error) => {
-        console.error(`SOAP FAIL: ${error}`);
-      });
+          return parsedData;
+        });
+    } catch (error) {
+      console.error(`SOAP FAIL: ${error}`);
+    }
   };
 
   /**
@@ -665,37 +692,48 @@ export class AudioProvider extends Component {
    * @param {object} sounds indirilicek şarkı
    */
   DownloadSoundFromServer = async (sounds, downloadType = "sound") => {
-    const { DownloadDir } = RNFetchBlob.fs.dirs;
+    try {
+      const { DownloadDir } = RNFetchBlob.fs.dirs;
 
-    let soundName = `${DownloadDir}/${downloadType}_${sounds?.DosyaIsmi}`;
+      let soundName = `${DownloadDir}/${downloadType}_${sounds?.DosyaIsmi}`;
 
-    const options = {
-      fileCache: true,
-      addAndroidDownloads: {
-        useDownloadManager: true,
-        notification: false,
-        path: soundName,
-        description: "Downloading.",
-      },
-    };
+      const options = {
+        fileCache: true,
+        addAndroidDownloads: {
+          useDownloadManager: true,
+          notification: false,
+          path: soundName,
+          description: "Downloading.",
+        },
+      };
 
-    //Dosya yok is indir.
-    //Dosyayı daha önce indirmişsek, bir şey yapma..
-    if (!(await RNFetchBlob.fs.exists(soundName))) {
-      //Şarkıyı indir..
-      if (sounds.SesLink) {
-        await RNFetchBlob.config(options).fetch("GET", sounds.SesLink);
+      //Dosya yok is indir.
+      //Dosyayı daha önce indirmişsek, bir şey yapma..
+      if (!(await RNFetchBlob.fs.exists(soundName))) {
+        //Şarkıyı indir..
+        if (sounds.SesLink) {
+          await RNFetchBlob.config(options).fetch("GET", sounds.SesLink);
 
-        this.setState({ ...this, isDownloading: true });
-        this.setState({ ...this, currentDownloadedSong: sounds?.Ismi });
+          this.setState({ ...this, isDownloading: true });
+          this.setState({
+            ...this,
+            currentDownloadedSong:
+              downloadType == "anons"
+                ? sounds?.AnonsIsmi
+                : sounds?.Ismi.split("_")[1],
+          });
 
-        //Listeyi boşalt ve çal
-        this.setState({ ...this, audioFiles: [] });
+          //Listeyi boşalt ve çal
+          //this.setState({ ...this, audioFiles: [] });
 
-        //TODO: START
-        await this.getAudioFiles();
-        await this.playyyy();
+          //TODO: START
+          //await this.getAudioFiles();
+          //this.setState({ ...this.state, audioFiles: [] });
+          //this.startToPlay();
+        }
       }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -722,88 +760,90 @@ export class AudioProvider extends Component {
         </KullaniciAnonsListesi>
     </soap:Body>
 </soap:Envelope>`;
+    try {
+      axios
+        .post(config.SOAP_URL, xml, {
+          headers: { "Content-Type": "text/xml" },
+        })
+        .then(async (resData) => {
+          const options = {
+            ignoreNameSpace: false,
+            ignoreAttributes: false,
+          };
 
-    axios
-      .post(config.SOAP_URL, xml, {
-        headers: { "Content-Type": "text/xml" },
-      })
-      .then(async (resData) => {
-        const options = {
-          ignoreNameSpace: false,
-          ignoreAttributes: false,
-        };
+          const parser = new XMLParser(options);
 
-        const parser = new XMLParser(options);
+          //Anonslar
+          const anons = parser.parse(
+            resData.data.match(
+              /<KullaniciAnonsListesiResult>([\s\S]*)<\/KullaniciAnonsListesiResult>/im
+            )[1]
+          );
 
-        //Anonslar
-        const anons = parser.parse(
-          resData.data.match(
-            /<KullaniciAnonsListesiResult>([\s\S]*)<\/KullaniciAnonsListesiResult>/im
-          )[1]
-        );
+          return anons;
+        })
+        .then(async (allAnons) => {
+          const anonsResult = [];
 
-        return anons;
-      })
-      .then(async (allAnons) => {
-        const anonsResult = [];
+          anonsResult[0] = allAnons.AnonsListesi.wsAnonsDto;
+          anonsResult[1] = allAnons.GorevListesi.AnonsGorevTanimDto;
 
-        anonsResult[0] = allAnons.AnonsListesi.wsAnonsDto;
-        anonsResult[1] = allAnons.GorevListesi.AnonsGorevTanimDto;
-
-        let theGrader =
-          anonsResult[0].length > anonsResult[1].length ? true : false;
-        let theLooper = theGrader ? anonsResult[0] : anonsResult[1];
-
-        const pretty_anons = [];
-        try {
-          for (let i = 0; i < theLooper.length; i++) {
+          const pretty_anons = [];
+          for (let i = 0; i < anonsResult[0].length; i++) {
             //LoperGorevler
-            if (!theLooper[i].Isim) {
-              for (let a = 0; a < anonsResult[1].length; a++) {
-                if (
-                  anonsResult[0][i].GrupTanimlamaKodu ==
-                  anonsResult[1][a].GrupTanimlamaKodu
-                ) {
-                  pretty_anons.push({
-                    anons: anonsResult[0][i],
-                    task: anonsResult[1][a],
-                  });
-                }
+            for (let a = 0; a <= anonsResult[1].length; a++) {
+              if (
+                anonsResult[0][i]?.GrupTanimlamaKodu ==
+                anonsResult[1][a]?.GrupTanimlamaKodu
+              ) {
+                pretty_anons.push({
+                  anons: anonsResult[0][i],
+                  task: anonsResult[1][a],
+                });
               }
             }
           }
-        } catch (error) {
-          //console.log("Bir fazla görevvv");
-        }
-        // console.log("--------------PRETYYY----------------------");
-        // console.log(pretty_anons);
+          // console.log("--------------PRETYYY----------------------");
+          // console.log(pretty_anons);
 
-        for (let p = 0; p < pretty_anons.length; p++) {
-          if (pretty_anons[p].anons != "undefined") {
-            await this.DownloadSoundFromServer(pretty_anons[p].anons, "anons");
+          for (let p = 0; p < pretty_anons?.length; p++) {
+            if (pretty_anons[p].anons != "undefined") {
+              await this.DownloadSoundFromServer(
+                pretty_anons[p].anons,
+                "anons"
+              ).then(async () => {
+                //Anons Download işlemi bittiyse
+                if (p == pretty_anons?.length - 1) {
+                  //Download işlemi bitti
+                  this.setState({ ...this, isDownloading: false });
+                  this.setState({ ...this, currentDownloadedSong: "" });
+                  this.setState({ ...this, currentSongNumber: null });
+
+                  //TODO:START
+                  //this.getAudioFiles();
+                  //this.startToPlay();
+
+                  //Save it to storage
+                  await AsyncStorage.setItem(
+                    "anons",
+                    JSON.stringify(pretty_anons)
+                  );
+                }
+              });
+            }
           }
-        }
 
-        //Anons array'ini oluştur.
-        //console.log(pretty_anons);
-        AsyncStorage.setItem("anons", JSON.stringify(pretty_anons));
-        //console.log(this.state.playlist);
-      })
-
-      .catch((error) => {
-        console.error(`SOAP FAIL: ${error}`);
-      });
-  };
-
-  playyyy = async () => {
-    //  await this.getAudioFiles();
-    await this.startToPlay();
+          //Anons array'ini oluştur.
+          //console.log(pretty_anons);
+          //AsyncStorage.setItem("anons", JSON.stringify(pretty_anons));
+          //console.log(this.state.playlist);
+        });
+    } catch (e) {}
   };
 
   getSoundsAndAnonsFromServer = async () => {
     //Ses dosyalarını serverdan indir.
     await this.getUserGroupListFromServer();
-
     await this.getAllAnonsFromServer();
 
     //console.log(this.state.playlist);
@@ -812,8 +852,15 @@ export class AudioProvider extends Component {
   //Aanons Realm'e bağlan
   connectToAnonsDatabaseDoc = async () => {
     //Anonslar için bir bağlantı aç
-    this.state.AnonsDBConnection = await Realm.open({
-      schema: [this.AnonsShema],
+    this.state.DBConnection = await Realm.open({
+      schema: [AnonsShema, AppSettings],
+      deleteRealmIfMigrationNeeded: true,
+    });
+  };
+
+  connectToAppSettingsDB = async () => {
+    this.state.AppSettingsConnection = await Realm.open({
+      schema: [AppSettings],
       deleteRealmIfMigrationNeeded: true,
     });
   };
@@ -823,9 +870,9 @@ export class AudioProvider extends Component {
     const date = getCurrentDate(new Date());
     //Check is there is any anons equal to anonsId
     try {
-      let checkAnons = this.state.AnonsDBConnection.objects(
-        "AnonsDocs"
-      ).filtered(`anonsId=${anonsId} && date='${date}'`);
+      let checkAnons = this.state.DBConnection.objects("AnonsDocs").filtered(
+        `anonsId=${anonsId} && date='${date}'`
+      );
 
       //Anons daha önce varsa
       if (
@@ -835,9 +882,9 @@ export class AudioProvider extends Component {
       ) {
         //Yeni veriyi ekkle
         let insert;
-        this.state.AnonsDBConnection.write(() => {
+        this.state.DBConnection.write(() => {
           //YOKSA EKLE
-          insert = this.state.AnonsDBConnection.create("AnonsDocs", {
+          insert = this.state.DBConnection.create("AnonsDocs", {
             _id: new BSON.ObjectID(),
             repeats: 1,
             anonsId: anonsId,
@@ -848,12 +895,10 @@ export class AudioProvider extends Component {
         });
       } else {
         //Güncelleme yap
-        console.log("---------//VAR GUNCELLE 2------------");
-
-        this.state.AnonsDBConnection.write(() => {
-          const anons = this.state.AnonsDBConnection.objects(
-            "AnonsDocs"
-          ).filtered(`anonsId=${anonsId} && date='${date}'`)[0];
+        this.state.DBConnection.write(() => {
+          const anons = this.state.DBConnection.objects("AnonsDocs").filtered(
+            `anonsId=${anonsId} && date='${date}'`
+          )[0];
           //VAR GUNCELLE
           //Güncellemeyi en fazla serverdaki kadar yap.
           if (anons.repeats < localRepeat + 1) {
@@ -876,10 +921,10 @@ export class AudioProvider extends Component {
     try {
       const date = getCurrentDate(new Date());
 
-      return this.state.AnonsDBConnection.write(() => {
-        const repeats = this.state.AnonsDBConnection.objects(
-          "AnonsDocs"
-        ).filtered(`anonsId=${anonsId} && date='${date}'`);
+      return this.state.DBConnection.write(() => {
+        const repeats = this.state.DBConnection.objects("AnonsDocs").filtered(
+          `anonsId=${anonsId} && date='${date}'`
+        );
         if (repeats.length !== 0) {
           return repeats[0];
         }
@@ -895,25 +940,26 @@ export class AudioProvider extends Component {
     } catch (er) {}
   };
 
+  /**
+   * Database bağlantısını yap
+   */
+  dbConnection = async () => {
+    //DATAbase table bağlantıları
+    await this.connectToAnonsDatabaseDoc().then(async () => {
+      //this.requestToPermissions();
+      //Musiclere erişim izni all
+      await this.getPermission();
+
+      //Serverdan şarkı ve anonsları al
+      this.getSoundsAndAnonsFromServer();
+    });
+  };
+
   componentDidMount = () => {
-    //Anons documations..
-    this.connectToAnonsDatabaseDoc();
-
-    //this.requestToPermissions();
-    //Musiclere erişim izni all
-    this.getPermission();
-
-    //Serverdan şarkı ve anonsları al
-    this.getSoundsAndAnonsFromServer();
-
-    //Çalmaya başla..
-    if (this.state.isPlaying == false) {
-      //this.playyyy();
-    }
-
-    if (this.state.playbackObj == null) {
-      this.setState({ ...this.state, playbackObj: new Audio.Sound() });
-    }
+    this.dbConnection();
+    // if (this.state.playbackObj == null) {
+    //   this.setState({ ...this.state, playbackObj: new Audio.Sound() });
+    // }
   };
 
   componentWillUnmount() {
@@ -954,7 +1000,7 @@ export class AudioProvider extends Component {
       //Eğer yukarıdaki şart geçerli değil ise sonraki şarkıya geç...
       //Ve Şarkıya geç ve çal, durumu güncelle
       const audio = this.state.audioFiles[nextAudioIndex];
-      const status = await playNext(this.state.playbackObj, audio.uri);
+      const status = await playNext(this.state.playbackObj, audio?.uri);
       this.updateState(this, {
         soundObj: status,
         currentAudio: audio,
@@ -965,16 +1011,52 @@ export class AudioProvider extends Component {
     }
   };
 
-  startToPlay = async () => {
-    const audio = this.state.audioFiles[0];
+  /**
+   * Ses dosyalarını okumak için kullanılır
+   * @param {string} permission granted | denied
+   */
+  savePermission = (permission) => {
+    let AppSettings = this.state.DBConnection.objects("AppSettings")[0];
 
-    if (audio && this.state.soundObj == null) {
+    if (
+      !AppSettings ||
+      typeof AppSettings.AudioFilePermission == undefined ||
+      AppSettings.AudioFilePermission == ""
+    ) {
+      //Ekle
+      this.state.DBConnection.write(() => {
+        this.state.DBConnection.create("AppSettings", {
+          _id: new BSON.ObjectID(),
+          AudioFilePermission: permission,
+        });
+      });
+    } else {
+      //Güncelle
+
+      this.state.DBConnection.write(() => {
+        const app = this.state.DBConnection.objects("AppSettings")[0];
+        app.AudioFilePermission = permission;
+      });
+    }
+  };
+
+  /**
+   * Çal
+   */
+  startToPlay = async () => {
+    await this.getAudioFiles();
+    if (
+      this.state.soundObj == null ||
+      (this.state.isPlaying == false && this.state.audioFiles.length != 0)
+    ) {
+      const audio = this.state.audioFiles[0];
+
       //Playlisti oynatmaya başla
       //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
       const playbackObj = new Audio.Sound();
 
       //Controllerdan çağır.
-      const status = await play(playbackObj, audio.uri);
+      const status = await play(playbackObj, audio?.uri);
       const index = 0;
 
       //Yeni durumu state ata ve ilerlememesi için return'le
@@ -991,11 +1073,11 @@ export class AudioProvider extends Component {
       this.setState({ ...this, isPlaying: true });
 
       //Slider bar için statuyü güncelle
-      playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+      //playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
 
       //Application açıldığında
       //son çalınna şarkıyı bulmak için kullanırı
-      storeAudioForNextOpening(audio, index);
+      //storeAudioForNextOpening(audio, index);
     }
   };
 
@@ -1025,12 +1107,12 @@ export class AudioProvider extends Component {
           style={{
             flex: 1,
             justifyContent: "center",
-            alignItems: "ce nter",
+            alignItems: "center",
             fontSize: 30,
             color: "red",
           }}
         >
-          <Text>
+          <Text style={styles.permissionError}>
             Ses dosyalarına erişim izni vermediniz. Ayarları gidip erişim izni
             verin.
           </Text>
@@ -1055,13 +1137,14 @@ export class AudioProvider extends Component {
           loadPreviousAudio: this.loadPreviousAudio,
           totalAudioCount: this.totalAudioCount,
           updateState: this.updateState,
-
+          isDownloading: this.state.isDownloading,
           onPlaybackStatusUpdate: this.onPlaybackStatusUpdate,
-
+          startToPlay: this.startToPlay,
           //ANONS
           anonsSoundObj: this.state.anonsSoundObj,
           currentPlayingAnons: this.state.currentPlayingAnons,
           anonsPlaylist: this.state.anonsPlaylist,
+          getSoundsAndAnonsFromServer: this.getSoundsAndAnonsFromServer,
         }}
       >
         {this.state.isDownloading ? (
@@ -1073,5 +1156,17 @@ export class AudioProvider extends Component {
     );
   }
 }
-
+const styles = StyleSheet.create({
+  permissionError: {
+    fontSize: 30,
+    color: color.WHITE,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    textAlign: "center",
+    backgroundColor: color.RED,
+    padding: 15,
+    borderRadius: 10,
+  },
+});
 export default AudioProvider;

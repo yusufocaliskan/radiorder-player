@@ -72,7 +72,9 @@ const AudioListItem = ({
 
                 <View>
                   <Text numberOfLines={1} style={styles.title}>
-                    {item.Ismi}
+                    {item.FileType == "audio"
+                      ? item.Ismi?.split("_")[1]
+                      : item.Ismi}
                   </Text>
                 </View>
               </View>

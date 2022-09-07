@@ -1,4 +1,5 @@
 import React, { useContext, useMemo, useEffect, useReducer } from "react";
+import { LogBox } from "react-native";
 import NavigationStack from "./app/navigation/NavigationStack";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { AudioProvider, AudioContext } from "./app/context/AudioProvider";
@@ -7,7 +8,9 @@ import LoadingGif from "./app/components/LoadingGif";
 import { newAuthContext } from "./app/context/newAuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
-import { DBContext, Database } from "./app/context/Database";
+
+//Hataları kaldır.
+LogBox.ignoreAllLogs();
 
 export default function App() {
   const initialLoginState = {
@@ -116,13 +119,13 @@ export default function App() {
     <newAuthContext.Provider value={authContext}>
       <StatusBar style="light" />
       <NavigationContainer>
-        <AudioProvider>
-          {loadingState.userToken == null ? (
-            <NavigationStack />
-          ) : (
+        {loadingState.userToken == null ? (
+          <NavigationStack />
+        ) : (
+          <AudioProvider>
             <AppNavigator />
-          )}
-        </AudioProvider>
+          </AudioProvider>
+        )}
       </NavigationContainer>
     </newAuthContext.Provider>
   );
