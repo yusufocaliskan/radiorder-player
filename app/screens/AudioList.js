@@ -31,7 +31,7 @@ import Realm, { BSON } from "realm";
 import LoadingGif from "../components/LoadingGif";
 import LoadingSimple from "../components/LoadingSimple";
 
-export class AudioList extends Component {
+export class AudioList extends React.PureComponent {
   static contextType = AudioContext;
 
   //Constructor
@@ -303,23 +303,23 @@ export class AudioList extends Component {
   // };
 
   //Şarkıyı listele.
-  // rowRenderer = (type, item, index, extendedState) => {
-  //   return (
-  //     <AudioListItem
-  //       title={item.filename}
-  //       duration={item.duration}
-  //       isPlaying={extendedState.isPlaying}
-  //       activeListItem={this.context.currentAudioIndex === index}
-  //       item={item}
-  //       keyy={index + 1}
-  //       onAudioPress={() => this.handleAudioPress(item)}
-  //       onOptionPress={() => {
-  //         this.currentItem = item;
-  //         this.setState({ ...this.state, optionModalVisible: true });
-  //       }}
-  //     />
-  //   );
-  // };
+  rowRenderer = (type, item, index, extendedState) => {
+    return (
+      <AudioListItem
+        title={item.filename}
+        duration={item.duration}
+        isPlaying={extendedState.isPlaying}
+        activeListItem={this.context.currentAudioIndex === index}
+        item={item}
+        keyy={index + 1}
+        onAudioPress={() => this.handleAudioPress(item)}
+        onOptionPress={() => {
+          this.currentItem = item;
+          this.setState({ ...this.state, optionModalVisible: true });
+        }}
+      />
+    );
+  };
 
   render() {
     return (
@@ -331,42 +331,50 @@ export class AudioList extends Component {
           currentPlayingAnons,
           audioFiles,
         }) => {
-          if (!audioFiles.length) {
+          if (!dataProvider._data.length) {
             return <LoadingSimple />;
           }
 
           return (
             <>
               <Screen>
-                <FlatList
-                  style={{ paddingTop: 20 }}
-                  data={audioFiles}
-                  keyExtractor={(item, index) => String(index)}
-                  renderItem={({ item, index }) => (
-                    <AudioListItem
-                      title={item.filename}
-                      style={[
-                        styles.songItem,
-                        index + 1 == audioFiles.length
-                          ? { marginBottom: 30 }
-                          : null,
-                      ]}
-                      duration={item.duration}
-                      isPlaying={isPlaying}
-                      activeListItem={this.context.currentAudioIndex === index}
-                      item={item}
-                      keyy={index + 1}
-                      onAudioPress={() => this.handleAudioPress(item)}
-                      onOptionPress={() => {
-                        this.currentItem = item;
-                        this.setState({
-                          ...this.state,
-                          optionModalVisible: true,
-                        });
-                      }}
-                    />
-                  )}
-                />
+                {
+                  <FlatList
+                    style={{ paddingTop: 20 }}
+                    initialNumToRender={9}
+                    refreshing={() => {
+                      <LoadingSimple />;
+                    }}
+                    data={audioFiles}
+                    keyExtractor={(item, index) => String(index)}
+                    renderItem={({ item, index }) => (
+                      <AudioListItem
+                        title={item.filename}
+                        style={[
+                          styles.songItem,
+                          index + 1 == audioFiles.length
+                            ? { marginBottom: 30 }
+                            : null,
+                        ]}
+                        duration={item.duration}
+                        isPlaying={isPlaying}
+                        activeListItem={
+                          this.context.currentAudioIndex === index
+                        }
+                        item={item}
+                        keyy={index + 1}
+                        onAudioPress={() => this.handleAudioPress(item)}
+                        onOptionPress={() => {
+                          this.currentItem = item;
+                          this.setState({
+                            ...this.state,
+                            optionModalVisible: true,
+                          });
+                        }}
+                      />
+                    )}
+                  />
+                }
                 {/* <RecyclerListView
                   dataProvider={dataProvider}
                   layoutProvider={this.layoutProvider}

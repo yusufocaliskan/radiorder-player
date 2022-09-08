@@ -44,7 +44,7 @@ export class AudioProvider extends Component {
       permissionError: false,
 
       //Şarkı listesi
-      // dataProvider: new DataProvider((r1, r2) => r1 !== r2),
+      dataProvider: new DataProvider((r1, r2) => r1 !== r2),
 
       //Şarkı çalma conrtolleri.
       playbackObj: null,
@@ -149,55 +149,46 @@ export class AudioProvider extends Component {
 
     const permissionStored = this.state.DBConnection.objects("AppSettings")[0];
 
-    if (
-      !permissionStored ||
-      typeof permissionStored.AudioFilePermission == undefined
-    ) {
-      const permission = await MediaLibrary.getPermissionsAsync();
+    const permission = await MediaLibrary.getPermissionsAsync();
 
-      //İzin verildiy mi?
-      if (permission.granted) {
-        //izin verildi tüm şarkıları aall
+    //İzin verildiy mi?
+    if (permission.granted) {
+      //izin verildi tüm şarkıları aall
+      this.savePermission("granted");
+    }
+    if (!permission.granted && !permission.canAskAgain) {
+      this.setState({ ...this.state, permissionError: true });
+      return;
+    }
+    //İzin verilmedi ama yeniden sorulabilir.
+    //O zaman soralım!
+    if (!permission.granted && permission.canAskAgain) {
+      const { status, canAskAgain } =
+        await MediaLibrary.requestPermissionsAsync();
+
+      //Bize izin vermedi!
+      if (status === "denied" && canAskAgain) {
+        //Bir hata göster
+        this.permissionAlert();
+      }
+
+      //Izin verildi..
+      if (status === "granted") {
+        //Tüm şarkıları all..
         this.savePermission("granted");
       }
-      if (!permission.granted && !permission.canAskAgain) {
+
+      if (!permission.canAskAgain && !permission.granted) {
         this.setState({ ...this.state, permissionError: true });
-        return;
+        this.savePermission("denied");
       }
-      //İzin verilmedi ama yeniden sorulabilir.
-      //O zaman soralım!
-      if (!permission.granted && permission.canAskAgain) {
-        const { status, canAskAgain } =
-          await MediaLibrary.requestPermissionsAsync();
 
-        //Bize izin vermedi!
-        if (status === "denied" && canAskAgain) {
-          //Bir hata göster
-          this.permissionAlert();
-        }
-
-        //Izin verildi..
-        if (status === "granted") {
-          //Tüm şarkıları all..
-          this.savePermission("granted");
-        }
-
-        if (!permission.canAskAgain && !permission.granted) {
-          this.setState({ ...this.state, permissionError: true });
-          this.savePermission("denied");
-        }
-
-        //izin verilmedi ve yeniden sormamızı mı engelledi!!
-        if (status === "denied" && !canAskAgain) {
-          //Ona bir şeyler söyle..
-          this.setState({ ...this.state, permissionError: true });
-          this.savePermission("denied");
-        }
-
-        //Database kayıt et.
-        //Save the resultgetAudioFiles
+      //izin verilmedi ve yeniden sormamızı mı engelledi!!
+      if (status === "denied" && !canAskAgain) {
+        //Ona bir şeyler söyle..
+        this.setState({ ...this.state, permissionError: true });
+        this.savePermission("denied");
       }
-      //AsyncStorage.setItem("permission", "granted");
     }
   };
 
@@ -205,9 +196,8 @@ export class AudioProvider extends Component {
    * Şarkı dosyalarını al.
    */
   getAudioFiles = async () => {
-    console.log("BAN MIN KIRIN");
-    //const { dataProvider, audioFiles } = this.state;
-    const { audioFiles } = this.state;
+    const { dataProvider, audioFiles } = this.state;
+    //const { audioFiles } = this.state;
     let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
 
     //Tüm şarkıları listele.
@@ -222,10 +212,10 @@ export class AudioProvider extends Component {
 
     this.setState({
       ...this.state,
-      // dataProvider: dataProvider.cloneWithRows([
-      //   ...audioFiles,
-      //   ...media.assets,
-      // ]),
+      dataProvider: dataProvider.cloneWithRows([
+        ...audioFiles,
+        ...media.assets,
+      ]),
       audioFiles: [...audioFiles, ...media.assets],
     });
 
@@ -472,10 +462,10 @@ export class AudioProvider extends Component {
     //this.setState({ ...this.state, audioFiles: filtered_song });
     this.setState({
       ...this.state,
-      // dataProvider: dataProvider.cloneWithRows([
-      //   ...audioFiles,
-      //   ...filtered_song,
-      // ]),
+      dataProvider: dataProvider.cloneWithRows([
+        ...audioFiles,
+        ...filtered_song,
+      ]),
       audioFiles: filtered_song,
     });
 
@@ -584,12 +574,12 @@ export class AudioProvider extends Component {
           );
 
           //console.log(this.state.totalSongInTheServer.ToplamSayfa);
-          // for (
-          //   let i = 1;
-          //   i <= this.state.totalSongInTheServer.ToplamSayfa;
-          //   i++
-          // ) {
-          for (let i = 1; i <= 3; i++) {
+          for (
+            let i = 1;
+            i <= this.state.totalSongInTheServer.ToplamSayfa;
+            i++
+          ) {
+            //for (let i = 1; i <= 3; i++) {
             this.getAllSongs(
               userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
               username,
@@ -606,7 +596,7 @@ export class AudioProvider extends Component {
   /**
    * Serverdan playlisti alır ve download eder.
    */
-  getAllSongs = async (groupCode, username, password, pageNo = 1) => {
+  getAllSongs = async (groupCode, username, password, pageNo) => {
     try {
       const xml = `<?xml version="1.0" encoding="utf-8"?>
     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -658,12 +648,14 @@ export class AudioProvider extends Component {
               //Download işlemini başlat
               await this.DownloadSoundFromServer(
                 parsedData.Liste.WsSarkiDto[i],
-                "sound"
+                "sound",
+                i
               );
               this.setState({
                 ...this,
                 songs: [...this.state.songs, parsedData.Liste.WsSarkiDto[i]],
               });
+
               //Download işlemi bittikten sonra Çalma Listesini güncelle
               if (i == parsedData.Liste.WsSarkiDto.length - 1) {
                 //Download işlemi bitti
@@ -679,10 +671,13 @@ export class AudioProvider extends Component {
                 );
 
                 //TODO:START
-                //await this.getAudioFiles();
-                //Dosya varsa çalmaya çalış.
-                //eğer çalmıyorsa tabi.
-                this.startToPlay();
+                //Listeyi güncelle
+                await this.getAudioFiles();
+
+                //ilk part ((10 adet)) indirildikten sonra çal
+                if (pageNo == 1) {
+                  this.startToPlay();
+                }
               }
             }
           }
@@ -698,7 +693,7 @@ export class AudioProvider extends Component {
    * Server'dan şarkıları çeker
    * @param {object} sounds indirilicek şarkı
    */
-  DownloadSoundFromServer = async (sounds, downloadType = "sound") => {
+  DownloadSoundFromServer = async (sounds, downloadType = "sound", i) => {
     try {
       const { DownloadDir } = RNFetchBlob.fs.dirs;
 
@@ -729,15 +724,12 @@ export class AudioProvider extends Component {
                 ? sounds?.AnonsIsmi
                 : sounds?.Ismi.split("_")[1],
           });
-
-          //Listeyi boşalt ve çal
-          //this.setState({ ...this, audioFiles: [] });
-
-          //TODO: START
-          //await this.getAudioFiles();
-
-          //this.setState({ ...this.state, audioFiles: [] });
-          //this.startToPlay();
+          console.log("iiiiiiiii", i);
+          //İlk şarkıdan sonra çalmaya başla
+          if (i == 1 && downloadType == "sound") {
+            await this.getAudioFiles();
+            this.startToPlay();
+          }
         }
       }
     } catch (error) {
@@ -1056,11 +1048,10 @@ export class AudioProvider extends Component {
    * Çal
    */
   startToPlay = async () => {
-    await this.getAudioFiles().then(async () => {
-      console.log("SOUND ", this.state.soundObj);
-      console.log("PLAYIN ", this.state.isPlaying);
-
-      if (this.state.soundObj == null && this.state.isPlaying == false) {
+    console.log("SOUND ", this.state.soundObj);
+    console.log("PLAYIN ", this.state.isPlaying);
+    setTimeout(async () => {
+      if (this.state.soundObj == null) {
         console.log("--------------------EZ Ê LÊ BIDIMMMMM");
         const audio = this.state.audioFiles[0];
 
@@ -1088,9 +1079,9 @@ export class AudioProvider extends Component {
         this.state.isPlaying = true;
         //Application açıldığında
         //son çalınna şarkıyı bulmak için kullanırı
-        //storeAudioForNextOpening(audio, index);
+        storeAudioForNextOpening(audio, index);
       }
-    });
+    }, 2000);
   };
 
   /**Kontrollerdan */
@@ -1102,6 +1093,7 @@ export class AudioProvider extends Component {
     const {
       audioFiles,
       permissionError,
+      dataProvider,
       playbackObj,
       soundObj,
       currentAudio,
@@ -1141,6 +1133,7 @@ export class AudioProvider extends Component {
           currentAudioIndex,
           playbackPosition,
           playbackDuration,
+          dataProvider: dataProvider,
           userData,
           getAudioFiles: this.getAudioFiles,
           newAuthContext: this.context.loadingState.userData,
