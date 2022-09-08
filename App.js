@@ -1,13 +1,15 @@
 import React, { useContext, useMemo, useEffect, useReducer } from "react";
 import { LogBox } from "react-native";
 import NavigationStack from "./app/navigation/NavigationStack";
-import { NavigationContainer, useNavigation } from "@react-navigation/native";
-import { AudioProvider, AudioContext } from "./app/context/AudioProvider";
+import { NavigationContainer } from "@react-navigation/native";
+import { AudioProvider } from "./app/context/AudioProvider";
 import AppNavigator from "./app/navigation/AppNavigator";
 import LoadingGif from "./app/components/LoadingGif";
 import { newAuthContext } from "./app/context/newAuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
+
+import LangProvider from "./app/context/LangProvider";
 
 //Hataları kaldır.
 LogBox.ignoreAllLogs();

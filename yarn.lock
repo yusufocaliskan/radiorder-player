@@ -1681,6 +1681,11 @@
     "sudo-prompt" "^9.0.0"
     "wcwidth" "^1.0.1"
 
+"@react-native-community/netinfo@8.2.0":
+  "integrity" "sha512-mPMg9Uu2XeMX3tainvCWLhD9FZtdox3fcbPXJINuyFNgEQ2AUhGcoUT1dUpcFZrY4eXYiO9cckPhPHq9lWzSAA=="
+  "resolved" "https://registry.npmjs.org/@react-native-community/netinfo/-/netinfo-8.2.0.tgz"
+  "version" "8.2.0"
+
 "@react-native-community/slider@4.2.1":
   "integrity" "sha512-6HUS5HbB9bvEN4GiwBlxECgPWQIugHE+kfnxqX2jHUl1SE57MRpw00m1qVs4hXtEPQndBl6mAQiGbKCOtLPVbg=="
   "resolved" "https://registry.npmjs.org/@react-native-community/slider/-/slider-4.2.1.tgz"
@@ -6247,7 +6252,7 @@
     "timers" "0.1.x"
     "xmlbuilder" "8.2.x"
 
-"react-native@*", "react-native@^0.0.0-0 || 0.60 - 0.69 || 1000.0.0", "react-native@>= 0.30.0", "react-native@>=0.56", "react-native@>=0.60", "react-native@0.68.2":
+"react-native@*", "react-native@^0.0.0-0 || 0.60 - 0.69 || 1000.0.0", "react-native@>= 0.30.0", "react-native@>=0.56", "react-native@>=0.59", "react-native@>=0.60", "react-native@0.68.2":
   "integrity" "sha512-qNMz+mdIirCEmlrhapAtAG+SWVx6MAiSfCbFNhfHqiqu1xw1OKXdzIrjaBEPihRC2pcORCoCHduHGQe/Pz9Yuw=="
   "resolved" "https://registry.npmjs.org/react-native/-/react-native-0.68.2.tgz"
   "version" "0.68.2"

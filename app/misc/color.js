@@ -9,6 +9,7 @@ export default {
   FONT_FONT: "#fff",
   RED: "#EB5353",
   DARK_RED: "#950101",
+  LIGHT_RED: "#FA9494",
   WHITE: "#fafafa",
   BLACK: "#111",
   GRAY: "#444444",

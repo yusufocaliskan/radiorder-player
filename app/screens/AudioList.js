@@ -30,6 +30,7 @@ import "react-native-get-random-values";
 import Realm, { BSON } from "realm";
 import LoadingGif from "../components/LoadingGif";
 import LoadingSimple from "../components/LoadingSimple";
+import NoInternetConnection from "../components/NoInternetConnection";
 
 export class AudioList extends React.PureComponent {
   static contextType = AudioContext;
@@ -255,6 +256,12 @@ export class AudioList extends React.PureComponent {
       },
     });
 
+    this.props.navigation.setOptions({
+      headerRight: () => {
+        return <NoInternetConnection />;
+      },
+    });
+
     //TODO: Re-Check..
     //this.context.loadPreviousAudio();
     //çalma işlemi ve download işlemi yoksa
@@ -330,51 +337,49 @@ export class AudioList extends React.PureComponent {
           anonsSoundObj,
           currentPlayingAnons,
           audioFiles,
+          isDownloading,
         }) => {
           if (!dataProvider._data.length) {
             return <LoadingSimple />;
           }
-
           return (
             <>
               <Screen>
-                {
-                  <FlatList
-                    style={{ paddingTop: 20 }}
-                    initialNumToRender={9}
-                    refreshing={() => {
-                      <LoadingSimple />;
-                    }}
-                    data={audioFiles}
-                    keyExtractor={(item, index) => String(index)}
-                    renderItem={({ item, index }) => (
-                      <AudioListItem
-                        title={item.filename}
-                        style={[
-                          styles.songItem,
-                          index + 1 == audioFiles.length
-                            ? { marginBottom: 30 }
-                            : null,
-                        ]}
-                        duration={item.duration}
-                        isPlaying={isPlaying}
-                        activeListItem={
-                          this.context.currentAudioIndex === index
-                        }
-                        item={item}
-                        keyy={index + 1}
-                        onAudioPress={() => this.handleAudioPress(item)}
-                        onOptionPress={() => {
-                          this.currentItem = item;
-                          this.setState({
-                            ...this.state,
-                            optionModalVisible: true,
-                          });
-                        }}
-                      />
-                    )}
-                  />
-                }
+                <FlatList
+                  style={{ paddingTop: 20 }}
+                  initialNumToRender={9}
+                  refreshing={() => {
+                    <LoadingSimple />;
+                  }}
+                  data={audioFiles}
+                  keyExtractor={(item, index) => String(index)}
+                  renderItem={({ item, index }) => (
+                    <AudioListItem
+                      title={item.filename}
+                      style={[
+                        styles.songItem,
+                        index + 1 == audioFiles.length
+                          ? { marginBottom: 30 }
+                          : null,
+                      ]}
+                      duration={item.duration}
+                      isPlaying={isPlaying}
+                      activeListItem={this.context.currentAudioIndex === index}
+                      item={item}
+                      keyy={index + 1}
+                      onAudioPress={() => this.handleAudioPress(item)}
+                      onOptionPress={() => {
+                        this.currentItem = item;
+                        this.setState({
+                          ...this.state,
+                          optionModalVisible: true,
+                        });
+                      }}
+                    />
+                  )}
+                />
+                {console.log("Downloads", isDownloading)}
+
                 {/* <RecyclerListView
                   dataProvider={dataProvider}
                   layoutProvider={this.layoutProvider}

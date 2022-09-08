@@ -25,9 +25,10 @@ const { width } = Dimensions.get("window");
 //Müzik Çalar Ekranı
 const Player = () => {
   const navigation = useNavigation();
-  const context = useContext(AudioContext);
+
   const { loadingState } = useContext(newAuthContext);
   const [userData, setUserData] = useState(loadingState?.userData?.FSL);
+  const context = useContext(AudioContext);
   const { playbackPosition, playbackDuration } = context;
 
   //Slider position'ın hesapla

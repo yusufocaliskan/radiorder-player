@@ -5,6 +5,7 @@ import {
   Alert,
   StyleSheet,
   KeyboardAvoidingView,
+  TouchableOpacity,
 } from "react-native";
 import color from "../misc/color";
 import config from "../misc/config";
@@ -16,6 +17,8 @@ import axios from "axios";
 import { newAuthContext } from "../context/newAuthContext";
 import { AudioContext } from "../context/AudioProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LangContext } from "../context/LangProvider";
+import LanguageModal from "../components/LanguageModal";
 
 //Navigator.
 import { useNavigation } from "@react-navigation/native";
@@ -27,7 +30,10 @@ const Login = () => {
   const [userName, setUserName] = useState();
   const [password, setPassword] = useState();
   const { singIn, test } = useContext(newAuthContext);
+  const { Lang, setSelectedLang, updateSelectedLan } = useContext(LangContext);
   const audioContext = useContext(AudioContext);
+  const [showLangModal, setShowLangModal] = useState(false);
+  const [closeLangModal, setCloseLangModal] = useState(false);
 
   const LoginAction = async () => {
     //Kullanıcı bilgileri boş mu?
@@ -101,28 +107,53 @@ const Login = () => {
     return soapBody;
   };
 
+  const selectTR = () => {
+    updateSelectedLan("tr");
+  };
+
+  const selectEN = () => {
+    updateSelectedLan("en");
+  };
+
   //Giriş yapmamış ise burayı göster.
 
   //Giriş yapılmamış ise giriş formunu
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
+      <LanguageModal
+        showIt={showLangModal}
+        closeIt={() => setShowLangModal(false)}
+        selectTR={selectTR}
+        selectEN={selectEN}
+      />
+
       <Logo styles={styles.logo} />
+      <TouchableOpacity
+        style={styles.langSelection}
+        onPress={() => {
+          setShowLangModal(true);
+        }}
+      >
+        <View>
+          <Text style={styles.langSelectionText}>EN</Text>
+        </View>
+      </TouchableOpacity>
       <Input
         type="text"
-        placeholder="Kullanıcı Adı"
+        placeholder={Lang?.USER_NAME}
         value={userName}
         setValue={setUserName}
       />
 
       <Input
         type="secure"
-        placeholder="Şifre"
+        placeholder={Lang?.USER_PASSWORD}
         value={password}
         setValue={setPassword}
       />
-      <Button onPress={LoginAction} text="GİRİŞ YAP" />
+      <Button onPress={LoginAction} text={Lang?.LOGIN} />
       <View style={styles.bottomText}>
-        <Text style={{ color: "#666" }}>RADIORDER KURUMSAL</Text>
+        <Text style={{ color: "#666" }}>{Lang?.RADI_OFFICIAL}</Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -154,6 +185,22 @@ const styles = StyleSheet.create({
     marginTop: 80,
     marginBottom: 20,
     height: 200,
+  },
+  langSelection: {
+    position: "absolute",
+    top: 50,
+    right: 30,
+    zIndex: 777,
+    elevation: 777,
+    backgroundColor: color.FONT_LARGE,
+    borderRadius: 25,
+    padding: 5,
+    borderWidth: 2,
+    borderColor: color.GRAY,
+    opacity: 0.7,
+  },
+  langSelectionText: {
+    color: color.WHITE,
   },
 });
 

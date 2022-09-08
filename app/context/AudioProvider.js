@@ -1,6 +1,8 @@
-import React, { useContext, Component, createContext } from "react";
+import React, { useContext, Component, createContext, useEffect } from "react";
 import { Text, StyleSheet, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
+import NetInfo from "@react-native-community/netinfo";
+
 import { Audio } from "expo-av";
 import {
   issetInArray,
@@ -17,7 +19,7 @@ import { play, playNext } from "../misc/AudioController";
 import { DataProvider } from "recyclerlistview";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { XMLParser } from "fast-xml-parser";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import config from "../misc/config";
 import { newAuthContext } from "../context/newAuthContext";
 import { v4 as uuidv4 } from "uuid";
@@ -65,6 +67,7 @@ export class AudioProvider extends Component {
       isDownloading: false,
       currentDownloadedSong: "",
       currentSongNumber: null,
+      waitLittleBitStillDownloading: false,
 
       //songs
       songs: [],
@@ -473,6 +476,27 @@ export class AudioProvider extends Component {
   };
 
   /**
+   * Internet yoksa, şarkı listesini Storage'tan al.
+   * //Ve çalll
+   */
+  ifThereIsNOOInternet = async () => {
+    NetInfo.fetch().then(async (connection) => {
+      try {
+        //Heger ki internet yoksammm
+        if (!connection.isConnected) {
+          this.state.songs = JSON.parse(await AsyncStorage.getItem("songs"));
+          //TODO:START
+          //Listeyi güncelle
+          await this.getAudioFiles();
+          this.startToPlay();
+        }
+      } catch (e) {
+        throw "Hata! ";
+      }
+    });
+  };
+
+  /**
    * Serverda kaç tane şarkı var, sayısını verrir
    * @param {string} groupCode Group kkod
    * @param {string} username Kullanıcı e-postassı
@@ -518,8 +542,13 @@ export class AudioProvider extends Component {
 
           this.setState({ ...this, totalSongInTheServer: parsedData });
           return parsedData;
+        })
+        .catch((res) => {
+          //Internet yoksa
+          this.ifThereIsNOOInternet();
         });
     } catch (error) {
+      console.log("Heee");
       console.error(`SOAP FAIL: ${error}`);
     }
   };
@@ -552,6 +581,7 @@ export class AudioProvider extends Component {
         .post(config.SOAP_URL, xml, {
           headers: { "Content-Type": "text/xml" },
         })
+
         .then((resData) => {
           const options = {
             ignoreNameSpace: false,
@@ -587,8 +617,13 @@ export class AudioProvider extends Component {
               i
             );
           }
+        })
+        .catch(async (res) => {
+          //heger kiii internet yokksaam :)
+          this.ifThereIsNOOInternet();
         });
     } catch (error) {
+      console.log("Heee");
       console.error(`SOAP FAIL: ${error}`);
     }
   };
@@ -677,6 +712,12 @@ export class AudioProvider extends Component {
                 //ilk part ((10 adet)) indirildikten sonra çal
                 if (pageNo == 1) {
                   this.startToPlay();
+                  this.state.waitLittleBitStillDownloading = true;
+                }
+
+                //Tüm şarkılar indiyse
+                if (pageNo == parsedData.ToplamSayfa) {
+                  this.state.waitLittleBitStillDownloading = false;
                 }
               }
             }
@@ -685,6 +726,8 @@ export class AudioProvider extends Component {
           return parsedData;
         });
     } catch (error) {
+      //Save it to storage
+
       console.error(`SOAP FAIL: ${error}`);
     }
   };
@@ -948,8 +991,8 @@ export class AudioProvider extends Component {
     await this.connectToAnonsDatabaseDoc().then(async () => {
       //this.requestToPermissions();
       //Musiclere erişim izni all
-      await this.getPermission().then(() => {
-        this.getSoundsAndAnonsFromServer();
+      await this.getPermission().then(async () => {
+        await this.getSoundsAndAnonsFromServer();
       });
 
       //Serverdan şarkı ve anonsları al
@@ -960,10 +1003,8 @@ export class AudioProvider extends Component {
    * Componenet bağlandığında
    */
   componentDidMount = () => {
+    //DB Bağlantı, dosya izni ve verileri databaseden all.
     this.dbConnection();
-    // if (this.state.playbackObj == null) {
-    //   this.setState({ ...this.state, playbackObj: new Audio.Sound() });
-    // }
   };
 
   componentWillUnmount() {
@@ -1148,6 +1189,8 @@ export class AudioProvider extends Component {
           currentPlayingAnons: this.state.currentPlayingAnons,
           anonsPlaylist: this.state.anonsPlaylist,
           getSoundsAndAnonsFromServer: this.getSoundsAndAnonsFromServer,
+          waitLittleBitStillDownloading:
+            this.state.waitLittleBitStillDownloading,
         }}
       >
         {this.state.isDownloading ? (
@@ -1159,6 +1202,17 @@ export class AudioProvider extends Component {
     );
   }
 }
+
+const SetInternetInfo = ({ setNetInfo }) => {
+  const netInfo = useNetInfo();
+
+  useEffect(() => {
+    setNetInfo(netInfo);
+  }, [netInfo]);
+
+  return null;
+};
+
 const styles = StyleSheet.create({
   permissionError: {
     fontSize: 30,
