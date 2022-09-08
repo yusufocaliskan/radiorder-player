@@ -28,6 +28,8 @@ import { play, pause, resume, playNext } from "../misc/AudioController";
 
 import "react-native-get-random-values";
 import Realm, { BSON } from "realm";
+import LoadingGif from "../components/LoadingGif";
+import LoadingSimple from "../components/LoadingSimple";
 
 export class AudioList extends Component {
   static contextType = AudioContext;
@@ -301,42 +303,50 @@ export class AudioList extends Component {
   // };
 
   //Şarkıyı listele.
-  rowRenderer = (type, item, index, extendedState) => {
-    return (
-      <AudioListItem
-        title={item.filename}
-        duration={item.duration}
-        isPlaying={extendedState.isPlaying}
-        activeListItem={this.context.currentAudioIndex === index}
-        item={item}
-        keyy={index + 1}
-        onAudioPress={() => this.handleAudioPress(item)}
-        onOptionPress={() => {
-          this.currentItem = item;
-          this.setState({ ...this.state, optionModalVisible: true });
-        }}
-      />
-    );
-  };
+  // rowRenderer = (type, item, index, extendedState) => {
+  //   return (
+  //     <AudioListItem
+  //       title={item.filename}
+  //       duration={item.duration}
+  //       isPlaying={extendedState.isPlaying}
+  //       activeListItem={this.context.currentAudioIndex === index}
+  //       item={item}
+  //       keyy={index + 1}
+  //       onAudioPress={() => this.handleAudioPress(item)}
+  //       onOptionPress={() => {
+  //         this.currentItem = item;
+  //         this.setState({ ...this.state, optionModalVisible: true });
+  //       }}
+  //     />
+  //   );
+  // };
 
   render() {
     return (
       <AudioContext.Consumer>
-        {({ dataProvider, isPlaying, anonsSoundObj, currentPlayingAnons }) => {
-          if (!dataProvider._data.length) return null;
+        {({
+          dataProvider,
+          isPlaying,
+          anonsSoundObj,
+          currentPlayingAnons,
+          audioFiles,
+        }) => {
+          if (!audioFiles.length) {
+            return <LoadingSimple />;
+          }
 
           return (
             <>
               <Screen>
                 <FlatList
-                  style={styles.anonsList}
-                  data={dataProvider._data}
+                  style={{ paddingTop: 20 }}
+                  data={audioFiles}
                   keyExtractor={(item, index) => String(index)}
                   renderItem={({ item, index }) => (
                     <AudioListItem
                       title={item.filename}
                       duration={item.duration}
-                      //isPlaying={extendedState.isPlaying}
+                      isPlaying={isPlaying}
                       activeListItem={this.context.currentAudioIndex === index}
                       item={item}
                       keyy={index + 1}
@@ -390,12 +400,17 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   spinnerView: {
+    flex: 1,
     backgroundColor: color.APP_BG,
-    padding: 50,
+    justifyContent: "center",
+    alignContent: "center",
+    alignItems: "center",
   },
   spinnerText: {
     color: color.WHITE,
     textAlign: "center",
+    fontSize: 16,
+    marginTop: 20,
   },
   spinner: {
     marginBottom: 20,

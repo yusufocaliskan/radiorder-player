@@ -73,13 +73,7 @@ const Anons = () => {
   );
   return (
     <AudioContext.Consumer>
-      {({
-        dataProvider,
-        isPlaying,
-        anonsPlaylist,
-        anonsSoundObj,
-        currentPlayingAnons,
-      }) => {
+      {({ anonsPlaylist }) => {
         return (
           <Screen>
             <FlatList

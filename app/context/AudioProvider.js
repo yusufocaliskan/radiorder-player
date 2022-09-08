@@ -44,7 +44,7 @@ export class AudioProvider extends Component {
       permissionError: false,
 
       //Şarkı listesi
-      dataProvider: new DataProvider((r1, r2) => r1 !== r2),
+      // dataProvider: new DataProvider((r1, r2) => r1 !== r2),
 
       //Şarkı çalma conrtolleri.
       playbackObj: null,
@@ -101,18 +101,6 @@ export class AudioProvider extends Component {
     this.totalAudioCount = 0;
   }
 
-  //Hata mesajı göster.
-  permissionAlert = () => {
-    Alert.alert(
-      "Şarkılara erişim izni verilmek zorunlu.",
-      "Uygulama izne ihtiyaç duyar.",
-      [
-        { text: "Tamam, izin ver.", onPress: this.getPermission() },
-        { text: "Hayır", onPress: this.permissionAlert() },
-      ]
-    );
-  };
-
   /**
    * Application açıldığında en son şarkıyı
    * Alır ve çalar.
@@ -136,16 +124,28 @@ export class AudioProvider extends Component {
     this.setState({ ...this.state, currentAudio, currentAudioIndex });
   };
 
+  //Hata mesajı göster.
+  permissionAlert = () => {
+    Alert.alert(
+      "Şarkılara erişim izni verilmek zorunlu.",
+      "Uygulama izne ihtiyaç duyar.",
+      [
+        { text: "Tamam, izin ver.", onPress: this.getPermission() },
+        { text: "Hayır", onPress: this.permissionAlert() },
+      ]
+    );
+  };
+
   /**
    * Kullanıcıdan şarkılarına erişim izni iste
    */
   getPermission = async () => {
     //Erişim al.
-    this.state.DBConnection.write(() => {
-      let appSettings = this.state.DBConnection.objects("AppSettings");
-      this.state.DBConnection.delete(appSettings);
-      appSettings = null;
-    });
+    // this.state.DBConnection.write(() => {
+    //   let appSettings = this.state.DBConnection.objects("AppSettings");
+    //   this.state.DBConnection.delete(appSettings);
+    //   appSettings = null;
+    // });
 
     const permissionStored = this.state.DBConnection.objects("AppSettings")[0];
 
@@ -195,7 +195,7 @@ export class AudioProvider extends Component {
         }
 
         //Database kayıt et.
-        //Save the result
+        //Save the resultgetAudioFiles
       }
       //AsyncStorage.setItem("permission", "granted");
     }
@@ -205,7 +205,9 @@ export class AudioProvider extends Component {
    * Şarkı dosyalarını al.
    */
   getAudioFiles = async () => {
-    const { dataProvider, audioFiles } = this.state;
+    console.log("BAN MIN KIRIN");
+    //const { dataProvider, audioFiles } = this.state;
+    const { audioFiles } = this.state;
     let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
 
     //Tüm şarkıları listele.
@@ -215,15 +217,15 @@ export class AudioProvider extends Component {
     });
 
     this.totalAudioCount = media.totalCount;
-    //console.log(fileDetailed);
+
     //Şarkıları state ata.
 
     this.setState({
       ...this.state,
-      dataProvider: dataProvider.cloneWithRows([
-        ...audioFiles,
-        ...media.assets,
-      ]),
+      // dataProvider: dataProvider.cloneWithRows([
+      //   ...audioFiles,
+      //   ...media.assets,
+      // ]),
       audioFiles: [...audioFiles, ...media.assets],
     });
 
@@ -232,10 +234,8 @@ export class AudioProvider extends Component {
     //const anons = TestAnons;
 
     //Şarkıları da al.
-    const songs = JSON.parse(await AsyncStorage.getItem("songs"));
-
-    console.log(this.state.songs);
-    console.log("SONGSSSSS", this.state.songs.length);
+    //const songs = JSON.parse(await AsyncStorage.getItem("songs"));
+    const songs = this.state.songs;
 
     const filtered_song = [];
     let anons_must_be_shown = [];
@@ -249,8 +249,18 @@ export class AudioProvider extends Component {
 
       //Ses
       for (let d = 0; d < songs?.length; d++) {
-        const dosya_name = songs[d].DosyaIsmi;
-        if (`sound_${dosya_name}` == file_name) {
+        const dosya_name = `sound_${songs[d].DosyaIsmi}`;
+        if (dosya_name == file_name) {
+          //Daha önce filterlenmiş mi?
+          let alreadyIsset = false;
+          for (let f = 0; f < filtered_song.length; f++) {
+            if (dosya_name == filtered_song[f].filename) {
+              alreadyIsset = true;
+            }
+          }
+          if (alreadyIsset) {
+            continue;
+          }
           filtered_song.push({
             albumId: this.state.audioFiles[i].albumId,
             creationTime: this.state.audioFiles[i].creationTime,
@@ -462,12 +472,14 @@ export class AudioProvider extends Component {
     //this.setState({ ...this.state, audioFiles: filtered_song });
     this.setState({
       ...this.state,
-      dataProvider: dataProvider.cloneWithRows([
-        ...audioFiles,
-        ...filtered_song,
-      ]),
-      audioFiles: [...audioFiles, ...filtered_song],
+      // dataProvider: dataProvider.cloneWithRows([
+      //   ...audioFiles,
+      //   ...filtered_song,
+      // ]),
+      audioFiles: filtered_song,
     });
+    console.log("Total Media: ", this.totalAudioCount);
+    console.log("Total Song", this.state.audioFiles.length);
 
     this.setState({ ...this.state, anonsPlaylist: anons_must_be_shown });
   };
@@ -654,7 +666,6 @@ export class AudioProvider extends Component {
                 ...this,
                 songs: [...this.state.songs, parsedData.Liste.WsSarkiDto[i]],
               });
-
               //Download işlemi bittikten sonra Çalma Listesini güncelle
               if (i == parsedData.Liste.WsSarkiDto.length - 1) {
                 //Download işlemi bitti
@@ -662,17 +673,18 @@ export class AudioProvider extends Component {
                 this.setState({ ...this, currentDownloadedSong: "" });
                 this.setState({ ...this, currentSongNumber: null });
 
+                //Save it to storage
+                await AsyncStorage.setItem(
+                  "songs",
+                  //JSON.stringify(parsedData.Liste.WsSarkiDto)
+                  JSON.stringify(this.state.songs)
+                );
+
                 //TODO:START
                 //await this.getAudioFiles();
                 //Dosya varsa çalmaya çalış.
                 //eğer çalmıyorsa tabi.
                 this.startToPlay();
-
-                //Save it to storage
-                await AsyncStorage.setItem(
-                  "songs",
-                  JSON.stringify(parsedData.Liste.WsSarkiDto)
-                );
               }
             }
           }
@@ -726,7 +738,7 @@ export class AudioProvider extends Component {
           //TODO: START
           //await this.getAudioFiles();
 
-          this.setState({ ...this.state, audioFiles: [] });
+          //this.setState({ ...this.state, audioFiles: [] });
           //this.startToPlay();
         }
       }
@@ -946,13 +958,17 @@ export class AudioProvider extends Component {
     await this.connectToAnonsDatabaseDoc().then(async () => {
       //this.requestToPermissions();
       //Musiclere erişim izni all
-      await this.getPermission();
+      await this.getPermission().then(() => {
+        this.getSoundsAndAnonsFromServer();
+      });
 
       //Serverdan şarkı ve anonsları al
-      this.getSoundsAndAnonsFromServer();
     });
   };
 
+  /**
+   * Componenet bağlandığında
+   */
   componentDidMount = () => {
     this.dbConnection();
     // if (this.state.playbackObj == null) {
@@ -1042,41 +1058,40 @@ export class AudioProvider extends Component {
    * Çal
    */
   startToPlay = async () => {
-    await this.getAudioFiles();
-    if (
-      this.state.soundObj == null ||
-      (this.state.isPlaying == false && this.state.audioFiles.length != 0)
-    ) {
-      const audio = this.state.audioFiles[0];
+    await this.getAudioFiles().then(async () => {
+      if (
+        this.state.soundObj == null ||
+        (this.state.isPlaying == false && this.state.audioFiles.length != 0)
+      ) {
+        const audio = this.state.audioFiles[0];
 
-      //Playlisti oynatmaya başla
-      //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
-      const playbackObj = new Audio.Sound();
+        //Playlisti oynatmaya başla
+        //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
+        const playbackObj = new Audio.Sound();
 
-      //Controllerdan çağır.
-      const status = await play(playbackObj, audio?.uri);
-      const index = 0;
+        //Controllerdan çağır.
+        const status = await play(playbackObj, audio?.uri);
+        const index = 0;
 
-      //Yeni durumu state ata ve ilerlememesi için return'le
-      this.updateState(this, {
-        currentAudio: audio,
-        playbackObj: playbackObj,
-        soundObj: status,
-        currentAudioIndex: index,
+        //Yeni durumu state ata ve ilerlememesi için return'le
+        this.updateState(this, {
+          currentAudio: audio,
+          playbackObj: playbackObj,
+          soundObj: status,
+          currentAudioIndex: index,
 
-        // //Çalma-Durdurma iconları için
-        // isPlaying: true,
-      });
+          // //Çalma-Durdurma iconları için
+          isPlaying: true,
+        });
 
-      this.setState({ ...this, isPlaying: true });
+        //Slider bar için statuyü güncelle
+        //playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
 
-      //Slider bar için statuyü güncelle
-      //playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
-
-      //Application açıldığında
-      //son çalınna şarkıyı bulmak için kullanırı
-      //storeAudioForNextOpening(audio, index);
-    }
+        //Application açıldığında
+        //son çalınna şarkıyı bulmak için kullanırı
+        //storeAudioForNextOpening(audio, index);
+      }
+    });
   };
 
   /**Kontrollerdan */
@@ -1087,7 +1102,6 @@ export class AudioProvider extends Component {
   render() {
     const {
       audioFiles,
-      dataProvider,
       permissionError,
       playbackObj,
       soundObj,
@@ -1121,7 +1135,6 @@ export class AudioProvider extends Component {
       <AudioContext.Provider
         value={{
           audioFiles,
-          dataProvider,
           playbackObj,
           soundObj,
           currentAudio,
