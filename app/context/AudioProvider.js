@@ -66,6 +66,9 @@ export class AudioProvider extends Component {
       currentDownloadedSong: "",
       currentSongNumber: null,
 
+      //songs
+      songs: [],
+
       //AllAnons
       anons: [],
       anonsIsPlaying: true,
@@ -230,6 +233,9 @@ export class AudioProvider extends Component {
 
     //Şarkıları da al.
     const songs = JSON.parse(await AsyncStorage.getItem("songs"));
+
+    console.log(this.state.songs);
+    console.log("SONGSSSSS", this.state.songs.length);
 
     const filtered_song = [];
     let anons_must_be_shown = [];
@@ -573,23 +579,13 @@ export class AudioProvider extends Component {
           //   i <= this.state.totalSongInTheServer.ToplamSayfa;
           //   i++
           // ) {
-          let waitSome = 0;
           for (let i = 1; i <= 3; i++) {
-            //İlk sayfadan sonra 5dk bekle
-            if (i > 1) {
-              waitSome = 60000;
-            }
-            //Her sayfa başına 1dk bekledikten sonra indirme işlemini yap.
-            setTimeout(() => {
-              this.getAllSongs(
-                userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
-                username,
-                password,
-                i
-              );
-              console.log("----------------", i);
-              this.startToPlay();
-            }, waitSome);
+            this.getAllSongs(
+              userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
+              username,
+              password,
+              i
+            );
           }
         });
     } catch (error) {
@@ -643,7 +639,6 @@ export class AudioProvider extends Component {
           //Hepsini indir.
           for (let i = 0; i <= parsedData.Liste.WsSarkiDto.length; i++) {
             this.setState({ ...this, currentSongNumber: i });
-            console.log(i);
 
             //Push it into the array
             this.state.downloadedSongs.push(parsedData.Liste.WsSarkiDto[i]);
@@ -655,6 +650,10 @@ export class AudioProvider extends Component {
                 parsedData.Liste.WsSarkiDto[i],
                 "sound"
               );
+              this.setState({
+                ...this,
+                songs: [...this.state.songs, parsedData.Liste.WsSarkiDto[i]],
+              });
 
               //Download işlemi bittikten sonra Çalma Listesini güncelle
               if (i == parsedData.Liste.WsSarkiDto.length - 1) {
@@ -667,9 +666,7 @@ export class AudioProvider extends Component {
                 //await this.getAudioFiles();
                 //Dosya varsa çalmaya çalış.
                 //eğer çalmıyorsa tabi.
-                this.setState({ ...this.state, audioFiles: [] });
-                //this.startToPlay();
-                console.log("----WVVVDDERR???---");
+                this.startToPlay();
 
                 //Save it to storage
                 await AsyncStorage.setItem(
@@ -728,7 +725,8 @@ export class AudioProvider extends Component {
 
           //TODO: START
           //await this.getAudioFiles();
-          //this.setState({ ...this.state, audioFiles: [] });
+
+          this.setState({ ...this.state, audioFiles: [] });
           //this.startToPlay();
         }
       }

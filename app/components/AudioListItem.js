@@ -34,6 +34,7 @@ const AudioListItem = ({
   activeListItem,
   item,
   style,
+  keyy,
 }) => {
   //console.log("---------------ITEM----------------");
   //  console.log(item);
@@ -54,9 +55,7 @@ const AudioListItem = ({
                 ]}
               >
                 <Text style={styles.thumbnailText}>
-                  {activeListItem
-                    ? renderIcon(isPlaying)
-                    : getThumnailText(title)}
+                  {activeListItem ? renderIcon(isPlaying) : keyy}
                 </Text>
               </View>
             ) : null}
@@ -238,6 +237,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#999",
     marginTop: 4,
+  },
+  indexOfSong: {
+    position: "absolute",
+    right: 5,
+    top: 10,
+    color: color.WHITE,
   },
 });
 

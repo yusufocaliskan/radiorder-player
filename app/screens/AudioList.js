@@ -1,6 +1,7 @@
 import React, { Component, useContext, useEffect } from "react";
 import {
   Text,
+  FlatList,
   View,
   TouchableOpacity,
   StyleSheet,
@@ -308,6 +309,7 @@ export class AudioList extends Component {
         isPlaying={extendedState.isPlaying}
         activeListItem={this.context.currentAudioIndex === index}
         item={item}
+        keyy={index + 1}
         onAudioPress={() => this.handleAudioPress(item)}
         onOptionPress={() => {
           this.currentItem = item;
@@ -326,13 +328,46 @@ export class AudioList extends Component {
           return (
             <>
               <Screen>
-                <RecyclerListView
+                <FlatList
+                  style={styles.anonsList}
+                  data={dataProvider._data}
+                  keyExtractor={(item, index) => String(index)}
+                  renderItem={({ item, index }) => (
+                    <AudioListItem
+                      title={item.filename}
+                      duration={item.duration}
+                      //isPlaying={extendedState.isPlaying}
+                      activeListItem={this.context.currentAudioIndex === index}
+                      item={item}
+                      keyy={index + 1}
+                      onAudioPress={() => this.handleAudioPress(item)}
+                      onOptionPress={() => {
+                        this.currentItem = item;
+                        this.setState({
+                          ...this.state,
+                          optionModalVisible: true,
+                        });
+                      }}
+                    />
+                  )}
+                />
+                {/* <RecyclerListView
                   dataProvider={dataProvider}
                   layoutProvider={this.layoutProvider}
                   rowRenderer={this.rowRenderer}
+                  keyExtractor={(item, index) => String(index)}
                   extendedState={{ isPlaying }}
                   style={{ paddingTop: 20 }}
-                />
+                /> */}
+
+                {this.context.isDownloading ? (
+                  <View style={styles.spinnerView}>
+                    <ActivityIndicator
+                      style={styles.spinner}
+                      color={color.WHITE}
+                    />
+                  </View>
+                ) : null}
               </Screen>
               {anonsSoundObj != null &&
               currentPlayingAnons != null &&
