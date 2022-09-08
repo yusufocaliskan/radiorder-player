@@ -187,9 +187,8 @@ const styles = StyleSheet.create({
   },
 
   thumbnailText: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: color.FONT,
+    fontSize: 18,
+    color: color.FONT_LIGHT,
     textTransform: "uppercase",
   },
 

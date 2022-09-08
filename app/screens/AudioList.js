@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { Avatar } from "@rneui/base";
 import { AudioContext } from "../context/AudioProvider";
-import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import AudioListItem from "../components/AudioListItem";
+import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import color from "../misc/color";
 import Screen from "../components/Screen";
 import {
@@ -345,6 +345,12 @@ export class AudioList extends Component {
                   renderItem={({ item, index }) => (
                     <AudioListItem
                       title={item.filename}
+                      style={[
+                        styles.songItem,
+                        index + 1 == audioFiles.length
+                          ? { marginBottom: 30 }
+                          : null,
+                      ]}
                       duration={item.duration}
                       isPlaying={isPlaying}
                       activeListItem={this.context.currentAudioIndex === index}
@@ -414,6 +420,9 @@ const styles = StyleSheet.create({
   },
   spinner: {
     marginBottom: 20,
+  },
+  songItem: {
+    paddingTop: 10,
   },
 });
 

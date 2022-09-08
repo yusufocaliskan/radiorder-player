@@ -478,8 +478,6 @@ export class AudioProvider extends Component {
       // ]),
       audioFiles: filtered_song,
     });
-    console.log("Total Media: ", this.totalAudioCount);
-    console.log("Total Song", this.state.audioFiles.length);
 
     this.setState({ ...this.state, anonsPlaylist: anons_must_be_shown });
   };
@@ -1059,10 +1057,11 @@ export class AudioProvider extends Component {
    */
   startToPlay = async () => {
     await this.getAudioFiles().then(async () => {
-      if (
-        this.state.soundObj == null ||
-        (this.state.isPlaying == false && this.state.audioFiles.length != 0)
-      ) {
+      console.log("SOUND ", this.state.soundObj);
+      console.log("PLAYIN ", this.state.isPlaying);
+
+      if (this.state.soundObj == null && this.state.isPlaying == false) {
+        console.log("--------------------EZ Ê LÊ BIDIMMMMM");
         const audio = this.state.audioFiles[0];
 
         //Playlisti oynatmaya başla
@@ -1085,8 +1084,8 @@ export class AudioProvider extends Component {
         });
 
         //Slider bar için statuyü güncelle
-        //playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
-
+        playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
+        this.state.isPlaying = true;
         //Application açıldığında
         //son çalınna şarkıyı bulmak için kullanırı
         //storeAudioForNextOpening(audio, index);
