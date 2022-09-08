@@ -120,17 +120,19 @@ export default function App() {
     return <LoadingGif />;
   }
   return (
-    <newAuthContext.Provider value={authContext}>
-      <StatusBar style="light" />
-      <NavigationContainer>
-        {loadingState.userToken == null ? (
-          <NavigationStack />
-        ) : (
-          <AudioProvider>
-            <AppNavigator />
-          </AudioProvider>
-        )}
-      </NavigationContainer>
-    </newAuthContext.Provider>
+    <LangProvider>
+      <newAuthContext.Provider value={authContext}>
+        <StatusBar style="light" />
+        <NavigationContainer>
+          {loadingState.userToken == null ? (
+            <NavigationStack />
+          ) : (
+            <AudioProvider>
+              <AppNavigator />
+            </AudioProvider>
+          )}
+        </NavigationContainer>
+      </newAuthContext.Provider>
+    </LangProvider>
   );
 }

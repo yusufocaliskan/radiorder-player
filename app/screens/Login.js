@@ -30,7 +30,7 @@ const Login = () => {
   const [userName, setUserName] = useState();
   const [password, setPassword] = useState();
   const { singIn, test } = useContext(newAuthContext);
-  const { Lang, setSelectedLang, updateSelectedLan } = useContext(LangContext);
+  const { Lang, selectedLang, updateSelectedLan } = useContext(LangContext);
   const audioContext = useContext(AudioContext);
   const [showLangModal, setShowLangModal] = useState(false);
   const [closeLangModal, setCloseLangModal] = useState(false);
@@ -109,10 +109,12 @@ const Login = () => {
 
   const selectTR = () => {
     updateSelectedLan("tr");
+    setShowLangModal(false);
   };
 
   const selectEN = () => {
     updateSelectedLan("en");
+    setShowLangModal(false);
   };
 
   //Giriş yapmamış ise burayı göster.
@@ -120,24 +122,7 @@ const Login = () => {
   //Giriş yapılmamış ise giriş formunu
   return (
     <KeyboardAvoidingView style={styles.container} behavior="padding">
-      <LanguageModal
-        showIt={showLangModal}
-        closeIt={() => setShowLangModal(false)}
-        selectTR={selectTR}
-        selectEN={selectEN}
-      />
-
       <Logo styles={styles.logo} />
-      <TouchableOpacity
-        style={styles.langSelection}
-        onPress={() => {
-          setShowLangModal(true);
-        }}
-      >
-        <View>
-          <Text style={styles.langSelectionText}>EN</Text>
-        </View>
-      </TouchableOpacity>
       <Input
         type="text"
         placeholder={Lang?.USER_NAME}
@@ -152,6 +137,25 @@ const Login = () => {
         setValue={setPassword}
       />
       <Button onPress={LoginAction} text={Lang?.LOGIN} />
+      <View style={styles.languageView}>
+        <LanguageModal
+          showIt={showLangModal}
+          closeIt={() => setShowLangModal(false)}
+          selectTR={selectTR}
+          selectEN={selectEN}
+        />
+
+        <TouchableOpacity
+          style={styles.langSelection}
+          onPress={() => {
+            setShowLangModal(true);
+          }}
+        >
+          <View>
+            <Text style={styles.langSelectionText}>{selectedLang}</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
       <View style={styles.bottomText}>
         <Text style={{ color: "#666" }}>{Lang?.RADI_OFFICIAL}</Text>
       </View>
@@ -187,11 +191,6 @@ const styles = StyleSheet.create({
     height: 200,
   },
   langSelection: {
-    position: "absolute",
-    top: 50,
-    right: 30,
-    zIndex: 777,
-    elevation: 777,
     backgroundColor: color.FONT_LARGE,
     borderRadius: 25,
     padding: 5,
@@ -201,6 +200,7 @@ const styles = StyleSheet.create({
   },
   langSelectionText: {
     color: color.WHITE,
+    textTransform: "uppercase",
   },
 });
 

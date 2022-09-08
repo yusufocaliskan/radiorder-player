@@ -17,25 +17,28 @@ const LangProvider = (props) => {
   useEffect(() => {
     freshSelectedLang();
   });
+
   const freshSelectedLang = async () => {
     let appLang = await AsyncStorage.getItem("AppLang");
 
     if (!appLang) {
       appLang = "tr";
     }
-
     setSelectedLang(appLang);
     setLang(Languages[selectedLang]);
   };
+
+  //Dil değiştiriliken kullanılıyor..
   const updateSelectedLang = async (newVal) => {
     await AsyncStorage.setItem("AppLang", newVal);
     setSelectedLang(newVal);
   };
+
   return (
     <LangContext.Provider
       value={{
         Lang: Lang,
-        setSelectedLang: setSelectedLang,
+        selectedLang: selectedLang,
         updateSelectedLan: updateSelectedLang,
       }}
     >

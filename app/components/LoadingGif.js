@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   View,
   Text,
@@ -38,9 +38,7 @@ const LoadingGif = () => {
           fontSize: 16,
           color: color.DARK_RED,
         }}
-      >
-        Bir saniye bekle...
-      </Text>
+      ></Text>
     </View>
   );
 };
