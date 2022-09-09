@@ -242,7 +242,7 @@ export class AudioProvider extends Component {
     //let timeline_seconds = timeline_minutes * 60;
 
     for (let i = 0; i < this.state.audioFiles.length; i++) {
-      const file_name = this.state.audioFiles[i].filename;
+      const file_name = this.state.audioFiles[i]?.filename;
 
       //Ses
       for (let d = 0; d < songs?.length; d++) {
@@ -259,16 +259,16 @@ export class AudioProvider extends Component {
             continue;
           }
           filtered_song.push({
-            albumId: this.state.audioFiles[i].albumId,
-            creationTime: this.state.audioFiles[i].creationTime,
-            duration: this.state.audioFiles[i].duration,
-            filename: this.state.audioFiles[i].filename,
-            height: this.state.audioFiles[i].height,
-            id: this.state.audioFiles[i].id,
-            mediaType: this.state.audioFiles[i].mediaType,
-            modificationTime: this.state.audioFiles[i].modificationTime,
-            uri: this.state.audioFiles[i].uri,
-            width: this.state.audioFiles[i].width,
+            albumId: this.state.audioFiles[i]?.albumId,
+            creationTime: this.state.audioFiles[i]?.creationTime,
+            duration: this.state.audioFiles[i]?.duration,
+            filename: this.state.audioFiles[i]?.filename,
+            height: this.state.audioFiles[i]?.height,
+            id: this.state.audioFiles[i]?.id,
+            mediaType: this.state.audioFiles[i]?.mediaType,
+            modificationTime: this.state.audioFiles[i]?.modificationTime,
+            uri: this.state.audioFiles[i]?.uri,
+            width: this.state.audioFiles[i]?.width,
             Aktif: songs[d].Aktif,
             Album: songs[d].Album,
             DosyaIsmi: songs[d].DosyaIsmi,
@@ -315,16 +315,17 @@ export class AudioProvider extends Component {
 
           let singItToday = issetInArray(option, currentDay);
 
-          this.state.DBConnection.write(() => {
-            let anons = this.state.DBConnection.objects("AnonsDocs");
-            this.state.DBConnection.delete(anons);
-            anons = null;
-          });
+          // this.state.DBConnection.write(() => {
+          //   let anons = this.state.DBConnection.objects("AnonsDocs");
+          //   this.state.DBConnection.delete(anons);
+          //   anons = null;
+          // });
 
           // Local databaseden tekrar sayısını al.
           const AnonsRepeats = this.getAnonRepeatsFromDatabase(
             anons[a].anons.Id
           );
+          console.log(AnonsRepeats);
 
           // Ikı zaman arasındaki farkı al.
           // const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
@@ -352,7 +353,7 @@ export class AudioProvider extends Component {
               singItToday == true &&
               currentHours == anonsHours &&
               currentMinutes == anonsMinutes &&
-              AnonsRepeats.repeats <= repeatServer;
+              AnonsRepeats.repeats - 1 <= repeatServer;
           }
 
           //Tekrarlı anons gün içinde ikince defa çalıyor
@@ -413,16 +414,16 @@ export class AudioProvider extends Component {
           console.log(showIt);
 
           const anons_container = {
-            albumId: this.state.audioFiles[i].albumId,
-            creationTime: this.state.audioFiles[i].creationTime,
-            duration: this.state.audioFiles[i].duration,
-            filename: this.state.audioFiles[i].filename,
-            height: this.state.audioFiles[i].height,
-            id: this.state.audioFiles[i].id,
-            mediaType: this.state.audioFiles[i].mediaType,
-            modificationTime: this.state.audioFiles[i].modificationTime,
-            uri: this.state.audioFiles[i].uri,
-            width: this.state.audioFiles[i].width,
+            albumId: this.state.audioFiles[i]?.albumId,
+            creationTime: this.state.audioFiles[i]?.creationTime,
+            duration: this.state.audioFiles[i]?.duration,
+            filename: this.state.audioFiles[i]?.filename,
+            height: this.state.audioFiles[i]?.height,
+            id: this.state.audioFiles[i]?.id,
+            mediaType: this.state.audioFiles[i]?.mediaType,
+            modificationTime: this.state.audioFiles[i]?.modificationTime,
+            uri: this.state.audioFiles[i]?.uri,
+            width: this.state.audioFiles[i]?.width,
             Aciklama: anons[a].task.Aciklama,
             Aktif: anons[a].task.Aktif,
             Baslangic: anons[a].task.Baslangic,
@@ -457,14 +458,14 @@ export class AudioProvider extends Component {
           //Eğer çaldı ise ekle
 
           //Çalma sayısını ekle database e
-          if (isAnonsShowable == true) {
-            this.writeAnonsToDatabase(
-              anons[a].anons.Id,
-              AnonsRepeats.repeats,
-              repeatServer,
-              anons[a].anons.AnonsIsmi
-            );
-          }
+          // if (isAnonsShowable == true) {
+          //   this.writeAnonsToDatabase(
+          //     anons[a].anons.Id,
+          //     AnonsRepeats.repeats, //Kaç defa çaldı?
+          //     repeatServer, // Kaç defa çalması lazım?
+          //     anons[a].anons.AnonsIsmi
+          //   );
+          // }
 
           anons_must_be_shown.push(anons_container);
           //console.log(showIt);
@@ -962,6 +963,8 @@ export class AudioProvider extends Component {
         checkAnons == NaN ||
         checkAnons.length == 0
       ) {
+        console.log("---------------VESERKE-SILAAAAAAVVVV");
+        console.log(anonsId, repeats, localRepeat, name);
         //Yeni veriyi ekkle
         let insert;
         this.state.DBConnection.write(() => {
@@ -976,6 +979,7 @@ export class AudioProvider extends Component {
           });
         });
       } else {
+        console.log("---------------ROJANKE-SILAAAAAAVVVV");
         //Güncelleme yap
         this.state.DBConnection.write(() => {
           const anons = this.state.DBConnection.objects("AnonsDocs").filtered(
@@ -1192,7 +1196,6 @@ export class AudioProvider extends Component {
    * Çal
    */
   startToPlay = async () => {
-    this.saveListenedSongCount();
     setTimeout(async () => {
       if (this.state.soundObj == null) {
         const audio = this.state.audioFiles[0];
@@ -1293,6 +1296,7 @@ export class AudioProvider extends Component {
           waitLittleBitStillDownloading:
             this.state.waitLittleBitStillDownloading,
           removeListenedSongCount: this.removeListenedSongCount,
+          writeAnonsToDatabase: this.writeAnonsToDatabase,
         }}
       >
         {this.state.isDownloading ? (
@@ -1304,16 +1308,6 @@ export class AudioProvider extends Component {
     );
   }
 }
-
-const SetInternetInfo = ({ setNetInfo }) => {
-  const netInfo = useNetInfo();
-
-  useEffect(() => {
-    setNetInfo(netInfo);
-  }, [netInfo]);
-
-  return null;
-};
 
 const styles = StyleSheet.create({
   permissionError: {

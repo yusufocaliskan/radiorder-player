@@ -20,7 +20,7 @@ const TestAnons = [
     task: {
       Aciklama: "deneme123123123",
       Aktif: true,
-      Baslangic: "2022-06-29T23:11:00",
+      Baslangic: "2022-06-29T00:34:00",
       BaslangicStr: "29.6.2022 22:35:00",
       Bitis: "2022-10-01T00:00:00",
       BitisStr: "1.10.202 00:00:00",

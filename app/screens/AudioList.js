@@ -207,15 +207,15 @@ export class AudioList extends React.PureComponent {
             });
 
             //ÇAlma sayısını sıfırla
-            this.context.removeListenedSongCount();
+            //this.context.removeListenedSongCount();
 
             //Çalma sayısını database ekle
-            // this.context.writeAnonsToDatabase(
-            //   anonsPlaylist[a].Id,
-            //   AnonsRepeats.repeats,
-            //   repeatServer,
-            //   anonsPlaylist[a].anons.AnonsIsmi
-            // );
+            this.context.writeAnonsToDatabase(
+              anonsPlaylist[i].Id,
+              anonsPlaylist[i].anonsRepeated,
+              anonsPlaylist[i].showIt.repeat,
+              anonsPlaylist[i].showIt.AnonsName
+            );
 
             //Şarkıya kaldığı yerden davem ettir
             //Herhangi bir şarkı çalıyorsa
@@ -260,7 +260,7 @@ export class AudioList extends React.PureComponent {
     setInterval(() => {
       console.log("Anons Kontrol 1-2 1-2");
       this.playAnons();
-    }, 75000);
+    }, 5000);
     //}
     this.createHeader();
 
