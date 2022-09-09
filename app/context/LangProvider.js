@@ -14,10 +14,18 @@ const LangProvider = (props) => {
     tr: tr,
     en: en,
   };
+
+  //Display için
+  const Languages_LookUp = {
+    tr: "Türkçe",
+    en: "English",
+  };
+
   useEffect(() => {
     freshSelectedLang();
   });
 
+  //Seçili olan dili belirle.
   const freshSelectedLang = async () => {
     let appLang = await AsyncStorage.getItem("AppLang");
 
@@ -40,6 +48,7 @@ const LangProvider = (props) => {
         Lang: Lang,
         selectedLang: selectedLang,
         updateSelectedLan: updateSelectedLang,
+        Languages_LookUp: Languages_LookUp,
       }}
     >
       {props.children}

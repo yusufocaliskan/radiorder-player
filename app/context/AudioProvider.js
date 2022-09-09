@@ -19,7 +19,7 @@ import { play, playNext } from "../misc/AudioController";
 import { DataProvider } from "recyclerlistview";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { XMLParser } from "fast-xml-parser";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import config from "../misc/config";
 import { newAuthContext } from "../context/newAuthContext";
 import { v4 as uuidv4 } from "uuid";
@@ -99,6 +99,9 @@ export class AudioProvider extends Component {
         hour: "2-digit",
         timeZone: "Europe/Istanbul",
       })}`,
+
+      //Playlist güncelleme tarih
+      lastPlaylistUpdateTime: null,
     };
 
     this.totalAudioCount = 0;
@@ -150,7 +153,7 @@ export class AudioProvider extends Component {
     //   appSettings = null;
     // });
 
-    const permissionStored = this.state.DBConnection.objects("AppSettings")[0];
+    //const permissionStored = this.state.DBConnection.objects("AppSettings")[0];
 
     const permission = await MediaLibrary.getPermissionsAsync();
 
@@ -227,8 +230,8 @@ export class AudioProvider extends Component {
     //const anons = TestAnons;
 
     //Şarkıları da al.
-    //const songs = JSON.parse(await AsyncStorage.getItem("songs"));
-    const songs = this.state.songs;
+    const songs = JSON.parse(await AsyncStorage.getItem("songs"));
+    //const songs = this.state.songs;
 
     const filtered_song = [];
     let anons_must_be_shown = [];
@@ -617,6 +620,11 @@ export class AudioProvider extends Component {
               i
             );
           }
+          //Son güncelleme tarihini sakla
+          await AsyncStorage.setItem(
+            "Last_Playlist_Update_Time",
+            this.state.whatIsTheDate
+          );
         })
         .catch(async (res) => {
           //heger kiii internet yokksaam :)
@@ -992,13 +1000,43 @@ export class AudioProvider extends Component {
       //this.requestToPermissions();
       //Musiclere erişim izni all
       await this.getPermission().then(async () => {
-        await this.getSoundsAndAnonsFromServer();
+        //await this.getSoundsAndAnonsFromServer();
+        await this.setLastPlaylistUpdateTime();
+        const lastPlaylistUpdateTime = await AsyncStorage.getItem(
+          "Last_Playlist_Update_Time"
+        );
+        const diffTime = getDifferenceBetweenTwoHours(
+          new Date(this.state.lastPlaylistUpdateTime).getTime(),
+          new Date(this.state.whatIsTheDate).getTime()
+        );
+
+        //Şarkıları al
+        //Eğer son güncelleme 1 dk yı gectiyse
+        if (diffTime > 60000) {
+          await this.getUserGroupListFromServer();
+        } else {
+          this.state.songs = JSON.parse(await AsyncStorage.getItem("songs"));
+          //TODO:START
+          //Listeyi güncelle
+          await this.getAudioFiles();
+          this.startToPlay();
+        }
+
+        //Anonsları her zaman all..
+        await this.getAllAnonsFromServer();
       });
 
       //Serverdan şarkı ve anonsları al
     });
   };
 
+  setLastPlaylistUpdateTime = async () => {
+    const lastPlaylistUpdateTime = await AsyncStorage.getItem(
+      "Last_Playlist_Update_Time"
+    );
+
+    this.state.lastPlaylistUpdateTime = lastPlaylistUpdateTime;
+  };
   /**
    * Componenet bağlandığında
    */

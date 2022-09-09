@@ -138,3 +138,10 @@ export const whatIsTheDate = () => {
 export const whatIsTheTime = () => {
   return `${new Date().toLocaleTimeString()}`;
 };
+
+export const getHoursAndMinutes = ({ date }) => {
+  const customDate = new Date(date);
+  const hours = customDate.getHours();
+  const minutes = customDate.getMinutes();
+  return `${hours}:${minutes}`;
+};

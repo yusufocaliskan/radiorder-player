@@ -8,15 +8,18 @@ import {
   Dimensions,
   ActivityIndicator,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Avatar } from "@rneui/base";
 import { AudioContext } from "../context/AudioProvider";
 import AudioListItem from "../components/AudioListItem";
 import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import color from "../misc/color";
 import Screen from "../components/Screen";
+import HeaderRight from "../components/HeaderRight";
 import {
   updateAnonsSingRepeatTimes,
   storeAudioForNextOpening,
+  getHoursAndMinutes,
 } from "../misc/Helper";
 import AnonsModal from "../components/AnonsModal";
 import ModalPlayer from "../components/ModalPlayer";
@@ -237,28 +240,14 @@ export class AudioList extends React.PureComponent {
     //     this.playAnons();
     //   }, 75000);
     // }
-
+    const lastPlaylistUpdateTime = await AsyncStorage.getItem(
+      "Last_Playlist_Update_Time"
+    );
     //Profile resmini koy
-    // this.props.navigation.setOptions({
-    //   headerLeft: () => {
-    //     return (
-    //       <View style={{ marginLeft: 20 }}>
-    //         <TouchableOpacity>
-    //           <Avatar
-    //             rounded
-    //             source={{
-    //               uri: `http://radiorder.online/${this.context.newAuthContext?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
-    //             }}
-    //           />
-    //         </TouchableOpacity>
-    //       </View>
-    //     );
-    //   },
-    // });
 
     this.props.navigation.setOptions({
       headerRight: () => {
-        return <NoInternetConnection />;
+        return <HeaderRight lastPlaylistUpdateTime={lastPlaylistUpdateTime} />;
       },
     });
 

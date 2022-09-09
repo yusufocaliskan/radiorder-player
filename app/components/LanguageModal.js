@@ -11,10 +11,11 @@ import color from "../misc/color";
 import { LangContext } from "../context/LangProvider";
 
 const LanguageModal = ({ showIt, closeIt, selectTR, selectEN }) => {
-  const { Lang, selectedLang, updateSelectedLan } = useContext(LangContext);
+  const { Lang, selectedLang, updateSelectedLan, Languages_LookUp } =
+    useContext(LangContext);
   const [showLangModal, setShowLangModal] = useState(false);
   const [closeLangModal, setCloseLangModal] = useState(false);
-  const langLookUp = { tr: "Türkçe", en: "English" };
+
   const selectTRLang = () => {
     updateSelectedLan("tr");
     setShowLangModal(false);
@@ -36,7 +37,7 @@ const LanguageModal = ({ showIt, closeIt, selectTR, selectEN }) => {
         >
           <View>
             <Text style={styles.langSelectionText}>
-              {langLookUp[selectedLang]}
+              {Languages_LookUp[selectedLang]}
             </Text>
           </View>
         </TouchableOpacity>

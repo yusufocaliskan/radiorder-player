@@ -12,4 +12,5 @@ export default {
   PLAYER: "Player",
   PLAYLIST: "Playlist",
   LOGOUT: "Logout",
+  NO_INTERNET: "Offline Mode",
 };

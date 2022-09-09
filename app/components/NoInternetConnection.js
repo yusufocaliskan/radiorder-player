@@ -7,7 +7,7 @@ import { useNetInfo } from "@react-native-community/netinfo";
 /**
  * Sağ üstte internet yok yazısı göstermek için kullanılır.
  */
-export default NoInternetConnection = () => {
+export default NoInternetConnection = ({ text }) => {
   const netInfo = useNetInfo();
 
   if (netInfo.isConnected == true) {
@@ -15,8 +15,8 @@ export default NoInternetConnection = () => {
   }
   return (
     <View style={styles.internetInfo}>
-      <Ionicons name="cloud-offline" size={22} color="black" />
-      <Text style={styles.internetInfoText}>Internetiniz Yok</Text>
+      <Ionicons name="cloud-offline" size={20} color={color.BLACK} />
+      <Text style={styles.internetInfoText}>{text}</Text>
     </View>
   );
 };
@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
   },
   internetInfoText: {
     color: color.BLACK,
-    fontWeight: "bold",
     marginLeft: 10,
   },
 });

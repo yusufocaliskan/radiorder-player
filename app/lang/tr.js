@@ -12,4 +12,5 @@ export default {
   PLAYER: "Müzik Çalar",
   PLAYLIST: "Çalma Listesi",
   LOGOUT: "Çıkış Yap",
+  NO_INTERNET: "Bağlantı Yok",
 };
