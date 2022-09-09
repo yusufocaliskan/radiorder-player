@@ -206,9 +206,6 @@ export class AudioList extends React.PureComponent {
               positionMillis: false,
             });
 
-            //ÇAlma sayısını sıfırla
-            //this.context.removeListenedSongCount();
-
             //Çalma sayısını database ekle
             this.context.writeAnonsToDatabase(
               anonsPlaylist[i].Id,
