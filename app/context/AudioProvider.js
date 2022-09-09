@@ -326,10 +326,13 @@ export class AudioProvider extends Component {
           );
 
           // Ikı zaman arasındaki farkı al.
-          const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
-            new Date(AnonsRepeats.repeatDate).getTime(),
-            new Date(this.state.whatIsTheDate).getTime()
-          );
+          // const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
+          //   new Date(AnonsRepeats.repeatDate).getTime(),
+          //   new Date(this.state.whatIsTheDate).getTime()
+          // );
+          const ListenedSongCount = JSON.parse(
+            await AsyncStorage.getItem("ListenedSongCount")
+          ).ListenedSongCount;
 
           //Bu anons çalınması gerekiyor mu?
           //Şartları kontrol et.
@@ -361,7 +364,7 @@ export class AudioProvider extends Component {
               today >= start &&
               today <= end &&
               AnonsRepeats.repeats <= repeatServer &&
-              diffBetweenLastAnons >= config.REPEAT_PERIOT_TIME; //Son çalınan anonsun üzerinden x kadar geçti ise.
+              ListenedSongCount >= config.REPEAT_PERIOT_TIME; //Son çalınan anonsun üzerinden x kadar geçti ise.
           }
 
           //Tekrarlı anons gün için de ilk defa çalıyorsa.
@@ -376,7 +379,7 @@ export class AudioProvider extends Component {
               today >= start &&
               today <= end &&
               AnonsRepeats.repeats <= repeatServer &&
-              diffBetweenLastAnons >= config.REPEAT_PERIOT_TIME &&
+              ListenedSongCount >= config.REPEAT_PERIOT_TIME &&
               currentHours == config.FIRST_PERIOT_TIME.split(":")[0] &&
               currentMinutes == config.FIRST_PERIOT_TIME.split(":")[1]; //Son çalınan anonsun üzerinden x kadar geçti ise.
           }
@@ -894,7 +897,28 @@ export class AudioProvider extends Component {
 
   getSoundsAndAnonsFromServer = async () => {
     //Ses dosyalarını serverdan indir.
-    await this.getUserGroupListFromServer();
+    await this.setLastPlaylistUpdateTime();
+    const lastPlaylistUpdateTime = await AsyncStorage.getItem(
+      "Last_Playlist_Update_Time"
+    );
+    const diffTime = getDifferenceBetweenTwoHours(
+      new Date(this.state.lastPlaylistUpdateTime).getTime(),
+      new Date(this.state.whatIsTheDate).getTime()
+    );
+
+    //Şarkıları al
+    //Eğer son güncelleme 1 dk yı gectiyse
+    if (diffTime > 60000) {
+      await this.getUserGroupListFromServer();
+    } else {
+      this.state.songs = JSON.parse(await AsyncStorage.getItem("songs"));
+      //TODO:START
+      //Listeyi güncelle
+      await this.getAudioFiles();
+      this.startToPlay();
+    }
+
+    //Anonsları her zaman all..
     await this.getAllAnonsFromServer();
 
     //console.log(this.state.playlist);
@@ -1000,36 +1024,16 @@ export class AudioProvider extends Component {
       //this.requestToPermissions();
       //Musiclere erişim izni all
       await this.getPermission().then(async () => {
-        //await this.getSoundsAndAnonsFromServer();
-        await this.setLastPlaylistUpdateTime();
-        const lastPlaylistUpdateTime = await AsyncStorage.getItem(
-          "Last_Playlist_Update_Time"
-        );
-        const diffTime = getDifferenceBetweenTwoHours(
-          new Date(this.state.lastPlaylistUpdateTime).getTime(),
-          new Date(this.state.whatIsTheDate).getTime()
-        );
-
-        //Şarkıları al
-        //Eğer son güncelleme 1 dk yı gectiyse
-        if (diffTime > 60000) {
-          await this.getUserGroupListFromServer();
-        } else {
-          this.state.songs = JSON.parse(await AsyncStorage.getItem("songs"));
-          //TODO:START
-          //Listeyi güncelle
-          await this.getAudioFiles();
-          this.startToPlay();
-        }
-
-        //Anonsları her zaman all..
-        await this.getAllAnonsFromServer();
+        await this.getSoundsAndAnonsFromServer();
       });
 
       //Serverdan şarkı ve anonsları al
     });
   };
 
+  /**
+   * Son güncelleme tarhini state ata.
+   */
   setLastPlaylistUpdateTime = async () => {
     const lastPlaylistUpdateTime = await AsyncStorage.getItem(
       "Last_Playlist_Update_Time"
@@ -1062,6 +1066,15 @@ export class AudioProvider extends Component {
 
     //Şarkı bitti ise diğerine geç
     if (playbackStatus.didJustFinish) {
+      //Şarkı bittiğinde yeni bir günceleme var mı yok mu diye kontrol et.
+      //Anonsları çek.
+      this.getSoundsAndAnonsFromServer();
+
+      //Çalının şarkı sayını bir artttır.
+      this.saveListenedSongCount();
+
+      console.log("------------NEXT: HIIIII----------");
+
       //Sonraki şarkının id'sini belirle
       const nextAudioIndex = this.state.currentAudioIndex + 1;
 
@@ -1124,12 +1137,43 @@ export class AudioProvider extends Component {
   };
 
   /**
+   * ÇAlma sayısını
+   */
+  saveListenedSongCount = async () => {
+    let count = JSON.parse(await AsyncStorage.getItem("ListenedSongCount"));
+
+    //Eğer boş ise?
+    //İlk defa count edilecekse
+    if (count == null) {
+      count = {
+        ListenedSongCount: 0,
+      };
+    }
+
+    //Var olanı bir arttır.
+    count.ListenedSongCount = count.ListenedSongCount + 1;
+
+    //Yeniden kayıt et.
+    await AsyncStorage.setItem(
+      "ListenedSongCount",
+      JSON.stringify({ ListenedSongCount: count.ListenedSongCount })
+    );
+  };
+
+  /**
+   * Çalma sayısnı kaldırı
+   */
+  removeListenedSongCount = async () => {
+    await AsyncStorage.removeItem("ListenedSongCount");
+  };
+
+  /**
    * Çal
    */
   startToPlay = async () => {
+    this.saveListenedSongCount();
     setTimeout(async () => {
       if (this.state.soundObj == null) {
-        console.log("--------------------EZ Ê LÊ BIDIMMMMM");
         const audio = this.state.audioFiles[0];
 
         //Playlisti oynatmaya başla

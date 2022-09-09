@@ -230,6 +230,17 @@ export class AudioList extends React.PureComponent {
     }, 1000);
   };
 
+  createHeader = async () => {
+    const lastPlaylistUpdateTime = await AsyncStorage.getItem(
+      "Last_Playlist_Update_Time"
+    );
+    this.props.navigation.setOptions({
+      headerRight: () => {
+        return <HeaderRight lastPlaylistUpdateTime={lastPlaylistUpdateTime} />;
+      },
+    });
+  };
+
   componentDidMount = async () => {
     //Anonsu çal
     //TODO
@@ -240,16 +251,7 @@ export class AudioList extends React.PureComponent {
     //     this.playAnons();
     //   }, 75000);
     // }
-    const lastPlaylistUpdateTime = await AsyncStorage.getItem(
-      "Last_Playlist_Update_Time"
-    );
-    //Profile resmini koy
-
-    this.props.navigation.setOptions({
-      headerRight: () => {
-        return <HeaderRight lastPlaylistUpdateTime={lastPlaylistUpdateTime} />;
-      },
-    });
+    this.createHeader();
 
     //TODO: Re-Check..
     //this.context.loadPreviousAudio();
@@ -367,7 +369,6 @@ export class AudioList extends React.PureComponent {
                     />
                   )}
                 />
-                {console.log("Downloads", isDownloading)}
 
                 {/* <RecyclerListView
                   dataProvider={dataProvider}
@@ -410,6 +411,7 @@ const styles = StyleSheet.create({
   spinnerView: {
     flex: 1,
     backgroundColor: color.APP_BG,
+    padding: 10,
     justifyContent: "center",
     alignContent: "center",
     alignItems: "center",

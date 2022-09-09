@@ -7,10 +7,8 @@ const configs = {
 
   //Tekrarlı anonslar arasındaki zaman dilimi.
   //Her x saate bir tekrarı yap
-  //Milisaniye cinsinden belirt
-  // 60000 = 1dk.
-  //21600000 = 6 saat
-  REPEAT_PERIOT_TIME: 120000,
+  /// 20 şarkıda bir tane anons ya.
+  REPEAT_PERIOT_TIME: 20,
 
   //Tekrarlı anonslarda ilk çalma saati
   FIRST_PERIOT_TIME: "03:00",
