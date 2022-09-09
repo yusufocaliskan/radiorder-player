@@ -8,4 +8,8 @@ export default {
   USER_NAME: "User name",
   USER_PASSWORD: "Password",
   RADI_OFFICIAL: "Radiorder Official",
+
+  PLAYER: "Player",
+  PLAYLIST: "Playlist",
+  LOGOUT: "Logout",
 };

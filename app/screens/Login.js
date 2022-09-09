@@ -32,8 +32,6 @@ const Login = () => {
   const { singIn, test } = useContext(newAuthContext);
   const { Lang, selectedLang, updateSelectedLan } = useContext(LangContext);
   const audioContext = useContext(AudioContext);
-  const [showLangModal, setShowLangModal] = useState(false);
-  const [closeLangModal, setCloseLangModal] = useState(false);
 
   const LoginAction = async () => {
     //Kullanıcı bilgileri boş mu?
@@ -107,16 +105,6 @@ const Login = () => {
     return soapBody;
   };
 
-  const selectTR = () => {
-    updateSelectedLan("tr");
-    setShowLangModal(false);
-  };
-
-  const selectEN = () => {
-    updateSelectedLan("en");
-    setShowLangModal(false);
-  };
-
   //Giriş yapmamış ise burayı göster.
 
   //Giriş yapılmamış ise giriş formunu
@@ -137,25 +125,7 @@ const Login = () => {
         setValue={setPassword}
       />
       <Button onPress={LoginAction} text={Lang?.LOGIN} />
-      <View style={styles.languageView}>
-        <LanguageModal
-          showIt={showLangModal}
-          closeIt={() => setShowLangModal(false)}
-          selectTR={selectTR}
-          selectEN={selectEN}
-        />
-
-        <TouchableOpacity
-          style={styles.langSelection}
-          onPress={() => {
-            setShowLangModal(true);
-          }}
-        >
-          <View>
-            <Text style={styles.langSelectionText}>{selectedLang}</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      <LanguageModal />
       <View style={styles.bottomText}>
         <Text style={{ color: "#666" }}>{Lang?.RADI_OFFICIAL}</Text>
       </View>
@@ -189,18 +159,6 @@ const styles = StyleSheet.create({
     marginTop: 80,
     marginBottom: 20,
     height: 200,
-  },
-  langSelection: {
-    backgroundColor: color.FONT_LARGE,
-    borderRadius: 25,
-    padding: 5,
-    borderWidth: 2,
-    borderColor: color.GRAY,
-    opacity: 0.7,
-  },
-  langSelectionText: {
-    color: color.WHITE,
-    textTransform: "uppercase",
   },
 });
 

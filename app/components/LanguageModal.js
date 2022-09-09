@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   TouchableOpacity,
   StyleSheet,
@@ -8,25 +8,58 @@ import {
   Dimensions,
 } from "react-native";
 import color from "../misc/color";
-const LanguageModal = ({ showIt, closeIt, selectTR, selectEN }) => {
-  return (
-    <Modal transparent={true} animationType="slide" visible={showIt}>
-      <TouchableOpacity onPress={closeIt}>
-        <View style={styles.overview}></View>
-      </TouchableOpacity>
-      <View style={styles.modalView}>
-        <Text style={styles.modalTitle}>Select Language</Text>
-        <View style={styles.optionsView}>
-          <TouchableOpacity style={styles.option} onPress={selectTR}>
-            <Text style={styles.optionText}>Türkçe</Text>
-          </TouchableOpacity>
+import { LangContext } from "../context/LangProvider";
 
-          <TouchableOpacity style={styles.option} onPress={selectEN}>
-            <Text style={styles.optionText}>English</Text>
-          </TouchableOpacity>
-        </View>
+const LanguageModal = ({ showIt, closeIt, selectTR, selectEN }) => {
+  const { Lang, selectedLang, updateSelectedLan } = useContext(LangContext);
+  const [showLangModal, setShowLangModal] = useState(false);
+  const [closeLangModal, setCloseLangModal] = useState(false);
+  const langLookUp = { tr: "Türkçe", en: "English" };
+  const selectTRLang = () => {
+    updateSelectedLan("tr");
+    setShowLangModal(false);
+  };
+
+  const selectENLang = () => {
+    updateSelectedLan("en");
+    setShowLangModal(false);
+  };
+
+  return (
+    <>
+      <View style={styles.languageView}>
+        <TouchableOpacity
+          style={styles.langSelection}
+          onPress={() => {
+            setShowLangModal(true);
+          }}
+        >
+          <View>
+            <Text style={styles.langSelectionText}>
+              {langLookUp[selectedLang]}
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
-    </Modal>
+
+      <Modal transparent={true} animationType="slide" visible={showLangModal}>
+        <TouchableOpacity onPress={() => setShowLangModal(false)}>
+          <View style={styles.overview}></View>
+        </TouchableOpacity>
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>Select Language</Text>
+          <View style={styles.optionsView}>
+            <TouchableOpacity style={styles.option} onPress={selectTRLang}>
+              <Text style={styles.optionText}>Türkçe</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.option} onPress={selectENLang}>
+              <Text style={styles.optionText}>English</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 const { height, width } = Dimensions.get("window");
@@ -74,6 +107,20 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     opacity: 0.2,
+  },
+  langSelection: {
+    backgroundColor: color.FONT_LARGE,
+    borderRadius: 20,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderWidth: 2,
+    borderColor: color.GRAY,
+    opacity: 0.7,
+  },
+  langSelectionText: {
+    color: color.WHITE,
+    textTransform: "uppercase",
+    fontSize: 14,
   },
 });
 

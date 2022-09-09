@@ -604,12 +604,12 @@ export class AudioProvider extends Component {
           );
 
           //console.log(this.state.totalSongInTheServer.ToplamSayfa);
-          for (
-            let i = 1;
-            i <= this.state.totalSongInTheServer.ToplamSayfa;
-            i++
-          ) {
-            //for (let i = 1; i <= 3; i++) {
+          // for (
+          //   let i = 1;
+          //   i <= this.state.totalSongInTheServer.ToplamSayfa;
+          //   i++
+          // ) {
+          for (let i = 1; i <= 3; i++) {
             this.getAllSongs(
               userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
               username,
@@ -1089,8 +1089,6 @@ export class AudioProvider extends Component {
    * Çal
    */
   startToPlay = async () => {
-    console.log("SOUND ", this.state.soundObj);
-    console.log("PLAYIN ", this.state.isPlaying);
     setTimeout(async () => {
       if (this.state.soundObj == null) {
         console.log("--------------------EZ Ê LÊ BIDIMMMMM");

@@ -239,22 +239,22 @@ export class AudioList extends React.PureComponent {
     // }
 
     //Profile resmini koy
-    this.props.navigation.setOptions({
-      headerLeft: () => {
-        return (
-          <View style={{ marginLeft: 20 }}>
-            <TouchableOpacity>
-              <Avatar
-                rounded
-                source={{
-                  uri: `http://radiorder.online/${this.context.newAuthContext?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
-                }}
-              />
-            </TouchableOpacity>
-          </View>
-        );
-      },
-    });
+    // this.props.navigation.setOptions({
+    //   headerLeft: () => {
+    //     return (
+    //       <View style={{ marginLeft: 20 }}>
+    //         <TouchableOpacity>
+    //           <Avatar
+    //             rounded
+    //             source={{
+    //               uri: `http://radiorder.online/${this.context.newAuthContext?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
+    //             }}
+    //           />
+    //         </TouchableOpacity>
+    //       </View>
+    //     );
+    //   },
+    // });
 
     this.props.navigation.setOptions({
       headerRight: () => {

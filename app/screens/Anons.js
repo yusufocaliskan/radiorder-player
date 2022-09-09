@@ -26,22 +26,22 @@ const Anons = () => {
   useEffect(() => {
     //Mount olduğunda verileri storagetan al.
     //Üstte profile avatarın koy.
-    navigation.setOptions({
-      headerLeft: () => {
-        return (
-          <View style={{ marginLeft: 20 }}>
-            <TouchableOpacity>
-              <Avatar
-                rounded
-                source={{
-                  uri: `http://radiorder.online/${loadingState.userData?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
-                }}
-              />
-            </TouchableOpacity>
-          </View>
-        );
-      },
-    });
+    // navigation.setOptions({
+    //   headerLeft: () => {
+    //     return (
+    //       <View style={{ marginLeft: 20 }}>
+    //         <TouchableOpacity>
+    //           <Avatar
+    //             rounded
+    //             source={{
+    //               uri: `http://radiorder.online/${loadingState.userData?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
+    //             }}
+    //           />
+    //         </TouchableOpacity>
+    //       </View>
+    //     );
+    //   },
+    // });
   });
 
   const rowRenderer = (type, item, index, extendedState) => {

@@ -8,4 +8,8 @@ export default {
   USER_NAME: "Kullanıcı Adı",
   USER_PASSWORD: "Şifre",
   RADI_OFFICIAL: "Radiorder Kurumsal",
+
+  PLAYER: "Müzik Çalar",
+  PLAYLIST: "Çalma Listesi",
+  LOGOUT: "Çıkış Yap",
 };

@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useLayoutEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { StyleSheet } from "react-native";
+import { Text, View, StyleSheet } from "react-native";
 import AudioList from "../screens/AudioList";
 import Player from "../screens/Player";
 import User from "../screens/User";
@@ -13,13 +13,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
 import { AudioContext } from "../context/AudioProvider";
 import { newAuthContext } from "../context/newAuthContext";
-
+import { LangContext } from "../context/LangProvider";
+import { useNavigation } from "@react-navigation/native";
 const Tab = createBottomTabNavigator();
 const AppNavigator = () => {
   const context = useContext(AudioContext);
   const { loadingState } = useContext(newAuthContext);
   const [userData, setUserData] = useState(loadingState?.userData?.FSL);
-
+  const { Lang } = useContext(LangContext);
+  const navigation = useNavigation(AppNavigator);
+  useEffect(() => {
+    console.log(Lang?.PLAYLIST);
+  });
   return (
     <Tab.Navigator
       screenOptions={{
@@ -33,7 +38,7 @@ const AppNavigator = () => {
       }}
     >
       <Tab.Screen
-        name="Şarkılar"
+        name={Lang?.PLAYLIST || "Çalma Listesi"}
         component={AudioList}
         context={context}
         options={{
@@ -43,7 +48,7 @@ const AppNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Müzik Çalar"
+        name={Lang?.PLAYER || "Müzik Player"}
         component={Player}
         context={context}
         options={{
@@ -55,7 +60,7 @@ const AppNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Anons"
+        name={Lang?.ANONS || "Anons"}
         component={Anons}
         context={context}
         options={{

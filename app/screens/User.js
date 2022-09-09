@@ -8,33 +8,13 @@ import { newAuthContext } from "../context/newAuthContext";
 import color from "../misc/color";
 import { stop } from "../misc/AudioController";
 import { useNavigation } from "@react-navigation/native";
-
+import LanguageModal from "../components/LanguageModal";
+import { LangContext } from "../context/LangProvider";
 const User = () => {
   const { singOut, loadingState } = useContext(newAuthContext);
   const audioContext = useContext(AudioContext);
+  const { Lang } = useContext(LangContext);
   const navigation = useNavigation();
-
-  //Moun olduğuında
-  useEffect(() => {
-    //Mount olduğunda verileri storagetan al.
-    //Üstte profile avatarın koy.
-    navigation.setOptions({
-      headerLeft: () => {
-        return (
-          <View style={{ marginLeft: 20 }}>
-            <TouchableOpacity>
-              <Avatar
-                rounded
-                source={{
-                  uri: `http://radiorder.online/${loadingState.userData?.FSL?.KullaniciListesi?.KullaniciDto?.ProfilResmi}`,
-                }}
-              />
-            </TouchableOpacity>
-          </View>
-        );
-      },
-    });
-  });
 
   const singOutUser = async () => {
     //Çalan şarkı varsa durdur..
@@ -71,10 +51,13 @@ const User = () => {
           {loadingState.userData?.FSL?.KullaniciListesi?.KullaniciDto?.Eposta}
         </Text>
         <Text style={styles.Sehir}>{loadingState.userData?.FSL?.Sehir}</Text>
+        <View style={styles.langView}>
+          <LanguageModal />
+        </View>
         <Button
           style={styles.logOutButton}
           onPress={singOutUser}
-          text="Çıkış Yap"
+          text={Lang?.LOGOUT}
           textStyle={styles.buttonTextStyle}
         />
       </View>
@@ -131,6 +114,11 @@ const styles = StyleSheet.create({
     width: 100,
   },
   buttonTextStyle: { color: color.WHITE },
+  langView: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+  },
 });
 
 export default User;
