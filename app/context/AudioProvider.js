@@ -202,6 +202,7 @@ export class AudioProvider extends Component {
    * Şarkı dosyalarını al.
    */
   getAudioFiles = async () => {
+    console.log("--------------TEST");
     const { dataProvider, audioFiles } = this.state;
     //const { audioFiles } = this.state;
     let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
@@ -226,8 +227,8 @@ export class AudioProvider extends Component {
     });
 
     //Anonsları al
-    const anons = JSON.parse(await AsyncStorage.getItem("anons"));
-    //const anons = TestAnons;
+    //const anons = JSON.parse(await AsyncStorage.getItem("anons"));
+    const anons = TestAnons;
 
     //Şarkıları da al.
     const songs = JSON.parse(await AsyncStorage.getItem("songs"));
@@ -314,11 +315,11 @@ export class AudioProvider extends Component {
 
           let singItToday = issetInArray(option, currentDay);
 
-          // this.state.DBConnection.write(() => {
-          //   let anons = this.state.DBConnection.objects("AnonsDocs");
-          //   this.state.DBConnection.delete(anons);
-          //   anons = null;
-          // });
+          this.state.DBConnection.write(() => {
+            let anons = this.state.DBConnection.objects("AnonsDocs");
+            this.state.DBConnection.delete(anons);
+            anons = null;
+          });
 
           // Local databaseden tekrar sayısını al.
           const AnonsRepeats = this.getAnonRepeatsFromDatabase(
@@ -330,10 +331,12 @@ export class AudioProvider extends Component {
           //   new Date(AnonsRepeats.repeatDate).getTime(),
           //   new Date(this.state.whatIsTheDate).getTime()
           // );
-          const ListenedSongCount = JSON.parse(
+
+          let ListenedSongCount = JSON.parse(
             await AsyncStorage.getItem("ListenedSongCount")
           ).ListenedSongCount;
 
+          console.log("ListentedCount----------------", ListenedSongCount);
           //Bu anons çalınması gerekiyor mu?
           //Şartları kontrol et.
           let isAnonsShowable = false;
@@ -342,6 +345,7 @@ export class AudioProvider extends Component {
           //Haftalık mı çalınacak?
           //Sepesifik saatler için
           if (option.length != 0) {
+            console.log("---------------EV DER");
             isAnonsShowable =
               today >= start &&
               today <= end &&
@@ -353,7 +357,7 @@ export class AudioProvider extends Component {
 
           //Tekrarlı anons gün içinde ikince defa çalıyor
           //YOKSA anons saati
-          //O zaman son çaldığı zamandan bu yana REPEAT_PERIOT_TIME saat geçmiş ise yeniden çal
+          //Ozaman REPEAT_PERIOT_TIME sayısı kadar şarkı çalındı ise anosu yap
           //Başlangıç saati belirle.
           if (
             anonsHours == "00" &&
@@ -406,7 +410,7 @@ export class AudioProvider extends Component {
 
           //Bu gün yeterince çaldı mı?
 
-          // console.log(isAnonsShowable);
+          console.log(showIt);
 
           const anons_container = {
             albumId: this.state.audioFiles[i].albumId,
@@ -550,6 +554,7 @@ export class AudioProvider extends Component {
           return parsedData;
         })
         .catch((res) => {
+          console.log("--******---");
           //Internet yoksa
           this.ifThereIsNOOInternet();
         });
@@ -718,6 +723,7 @@ export class AudioProvider extends Component {
 
                 //TODO:START
                 //Listeyi güncelle
+                console.log("---HII--");
                 await this.getAudioFiles();
 
                 //ilk part ((10 adet)) indirildikten sonra çal
@@ -738,7 +744,6 @@ export class AudioProvider extends Component {
         });
     } catch (error) {
       //Save it to storage
-
       console.error(`SOAP FAIL: ${error}`);
     }
   };
@@ -781,6 +786,7 @@ export class AudioProvider extends Component {
           console.log("iiiiiiiii", i);
           //İlk şarkıdan sonra çalmaya başla
           if (i == 1 && downloadType == "sound") {
+            console.log("---TEST:HII--");
             await this.getAudioFiles();
             this.startToPlay();
           }
@@ -914,6 +920,7 @@ export class AudioProvider extends Component {
       this.state.songs = JSON.parse(await AsyncStorage.getItem("songs"));
       //TODO:START
       //Listeyi güncelle
+      console.log("---TEST:2--");
       await this.getAudioFiles();
       this.startToPlay();
     }
@@ -1020,15 +1027,20 @@ export class AudioProvider extends Component {
    */
   dbConnection = async () => {
     //DATAbase table bağlantıları
-    await this.connectToAnonsDatabaseDoc().then(async () => {
-      //this.requestToPermissions();
-      //Musiclere erişim izni all
-      await this.getPermission().then(async () => {
-        await this.getSoundsAndAnonsFromServer();
-      });
+    try {
+      await this.connectToAnonsDatabaseDoc().then(async () => {
+        //this.requestToPermissions();
+        //Musiclere erişim izni all
+        await this.getPermission().then(async () => {
+          await this.getSoundsAndAnonsFromServer();
+        });
 
-      //Serverdan şarkı ve anonsları al
-    });
+        //Serverdan şarkı ve anonsları al
+      });
+    } catch (error) {
+      console.log(error);
+      console.log("---------------SILAV");
+    }
   };
 
   /**
@@ -1068,7 +1080,7 @@ export class AudioProvider extends Component {
     if (playbackStatus.didJustFinish) {
       //Şarkı bittiğinde yeni bir günceleme var mı yok mu diye kontrol et.
       //Anonsları çek.
-      this.getSoundsAndAnonsFromServer();
+      await this.getSoundsAndAnonsFromServer();
 
       //Çalının şarkı sayını bir artttır.
       this.saveListenedSongCount();
@@ -1140,31 +1152,40 @@ export class AudioProvider extends Component {
    * ÇAlma sayısını
    */
   saveListenedSongCount = async () => {
-    let count = JSON.parse(await AsyncStorage.getItem("ListenedSongCount"));
+    try {
+      let count = await AsyncStorage.getItem("ListenedSongCount");
+      console.log("COUNT", count);
+      //Eğer boş ise?
+      //İlk defa count edilecekse
+      if (count != null) {
+        count = JSON.parse(count);
+      }
 
-    //Eğer boş ise?
-    //İlk defa count edilecekse
-    if (count == null) {
-      count = {
-        ListenedSongCount: 0,
-      };
+      if (count == null) {
+        count = {
+          ListenedSongCount: 0,
+        };
+      }
+
+      //Var olanı bir arttır.
+      count.ListenedSongCount = count.ListenedSongCount + 1;
+
+      //Yeniden kayıt et.
+      await AsyncStorage.setItem(
+        "ListenedSongCount",
+        JSON.stringify({ ListenedSongCount: count.ListenedSongCount })
+      );
+    } catch (error) {
+      console.log("----------------dsfsdfds--");
+      console.log(error);
     }
-
-    //Var olanı bir arttır.
-    count.ListenedSongCount = count.ListenedSongCount + 1;
-
-    //Yeniden kayıt et.
-    await AsyncStorage.setItem(
-      "ListenedSongCount",
-      JSON.stringify({ ListenedSongCount: count.ListenedSongCount })
-    );
   };
 
   /**
    * Çalma sayısnı kaldırı
    */
   removeListenedSongCount = async () => {
-    await AsyncStorage.removeItem("ListenedSongCount");
+    await AsyncStorage.setItem("ListenedSongCount", 1);
   };
 
   /**
@@ -1271,6 +1292,7 @@ export class AudioProvider extends Component {
           getSoundsAndAnonsFromServer: this.getSoundsAndAnonsFromServer,
           waitLittleBitStillDownloading:
             this.state.waitLittleBitStillDownloading,
+          removeListenedSongCount: this.removeListenedSongCount,
         }}
       >
         {this.state.isDownloading ? (

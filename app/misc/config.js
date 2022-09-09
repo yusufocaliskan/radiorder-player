@@ -8,7 +8,7 @@ const configs = {
   //Tekrarlı anonslar arasındaki zaman dilimi.
   //Her x saate bir tekrarı yap
   /// 20 şarkıda bir tane anons ya.
-  REPEAT_PERIOT_TIME: 20,
+  REPEAT_PERIOT_TIME: 2,
 
   //Tekrarlı anonslarda ilk çalma saati
   FIRST_PERIOT_TIME: "03:00",

@@ -22,9 +22,7 @@ const AppNavigator = () => {
   const [userData, setUserData] = useState(loadingState?.userData?.FSL);
   const { Lang } = useContext(LangContext);
   const navigation = useNavigation(AppNavigator);
-  useEffect(() => {
-    console.log(Lang?.PLAYLIST);
-  });
+
   return (
     <Tab.Navigator
       screenOptions={{

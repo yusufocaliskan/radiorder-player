@@ -206,6 +206,17 @@ export class AudioList extends React.PureComponent {
               positionMillis: false,
             });
 
+            //ÇAlma sayısını sıfırla
+            this.context.removeListenedSongCount();
+
+            //Çalma sayısını database ekle
+            // this.context.writeAnonsToDatabase(
+            //   anonsPlaylist[a].Id,
+            //   AnonsRepeats.repeats,
+            //   repeatServer,
+            //   anonsPlaylist[a].anons.AnonsIsmi
+            // );
+
             //Şarkıya kaldığı yerden davem ettir
             //Herhangi bir şarkı çalıyorsa
             if (
@@ -245,12 +256,12 @@ export class AudioList extends React.PureComponent {
     //Anonsu çal
     //TODO
     //Eğer indirme işlemi devam ediyorsa anons çalma.
-    // if (!this.context.isDownloading) {
-    //   setInterval(() => {
-    //     console.log("Anons Kontrol 1-2 1-2");
-    //     this.playAnons();
-    //   }, 75000);
-    // }
+    //if (!this.context.isDownloading) {
+    setInterval(() => {
+      console.log("Anons Kontrol 1-2 1-2");
+      this.playAnons();
+    }, 75000);
+    //}
     this.createHeader();
 
     //TODO: Re-Check..
