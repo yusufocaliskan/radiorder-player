@@ -12,7 +12,7 @@ const HeaderRight = ({ lastPlaylistUpdateTime }) => {
   return (
     <View style={styles.headerRight}>
       <View style={styles.updateView}>
-        <MaterialIcons name="update" size={20} color={color.BLACK} />
+        <MaterialIcons name="update" size={18} color={color.BLACK} />
         <Text style={styles.updateText}>
           {getHoursAndMinutes({ date: lastPlaylistUpdateTime })}
         </Text>
@@ -37,6 +37,7 @@ const styles = StyleSheet.create({
   },
   updateText: {
     color: color.BLACK,
+    marginLeft: 5,
   },
 });
 

@@ -6,10 +6,10 @@ const configs = {
   SER_PASSWORD: "1@K_#$159X!",
 
   /// 10 şarkıda bir tane anons ya.
-  HERGUN_TEKRARLI_ANONS: 13,
+  HERGUN_TEKRARLI_ANONS: 2,
 
   //Her 20 şarkıda bir
-  BELIRGUN_TEKRARLI_ANONS: 15,
+  BELIRGUN_TEKRARLI_ANONS: 4,
 
   //SOAP QUERY
   SOAP_URL: "https://www.radiorder.online/ws/radi.asmx",

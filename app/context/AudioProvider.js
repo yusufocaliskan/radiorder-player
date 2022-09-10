@@ -9,10 +9,13 @@ import {
   getCurrentDate,
   storeAudioForNextOpening,
   getDifferenceBetweenTwoHours,
+  convertSecondToMillisecond,
+  converMinutesToMilliseconds,
+  calculateTotalSongDurration,
 } from "../misc/Helper";
 import RNFetchBlob from "rn-fetch-blob";
 import DownloadingGif from "../components/DownloadingGif";
-import { play, playNext } from "../misc/AudioController";
+import { play, pause, resume, playNext } from "../misc/AudioController";
 
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
@@ -74,10 +77,10 @@ export class AudioProvider extends Component {
 
       //AllAnons
       anons: [],
-      anonsIsPlaying: true,
       anonsSoundObj: null,
       currentAnons: null,
       currentPlayingAnons: null,
+      anonsIsPlaying: false,
 
       //Song and Anons in the Storage
       downloadedSongs: [],
@@ -92,7 +95,9 @@ export class AudioProvider extends Component {
       AppSettingsConnection: null,
 
       //How Many song singged
-      ListenedSongCount: 0,
+      ListenedSongCount: 13,
+      theSongListened: [],
+      theTimePastedSinceAnonsLoopStart: 0,
 
       //Güncel tarih
       whatIsTheDate: `${getCurrentDate(
@@ -205,7 +210,6 @@ export class AudioProvider extends Component {
    * Şarkı dosyalarını al.
    */
   getAudioFiles = async () => {
-    console.log("--------------TEST");
     const { dataProvider, audioFiles } = this.state;
     //const { audioFiles } = this.state;
     let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
@@ -278,23 +282,25 @@ export class AudioProvider extends Component {
           //   this.state.DBConnection.delete(anons);
           //   anons = null;
           // });
+          // this.removeListenedSongCount();
 
           // Local databaseden tekrar sayısını al.
           const AnonsRepeats = this.getAnonRepeatsFromDatabase(
             anons[a].anons.Id
           );
-          //console.log(AnonsRepeats);
+          let lastAnonsRepeatByAnonsType = {};
 
           // Ikı zaman arasındaki farkı al.
-          // const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
-          //   new Date(AnonsRepeats.repeatDate).getTime(),
-          //   new Date(this.state.whatIsTheDate).getTime()
-          // );
+          //Sırası geldiğinde
+          //Anons tekrarlamak istedğinde en son 5 dk önce çalmış olmalı!
+          //Bu iki aynı tipteki anonsun üst üste çalması engelleyecek
 
-          // let ListenedSongCount = JSON.parse(
-          //   await AsyncStorage.getItem("ListenedSongCount")
-          // ).ListenedSongCount;
-          let ListenedSongCount = this.state.ListenedSongCount;
+          //console.log(AnonsRepeats);
+
+          let ListenedSongCount = JSON.parse(
+            await AsyncStorage.getItem("ListenedSongCount")
+          ).ListenedSongCount;
+          //let ListenedSongCount = this.state.ListenedSongCount;
 
           //console.log("ListentedCount----------------", ListenedSongCount);
           //Bu anons çalınması gerekiyor mu?
@@ -327,6 +333,14 @@ export class AudioProvider extends Component {
             option.length == 0
           ) {
             AnonsType = "HergunTekrarli";
+            lastAnonsRepeatByAnonsType =
+              this.getAnonRepeatsFromDatabaseByAnonsType(AnonsType);
+
+            const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
+              new Date(lastAnonsRepeatByAnonsType?.repeatDate).getTime(),
+              new Date(this.state.whatIsTheDate).getTime()
+            );
+
             isAnonsShowable =
               today >= start &&
               today <= end &&
@@ -334,8 +348,14 @@ export class AudioProvider extends Component {
               //Son çalınan anonsun üzerinden x kadar geçti ise.
               //Onun katlarını çal, her on şarkıda bir
               ListenedSongCount > 0 &&
-              ListenedSongCount % config.HERGUN_TEKRARLI_ANONS == 0;
+              lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
+              ListenedSongCount % config.HERGUN_TEKRARLI_ANONS == 0 &&
+              //Son anonstan sonra geçen süre
+              //Ama en son 60dk önce Aynı tipteki bir anons yapılmış olmalı!
+              diffBetweenLastAnons >= converMinutesToMilliseconds(30);
           }
+          console.log(calculateTotalSongDurration(this.state.theSongListened));
+          console.log(this.state.theSongListened);
 
           //BeliriGunlerTekrarli
           if (
@@ -344,6 +364,13 @@ export class AudioProvider extends Component {
             option.length != 0
           ) {
             AnonsType = "BeliriGunlerTekrarli";
+            lastAnonsRepeatByAnonsType =
+              this.getAnonRepeatsFromDatabaseByAnonsType(AnonsType);
+
+            const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
+              new Date(lastAnonsRepeatByAnonsType?.repeatDate).getTime(),
+              new Date(this.state.whatIsTheDate).getTime()
+            );
             isAnonsShowable =
               today >= start &&
               today <= end &&
@@ -352,10 +379,13 @@ export class AudioProvider extends Component {
               //Son çalınan anonsun üzerinden x kadar geçti ise.
               //Her 20 şarkıda bir
               ListenedSongCount > 0 &&
-              ListenedSongCount % config.BELIRGUN_TEKRARLI_ANONS == 0;
+              //Enson  çaldığın kendin olmayaacaaann
+              lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
+              ListenedSongCount % config.BELIRGUN_TEKRARLI_ANONS == 0 &&
+              //Son anonstan sonra geçen süre
+              diffBetweenLastAnons >= converMinutesToMilliseconds(30);
           }
 
-          console.log("ListenedSongCount", ListenedSongCount);
           const showIt = {
             AnonsName: anons[a].anons.AnonsIsmi,
             Start: start,
@@ -375,12 +405,10 @@ export class AudioProvider extends Component {
             lastAnonsRepeatTime: AnonsRepeats.repeatDate,
             anonsPeriotTime: config.REPEAT_PERIOT_TIME,
             AnonsType: AnonsType,
+            Id: anons[a].anons.Id,
             ListenedSongCount: ListenedSongCount,
+            lastAnonsRepeatByAnonsType: lastAnonsRepeatByAnonsType,
           };
-
-          //Bu gün yeterince çaldı mı?
-
-          //console.log(showIt);
 
           const anons_container = {
             albumId: this.state.audioFiles[i]?.albumId,
@@ -423,7 +451,9 @@ export class AudioProvider extends Component {
             Show: isAnonsShowable,
             showIt: showIt,
           };
-
+          anons_must_be_shown.sort((a, b) =>
+            a.showIt.lastAnonsRepeatTime > b.showIt.lastAnonsRepeatTime ? 1 : -1
+          );
           anons_must_be_shown.push(anons_container);
           //console.log(showIt);
         }
@@ -478,7 +508,7 @@ export class AudioProvider extends Component {
     }
 
     //Sort it
-    filtered_song.sort((a, b) => (a.Order > b.Order ? 1 : -1));
+    //filtered_song.sort((a, b) => (a.Order > b.Order ? 1 : -1));
 
     //push it into the state
     this.setState({
@@ -731,7 +761,6 @@ export class AudioProvider extends Component {
 
                 //TODO:START
                 //Listeyi güncelle
-                console.log("---HII--");
                 await this.getAudioFiles();
 
                 //ilk part ((10 adet)) indirildikten sonra çal
@@ -742,6 +771,7 @@ export class AudioProvider extends Component {
 
                 //Tüm şarkılar indiyse
                 if (pageNo == parsedData.ToplamSayfa) {
+                  //Download işlemi bitti!
                   this.state.waitLittleBitStillDownloading = false;
                 }
               }
@@ -928,7 +958,6 @@ export class AudioProvider extends Component {
       this.state.songs = JSON.parse(await AsyncStorage.getItem("songs"));
       //TODO:START
       //Listeyi güncelle
-      console.log("---TEST:2--");
       await this.getAudioFiles();
       this.startToPlay();
     }
@@ -956,12 +985,18 @@ export class AudioProvider extends Component {
   };
 
   //Anons Tekrarlarını veri sakla.
-  writeAnonsToDatabase = (anonsId, repeats = 0, localRepeat, name) => {
+  writeAnonsToDatabase = (
+    anonsId,
+    repeats = 0,
+    localRepeat,
+    name,
+    AnonsType
+  ) => {
     const date = getCurrentDate(new Date());
     //Check is there is any anons equal to anonsId
     try {
       let checkAnons = this.state.DBConnection.objects("AnonsDocs").filtered(
-        `anonsId=${anonsId} && date='${date}'`
+        `anonsId=${anonsId} && date='${date}' && anonsType='${AnonsType}'`
       );
 
       //Anons daha önce varsa
@@ -983,6 +1018,7 @@ export class AudioProvider extends Component {
             repeatDate: this.state.whatIsTheDate,
             date: date,
             anonsName: name,
+            anonsType: AnonsType,
           });
         });
       } else {
@@ -990,7 +1026,7 @@ export class AudioProvider extends Component {
         //Güncelleme yap
         this.state.DBConnection.write(() => {
           const anons = this.state.DBConnection.objects("AnonsDocs").filtered(
-            `anonsId=${anonsId} && date='${date}'`
+            `anonsId=${anonsId} && date='${date}' && anonsType='${AnonsType}'`
           )[0];
           //VAR GUNCELLE
           //Güncellemeyi en fazla serverdaki kadar yap.
@@ -1018,6 +1054,28 @@ export class AudioProvider extends Component {
         const repeats = this.state.DBConnection.objects("AnonsDocs").filtered(
           `anonsId=${anonsId} && date='${date}'`
         );
+        if (repeats.length !== 0) {
+          return repeats[0];
+        }
+
+        //Boş iswe
+        if (repeats.length === 0) {
+          return {
+            repeats: 0,
+            repeatDate: null,
+          };
+        }
+      });
+    } catch (er) {}
+  };
+  getAnonRepeatsFromDatabaseByAnonsType = (anonsType) => {
+    try {
+      const date = getCurrentDate(new Date());
+
+      return this.state.DBConnection.write(() => {
+        const repeats = this.state.DBConnection.objects("AnonsDocs")
+          .filtered(`date='${date}' && anonsType='${anonsType}'`)
+          .sorted("_id", true);
         if (repeats.length !== 0) {
           return repeats[0];
         }
@@ -1070,6 +1128,19 @@ export class AudioProvider extends Component {
   componentDidMount = () => {
     //DB Bağlantı, dosya izni ve verileri databaseden all.
     this.dbConnection();
+
+    //Anons Kontrolü yap
+    //Download işlemi tamamen bittiyse
+
+    if (
+      !this.waitLittleBitStillDownloading ||
+      this.state.anonsIsPlaying == false
+    ) {
+      setInterval(async () => {
+        console.log("Anons Kontrol # 1-2 1-2");
+        await this.playAnons();
+      }, convertSecondToMillisecond(5)); //Her 40 saniye de bir anons kontrollü yap
+    }
   };
 
   componentWillUnmount() {
@@ -1097,7 +1168,7 @@ export class AudioProvider extends Component {
       this.saveListenedSongCount();
 
       console.log("------------NEXT: HIIIII----------");
-
+      this.state.theSongListened.push(this.state.soundObj);
       //Sonraki şarkının id'sini belirle
       const nextAudioIndex = this.state.currentAudioIndex + 1;
 
@@ -1177,47 +1248,44 @@ export class AudioProvider extends Component {
    * ÇAlma sayısını
    */
   saveListenedSongCount = async () => {
-    this.state.ListenedSongCount = this.state.ListenedSongCount + 1;
-    // return;
-    // try {
-    //   let count = await AsyncStorage.getItem("ListenedSongCount");
-    //   console.log("COUNT", count);
-    //   //Eğer boş ise?
-    //   //İlk defa count edilecekse
-    //   if (count != null) {
-    //     count = JSON.parse(count);
-    //   }
+    //this.state.ListenedSongCount = this.state.ListenedSongCount + 1;
 
-    //   if (count == null) {
-    //     count = {
-    //       ListenedSongCount: 0,
-    //     };
-    //   }
+    try {
+      let count = await AsyncStorage.getItem("ListenedSongCount");
 
-    //   //Var olanı bir arttır.
-    //   count.ListenedSongCount = count.ListenedSongCount + 1;
-
-    //   //Yeniden kayıt et.
-    //   await AsyncStorage.setItem(
-    //     "ListenedSongCount",
-    //     JSON.stringify({ ListenedSongCount: count.ListenedSongCount })
-    //   );
-    // } catch (error) {
-    //   console.log("----------------dsfsdfds--");
-    //   console.log(error);
-    // }
+      //Eğer boş ise?
+      //İlk defa count edilecekse
+      if (count != null) {
+        count = JSON.parse(count);
+      }
+      if (count == null) {
+        count = {
+          ListenedSongCount: 0,
+        };
+      }
+      //Var olanı bir arttır.
+      count.ListenedSongCount = count.ListenedSongCount + 1;
+      //Yeniden kayıt et.
+      await AsyncStorage.setItem(
+        "ListenedSongCount",
+        JSON.stringify({ ListenedSongCount: count.ListenedSongCount })
+      );
+    } catch (error) {
+      console.log("----------------dsfsdfds--");
+      console.log(error);
+    }
   };
 
   /**
    * Çalma sayısnı kaldırı
    */
   removeListenedSongCount = async () => {
-    this.state.ListenedSongCount = 0;
-    return;
-    // count = {
-    //   ListenedSongCount: 0,
-    // };
-    // await AsyncStorage.setItem("ListenedSongCount", JSON.stringify(count));
+    // this.state.ListenedSongCount = 0;
+    // return;
+    const count = {
+      ListenedSongCount: 0,
+    };
+    await AsyncStorage.setItem("ListenedSongCount", JSON.stringify(count));
   };
 
   /**
@@ -1234,6 +1302,7 @@ export class AudioProvider extends Component {
 
         //Controllerdan çağır.
         const status = await play(playbackObj, audio?.uri);
+        this.state.theSongListened.push(status);
         const index = 0;
 
         //Yeni durumu state ata ve ilerlememesi için return'le
@@ -1250,11 +1319,103 @@ export class AudioProvider extends Component {
         //Slider bar için statuyü güncelle
         playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
         this.state.isPlaying = true;
+
         //Application açıldığında
         //son çalınna şarkıyı bulmak için kullanırı
         storeAudioForNextOpening(audio, index);
       }
     }, 2000);
+  };
+
+  /**
+   * Çalınacak anons var mı yok mu diye kontrol eder.
+   * Varsa Çalar
+   */
+  playAnons = async () => {
+    setTimeout(async () => {
+      this.getAudioFiles();
+      const anonsPlaylist = this.state.anonsPlaylist;
+      let isPlaying = null;
+
+      //Bir anons çalmıyorsa eğer anons yap
+      if (this.state.anonsSoundObj != null || this.state.anonsIsPlaying == true)
+        return;
+
+      //VAr olan anonsları kontrol et.
+      for (let i = 0; i < anonsPlaylist.length; i++) {
+        //Herhangi bir anons çalmıyorsa
+        console.log(anonsPlaylist[i].showIt);
+
+        if (this.state.anonsSoundObj == null && anonsPlaylist[i].Show == true) {
+          //Çalan bir şarkı varsa onu durdur
+          if (this.state.soundObj != null) {
+            pause(this.state.playbackObj);
+            isPlaying = false;
+          }
+
+          const playbackObj = new Audio.Sound();
+
+          //console.log(anonsPlaylist[5]);
+          //Controllerdan çağır.
+          const status = await play(playbackObj, anonsPlaylist[i].uri);
+
+          //Anons Tekrar sayısını güncelle
+          //updateAnonsSingRepeatTimes(anonsPlaylist[5].Id);
+          this.updateState({
+            ...this,
+            isPlaying: isPlaying,
+            anonsSoundObj: status,
+            anonsIsPlaying: true,
+            currentPlayingAnons: anonsPlaylist[i],
+          });
+
+          //Çalma sayısını database ekle
+          this.writeAnonsToDatabase(
+            anonsPlaylist[i].Id,
+            anonsPlaylist[i].anonsRepeated,
+            anonsPlaylist[i].showIt.repeat,
+            anonsPlaylist[i].showIt.AnonsName,
+            anonsPlaylist[i].showIt.AnonsType
+          );
+
+          //Çalınan Şarkı listesini boşalt.
+          this.state.theSongListened = [];
+
+          //Anons bittikten sonra tekrar durumu güncelle
+          setTimeout(async () => {
+            const status = await playbackObj.stopAsync({
+              shouldPlay: false,
+              positionMillis: false,
+            });
+
+            //this.state.ListenedSongCount++;
+
+            //Çalma sayısını all.
+            //this.getAnonRepeatsFromDatabase();
+
+            //Şarkıya kaldığı yerden davem ettir
+            //Herhangi bir şarkı çalıyorsa
+            if (
+              this.state.soundObj != null &&
+              this.state.soundObj.isPlaying == true
+            );
+            {
+              resume(this.state.playbackObj);
+              isPlaying = true;
+            }
+
+            //State'i güncelle
+            this.updateState({
+              ...this,
+              anonsSoundObj: null,
+              isPlaying: isPlaying,
+              anonsIsPlaying: false,
+              currentPlayingAnons: null,
+            });
+          }, status.durationMillis + 100);
+        }
+      }
+    }, 1000);
   };
 
   /**Kontrollerdan */

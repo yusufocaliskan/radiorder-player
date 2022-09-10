@@ -66,6 +66,30 @@ export const convertTime = (minutes) => {
   }
 };
 
+/**
+ * Obje içindeki element durationları toplar.
+ * @param {object} songs duration key'i olan bir obje
+ * @returns
+ */
+export const calculateTotalSongDurration = (songs) => {
+  let duration = 0;
+  for (let i = 0; i < songs?.length; i++) {
+    duration += parseInt(songs[i]?.durationMillis);
+  }
+  return duration;
+};
+
+/**
+ * Saniye yi millisaniye çevirir
+ * @param {int} second saniye
+ * @returns int
+ */
+export const convertSecondToMillisecond = (second) => {
+  return second * 1000;
+};
+export const converMinutesToMilliseconds = (min) => {
+  return min * 60 * 1000;
+};
 //Arayde var mı?
 export const issetInArray = (array, data) => {
   if (array.length != 0) {

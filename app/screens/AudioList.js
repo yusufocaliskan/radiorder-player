@@ -166,77 +166,6 @@ export class AudioList extends React.PureComponent {
   /**
    * Bir anons çalar.
    */
-  playAnons = async () => {
-    setTimeout(async () => {
-      this.context.getAudioFiles();
-      const anonsPlaylist = this.context.anonsPlaylist;
-      let isPlaying = null;
-
-      for (let i = 0; i < anonsPlaylist.length; i++) {
-        //Herhangi bir anons çalmıyorsa
-        if (
-          this.context.anonsSoundObj == null &&
-          anonsPlaylist[i].Show == true
-        ) {
-          //Çalan bir şarkı varsa onu durdur
-          if (this.context.soundObj != null) {
-            pause(this.context.playbackObj);
-            isPlaying = false;
-          }
-
-          const playbackObj = new Audio.Sound();
-
-          //console.log(anonsPlaylist[5]);
-          //Controllerdan çağır.
-          const status = await play(playbackObj, anonsPlaylist[i].uri);
-
-          //Anons Tekrar sayısını güncelle
-          //updateAnonsSingRepeatTimes(anonsPlaylist[5].Id);
-          this.context.updateState({
-            ...this.context,
-            isPlaying: isPlaying,
-            anonsSoundObj: status,
-            currentPlayingAnons: anonsPlaylist[i],
-          });
-
-          //Anons bittikten sonra tekrar durumu güncelle
-          setTimeout(async () => {
-            const status = await playbackObj.stopAsync({
-              shouldPlay: false,
-              positionMillis: false,
-            });
-
-            //Çalma sayısını database ekle
-            this.context.writeAnonsToDatabase(
-              anonsPlaylist[i].Id,
-              anonsPlaylist[i].anonsRepeated,
-              anonsPlaylist[i].showIt.repeat,
-              anonsPlaylist[i].showIt.AnonsName
-            );
-
-            //Şarkıya kaldığı yerden davem ettir
-            //Herhangi bir şarkı çalıyorsa
-            if (
-              this.context.soundObj != null &&
-              this.context.soundObj.isPlaying == true
-            );
-            {
-              resume(this.context.playbackObj);
-              isPlaying = true;
-            }
-
-            //State'i güncelle
-            this.context.updateState({
-              ...this.context,
-              anonsSoundObj: null,
-              isPlaying: isPlaying,
-              currentPlayingAnons: null,
-            });
-          }, status.durationMillis + 100);
-        }
-      }
-    }, 1000);
-  };
 
   createHeader = async () => {
     const lastPlaylistUpdateTime = await AsyncStorage.getItem(
@@ -253,12 +182,8 @@ export class AudioList extends React.PureComponent {
     //Anonsu çal
     //TODO
     //Eğer indirme işlemi devam ediyorsa anons çalma.
-    //if (!this.context.isDownloading) {
-    setInterval(() => {
-      console.log("Anons Kontrol 1-2 1-2");
-      this.playAnons();
-    }, 5000);
-    //}
+    //Artık kontrolle başlayabilirisn.
+
     this.createHeader();
 
     //TODO: Re-Check..

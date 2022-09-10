@@ -10,6 +10,7 @@ export const AnonsShema = {
     anonsName: "string",
     repeatDate: "mixed",
     date: "mixed",
+    anonsType: "string",
   },
 };
 
