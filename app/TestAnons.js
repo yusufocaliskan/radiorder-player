@@ -126,7 +126,7 @@ const TestAnons = [
       KayitEden: "BETÜL KARAKAŞ",
       SecenekTipi: "Haftalık",
       Silindi: false,
-      TekrarSayisi: 40,
+      TekrarSayisi: 4,
     },
   },
   {
@@ -168,7 +168,7 @@ const TestAnons = [
       KayitEden: "BETÜL KARAKAŞ",
       SecenekTipi: "Haftalık",
       Silindi: false,
-      TekrarSayisi: 40,
+      TekrarSayisi: 2,
     },
   },
 ];

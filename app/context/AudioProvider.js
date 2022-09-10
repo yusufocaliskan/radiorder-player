@@ -319,7 +319,7 @@ export class AudioProvider extends Component {
               singItToday == true &&
               currentHours == anonsHours &&
               currentMinutes == anonsMinutes &&
-              AnonsRepeats.repeats - 1 <= repeatServer;
+              AnonsRepeats.repeats < repeatServer;
           }
 
           //Tekrarlı anons gün içinde ikince defa çalıyor
@@ -336,26 +336,31 @@ export class AudioProvider extends Component {
             lastAnonsRepeatByAnonsType =
               this.getAnonRepeatsFromDatabaseByAnonsType(AnonsType);
 
-            const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
-              new Date(lastAnonsRepeatByAnonsType?.repeatDate).getTime(),
-              new Date(this.state.whatIsTheDate).getTime()
-            );
+            // const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
+            //   new Date(AnonsRepeats?.repeatDate).getTime(),
+            //   new Date(this.state.whatIsTheDate).getTime()
+            // );
 
             isAnonsShowable =
               today >= start &&
               today <= end &&
-              AnonsRepeats.repeats - 1 <= repeatServer &&
-              //Son çalınan anonsun üzerinden x kadar geçti ise.
-              //Onun katlarını çal, her on şarkıda bir
+              AnonsRepeats.repeats < repeatServer &&
               ListenedSongCount > 0 &&
               lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
-              ListenedSongCount % config.HERGUN_TEKRARLI_ANONS == 0 &&
-              //Son anonstan sonra geçen süre
-              //Ama en son 60dk önce Aynı tipteki bir anons yapılmış olmalı!
-              diffBetweenLastAnons >= converMinutesToMilliseconds(30);
+              //Son çalınan anonsun üzerinden x kadar geçti ise.
+              //Onun katlarını çal, her on şarkıda bir
+
+              ListenedSongCount % config.HERGUN_TEKRARLI_ANONS == 0;
+            //Son anonstan sonra geçen süre
+            //Ama en son 60dk önce Aynı tipteki bir anons yapılmış olmalı!
+            //diffBetweenLastAnons >= convertSecondToMillisecond(30);
           }
-          console.log(calculateTotalSongDurration(this.state.theSongListened));
-          console.log(this.state.theSongListened);
+
+          console.log(
+            "Total song ",
+            calculateTotalSongDurration(this.state.theSongListened)
+          );
+          //console.log(this.state.theSongListened);
 
           //BeliriGunlerTekrarli
           if (
@@ -368,22 +373,24 @@ export class AudioProvider extends Component {
               this.getAnonRepeatsFromDatabaseByAnonsType(AnonsType);
 
             const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
-              new Date(lastAnonsRepeatByAnonsType?.repeatDate).getTime(),
+              new Date(AnonsRepeats?.repeatDate).getTime(),
               new Date(this.state.whatIsTheDate).getTime()
             );
+            console.log(diffBetweenLastAnons);
             isAnonsShowable =
               today >= start &&
               today <= end &&
               singItToday == true &&
-              AnonsRepeats.repeats - 1 <= repeatServer &&
+              AnonsRepeats.repeats < repeatServer &&
+              ListenedSongCount > 0 &&
+              lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
               //Son çalınan anonsun üzerinden x kadar geçti ise.
               //Her 20 şarkıda bir
-              ListenedSongCount > 0 &&
+
               //Enson  çaldığın kendin olmayaacaaann
-              lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
-              ListenedSongCount % config.BELIRGUN_TEKRARLI_ANONS == 0 &&
-              //Son anonstan sonra geçen süre
-              diffBetweenLastAnons >= converMinutesToMilliseconds(30);
+              ListenedSongCount % config.BELIRGUN_TEKRARLI_ANONS == 0;
+            //Son anonstan sonra geçen süre
+            //diffBetweenLastAnons >= convertSecondToMillisecond(30);
           }
 
           const showIt = {
@@ -508,7 +515,7 @@ export class AudioProvider extends Component {
     }
 
     //Sort it
-    //filtered_song.sort((a, b) => (a.Order > b.Order ? 1 : -1));
+    // filtered_song.sort((a, b) => (a.Order > b.Order ? 1 : -1));
 
     //push it into the state
     this.setState({
@@ -1132,14 +1139,12 @@ export class AudioProvider extends Component {
     //Anons Kontrolü yap
     //Download işlemi tamamen bittiyse
 
-    if (
-      !this.waitLittleBitStillDownloading ||
-      this.state.anonsIsPlaying == false
-    ) {
+    if (!this.waitLittleBitStillDownloading) {
       setInterval(async () => {
         console.log("Anons Kontrol # 1-2 1-2");
         await this.playAnons();
-      }, convertSecondToMillisecond(5)); //Her 40 saniye de bir anons kontrollü yap
+        this.saveListenedSongCount();
+      }, convertSecondToMillisecond(10)); //Her 40 saniye de bir anons kontrollü yap
     }
   };
 
@@ -1372,7 +1377,7 @@ export class AudioProvider extends Component {
           //Çalma sayısını database ekle
           this.writeAnonsToDatabase(
             anonsPlaylist[i].Id,
-            anonsPlaylist[i].anonsRepeated,
+            anonsPlaylist[i].showIt.anonsRepeated,
             anonsPlaylist[i].showIt.repeat,
             anonsPlaylist[i].showIt.AnonsName,
             anonsPlaylist[i].showIt.AnonsType
