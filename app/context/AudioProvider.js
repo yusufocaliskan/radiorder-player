@@ -10,8 +10,6 @@ import {
   storeAudioForNextOpening,
   getDifferenceBetweenTwoHours,
   convertSecondToMillisecond,
-  converMinutesToMilliseconds,
-  calculateTotalSongDurration,
 } from "../misc/Helper";
 import RNFetchBlob from "rn-fetch-blob";
 import DownloadingGif from "../components/DownloadingGif";
@@ -234,8 +232,8 @@ export class AudioProvider extends Component {
     });
 
     //Anonsları al
-    //const anons = JSON.parse(await AsyncStorage.getItem("anons"));
-    const anons = TestAnons;
+    const anons = JSON.parse(await AsyncStorage.getItem("anons"));
+    //const anons = TestAnons;
 
     //Şarkıları da al.
     const songs = JSON.parse(await AsyncStorage.getItem("songs"));
@@ -322,45 +320,28 @@ export class AudioProvider extends Component {
               AnonsRepeats.repeats < repeatServer;
           }
 
-          //Tekrarlı anons gün içinde ikince defa çalıyor
-          //YOKSA anons saati
-          //Ozaman REPEAT_PERIOT_TIME sayısı kadar şarkı çalındı ise anosu yap
-          //Başlangıç saati belirle.
-          //Yani haftanın her günü çalıyor.
+          //Her gün bir kaç kez tekrar-tekrar çalacak olan anonslar
           if (
             anonsHours == "00" &&
             anonsMinutes == "00" &&
             option.length == 0
           ) {
+            //Anons tipini belirle
             AnonsType = "HergunTekrarli";
             lastAnonsRepeatByAnonsType =
               this.getAnonRepeatsFromDatabaseByAnonsType(AnonsType);
-
-            // const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
-            //   new Date(AnonsRepeats?.repeatDate).getTime(),
-            //   new Date(this.state.whatIsTheDate).getTime()
-            // );
 
             isAnonsShowable =
               today >= start &&
               today <= end &&
               AnonsRepeats.repeats < repeatServer &&
               ListenedSongCount > 0 &&
+              //Son çaldığın olmasın
               lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
               //Son çalınan anonsun üzerinden x kadar geçti ise.
               //Onun katlarını çal, her on şarkıda bir
-
               ListenedSongCount % config.HERGUN_TEKRARLI_ANONS == 0;
-            //Son anonstan sonra geçen süre
-            //Ama en son 60dk önce Aynı tipteki bir anons yapılmış olmalı!
-            //diffBetweenLastAnons >= convertSecondToMillisecond(30);
           }
-
-          console.log(
-            "Total song ",
-            calculateTotalSongDurration(this.state.theSongListened)
-          );
-          //console.log(this.state.theSongListened);
 
           //BeliriGunlerTekrarli
           if (
@@ -368,15 +349,11 @@ export class AudioProvider extends Component {
             anonsMinutes == "00" &&
             option.length != 0
           ) {
+            //Anons tipi
             AnonsType = "BeliriGunlerTekrarli";
             lastAnonsRepeatByAnonsType =
               this.getAnonRepeatsFromDatabaseByAnonsType(AnonsType);
 
-            const diffBetweenLastAnons = getDifferenceBetweenTwoHours(
-              new Date(AnonsRepeats?.repeatDate).getTime(),
-              new Date(this.state.whatIsTheDate).getTime()
-            );
-            console.log(diffBetweenLastAnons);
             isAnonsShowable =
               today >= start &&
               today <= end &&
@@ -384,15 +361,11 @@ export class AudioProvider extends Component {
               AnonsRepeats.repeats < repeatServer &&
               ListenedSongCount > 0 &&
               lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
-              //Son çalınan anonsun üzerinden x kadar geçti ise.
-              //Her 20 şarkıda bir
-
               //Enson  çaldığın kendin olmayaacaaann
               ListenedSongCount % config.BELIRGUN_TEKRARLI_ANONS == 0;
-            //Son anonstan sonra geçen süre
-            //diffBetweenLastAnons >= convertSecondToMillisecond(30);
           }
 
+          //Çoğunlukla debug için...
           const showIt = {
             AnonsName: anons[a].anons.AnonsIsmi,
             Start: start,
@@ -458,9 +431,12 @@ export class AudioProvider extends Component {
             Show: isAnonsShowable,
             showIt: showIt,
           };
+
+          //Sort et...
           anons_must_be_shown.sort((a, b) =>
             a.showIt.lastAnonsRepeatTime > b.showIt.lastAnonsRepeatTime ? 1 : -1
           );
+
           anons_must_be_shown.push(anons_container);
           //console.log(showIt);
         }
@@ -515,7 +491,7 @@ export class AudioProvider extends Component {
     }
 
     //Sort it
-    // filtered_song.sort((a, b) => (a.Order > b.Order ? 1 : -1));
+    filtered_song.sort((a, b) => (a.Order > b.Order ? 1 : -1));
 
     //push it into the state
     this.setState({
@@ -527,6 +503,7 @@ export class AudioProvider extends Component {
       audioFiles: filtered_song,
     });
 
+    //Anons playlistine ekle
     this.setState({ ...this.state, anonsPlaylist: anons_must_be_shown });
   };
 
@@ -1012,8 +989,6 @@ export class AudioProvider extends Component {
         checkAnons == NaN ||
         checkAnons.length == 0
       ) {
-        console.log("---------------VESERKE-SILAAAAAAVVVV");
-        console.log(anonsId, repeats, localRepeat, name);
         //Yeni veriyi ekkle
         let insert;
         this.state.DBConnection.write(() => {
@@ -1029,7 +1004,6 @@ export class AudioProvider extends Component {
           });
         });
       } else {
-        console.log("---------------ROJANKE-SILAAAAAAVVVV");
         //Güncelleme yap
         this.state.DBConnection.write(() => {
           const anons = this.state.DBConnection.objects("AnonsDocs").filtered(
@@ -1143,8 +1117,7 @@ export class AudioProvider extends Component {
       setInterval(async () => {
         console.log("Anons Kontrol # 1-2 1-2");
         await this.playAnons();
-        this.saveListenedSongCount();
-      }, convertSecondToMillisecond(10)); //Her 40 saniye de bir anons kontrollü yap
+      }, convertSecondToMillisecond(40)); //Her 40 saniye de bir anons kontrollü yap
     }
   };
 
@@ -1202,6 +1175,9 @@ export class AudioProvider extends Component {
         //Anonslar için onemmlliii
         //Çalma sayısını sil, çünkü yeniden saymay başlayacağız.
         this.context.removeListenedSongCount();
+
+        //Çalınan şarkıları sıfırla
+        this.state.theSongListened = [];
 
         return await storeAudioForNextOpening(this.state.audioFiles[0], 0);
       }

@@ -13,4 +13,6 @@ export default {
   PLAYLIST: "Playlist",
   LOGOUT: "Logout",
   NO_INTERNET: "Offline Mode",
+
+  SELECT_LANG: "Select A Language",
 };

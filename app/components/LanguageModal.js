@@ -48,7 +48,7 @@ const LanguageModal = ({ showIt, closeIt, selectTR, selectEN }) => {
           <View style={styles.overview}></View>
         </TouchableOpacity>
         <View style={styles.modalView}>
-          <Text style={styles.modalTitle}>Select Language</Text>
+          <Text style={styles.modalTitle}>{Lang?.SELECT_LANG}</Text>
           <View style={styles.optionsView}>
             <TouchableOpacity style={styles.option} onPress={selectTRLang}>
               <Text style={styles.optionText}>Türkçe</Text>

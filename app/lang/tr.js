@@ -13,4 +13,6 @@ export default {
   PLAYLIST: "Çalma Listesi",
   LOGOUT: "Çıkış Yap",
   NO_INTERNET: "Bağlantı Yok",
+
+  SELECT_LANG: "Dil Seç",
 };
