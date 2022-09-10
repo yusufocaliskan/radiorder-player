@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   TouchableWithoutFeedback,
   Dimensions,
@@ -8,10 +8,13 @@ import {
   TouchableOpacity,
 } from "react-native";
 import color from "../misc/color";
-import { convertTime } from "../misc/Helper";
+import { convertTime, TranslateTheWeekDays } from "../misc/Helper";
 //Icon
 import { Entypo } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
+import { LangContext } from "../context/LangProvider";
+
 //Şarkının ilk harfını al.
 const getThumnailText = (filename) => filename[0];
 
@@ -36,6 +39,25 @@ const AudioListItem = ({
   style,
   keyy,
 }) => {
+  const { Lang, selectedLang } = useContext(LangContext);
+  const TranslateTheWeekDays = (daysWillBeTranstlate) => {
+    const translator = [];
+    translator["Pazar"] = Lang?.SUNDAY;
+    translator["Pazartesi"] = Lang?.MONDAY;
+    translator["Salı"] = Lang?.THUESDAY;
+    translator["Çarşamba"] = Lang?.WEDNESDAY;
+    translator["Perşembe"] = Lang?.THURSDAY;
+    translator["Cuma"] = Lang?.FRIDAY;
+    translator["Cumartesi"] = Lang?.STURDAY;
+
+    let days = daysWillBeTranstlate.split(",");
+
+    days = days.map((v, k, x) => {
+      return translator[v];
+    });
+
+    return days;
+  };
   //console.log("---------------ITEM----------------");
   //  console.log(item);
   return (
@@ -63,11 +85,9 @@ const AudioListItem = ({
               <View style={styles.titleWithLabel}>
                 {item.FileType == "anons" ? (
                   <View style={styles.anonsLabel}>
-                    <Text style={styles.anonsLabelText}>Anons</Text>
+                    <Feather name="volume-2" size={24} color={color.RED} />
                   </View>
-                ) : (
-                  <Text></Text>
-                )}
+                ) : null}
 
                 <View>
                   <Text numberOfLines={1} style={styles.title}>
@@ -85,59 +105,65 @@ const AudioListItem = ({
                 )}
                 {item.FileType == "anons" ? (
                   <View>
-                    <Text style={styles.anonsDesc}>{item.Aciklama}</Text>
-                    <Text style={styles.anonsDesc}>
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={color.FONT_LIGHT}
-                      />{" "}
-                      Bir Sonraki Anons: {item.showIt.lastAnonsRepeatTime}
-                    </Text>
-                    <Text style={styles.anonsDesc}>
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={color.FONT_LIGHT}
-                      />{" "}
-                      Son Anons Saati: {item.showIt.lastAnonsRepeatTime}
-                    </Text>
+                    <View>
+                      <Text
+                        style={[
+                          styles.anonsDesc,
+                          { textTransform: "uppercase" },
+                        ]}
+                      >
+                        {item.Aciklama}
+                      </Text>
 
-                    <Text style={styles.anonsDesc}>
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={color.FONT_LIGHT}
-                      />{" "}
-                      Başlangıç {item.showIt.Start}
-                    </Text>
-                    <Text style={styles.anonsDesc}>
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={color.FONT_LIGHT}
-                      />{" "}
-                      Bitiş {item.showIt.End}
-                    </Text>
+                      <Text style={styles.anonsDesc}>
+                        <Ionicons
+                          name="checkmark"
+                          size={14}
+                          color={color.RED}
+                        />{" "}
+                        {Lang?.STARTING_DATE} - {item.showIt.Start}
+                      </Text>
+                      <Text style={styles.anonsDesc}>
+                        <Ionicons
+                          name="checkmark"
+                          size={14}
+                          color={color.RED}
+                        />{" "}
+                        {Lang?.ENDING_DATE} - {item.showIt.End}
+                      </Text>
 
-                    <Text style={styles.anonsDesc}>
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={color.FONT_LIGHT}
-                      />{" "}
-                      {`Bu gün ${item.showIt.anonsRepeated} kez anons yapıldı`}
-                    </Text>
-                    <Text style={styles.anonsDesc}>
-                      <Ionicons
-                        name="checkmark"
-                        size={14}
-                        color={color.FONT_LIGHT}
-                      />{" "}
-                      {!item.SecenekAciklama
-                        ? `${item.showIt.repeat} kez anons yapılıcak`
-                        : item.SecenekAciklama.split(",").map((x) => `${x} `)}
-                    </Text>
+                      <Text style={styles.anonsDesc}>
+                        <Ionicons
+                          name="checkmark"
+                          size={14}
+                          color={color.RED}
+                        />{" "}
+                        {item.SecenekAciklama
+                          ? TranslateTheWeekDays(item.SecenekAciklama).map(
+                              (v, k) => {
+                                return k == 6 ? `${v} ` : `${v}, `;
+                              }
+                            )
+                          : Lang?.EVERY_DAY}
+                      </Text>
+                    </View>
+                    <View style={styles.anonsCounterView}>
+                      <Text
+                        style={[
+                          styles.anonsCounterText,
+                          styles.anonsCounterTextFirst,
+                          item.showIt.anonsRepeated == item.showIt.repeat
+                            ? { backgroundColor: color.GREEN }
+                            : null,
+                        ]}
+                      >
+                        {item.showIt.anonsRepeated}
+                      </Text>
+                      <View style={styles.counterSeparator}></View>
+                      <Text style={styles.anonsCounterText}>
+                        {item.showIt.repeat}
+                      </Text>
+                    </View>
                   </View>
                 ) : (
                   <></>
@@ -168,13 +194,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-  },
-
-  rightContainer: {
-    flexBasis: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
+    width: width - 50,
   },
 
   thumbnail: {
@@ -220,8 +240,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   anonsLabel: {
-    backgroundColor: color.GREEN,
-
     paddingVertical: 0,
     paddingHorizontal: 4,
     borderRadius: 4,
@@ -233,7 +251,7 @@ const styles = StyleSheet.create({
     color: color.WHITE,
   },
   anonsDesc: {
-    fontSize: 11,
+    fontSize: 14,
     color: "#999",
     marginTop: 4,
   },
@@ -242,6 +260,35 @@ const styles = StyleSheet.create({
     right: 5,
     top: 10,
     color: color.WHITE,
+  },
+  anonsCounterView: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    borderWidth: 1,
+    backgroundColor: color.GRAY,
+    borderRadius: 8,
+  },
+
+  anonsCounterText: {
+    paddingVertical: 0,
+    paddingHorizontal: 15,
+    fontSize: 22,
+    color: "#aaa",
+    borderTopRightRadius: 8,
+    borderTopLeftRadius: 8,
+  },
+  anonsCounterTextFirst: {
+    backgroundColor: color.RED,
+    color: color.WHITE,
+  },
+  counterSeparator: {
+    height: 1,
+    backgroundColor: color.FONT_LARGE,
+  },
+
+  titleBottom: {
+    width: width - 60,
   },
 });
 

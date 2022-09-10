@@ -44,23 +44,6 @@ const Anons = () => {
     // });
   });
 
-  const rowRenderer = (type, item, index, extendedState) => {
-    return (
-      <AudioListItem
-        title={item.filename}
-        duration={item.duration}
-        isPlaying={extendedState.isPlaying}
-        activeListItem={audioContext.currentAudioIndex === index}
-        item={item}
-        onAudioPress={() => this.handleAudioPress(item)}
-        onOptionPress={() => {
-          this.currentItem = item;
-          this.setState({ ...this.state, optionModalVisible: true });
-        }}
-      />
-    );
-  };
-
   /**
    * Bir anons çaldırır
    */
@@ -79,33 +62,16 @@ const Anons = () => {
             <FlatList
               style={styles.anonsList}
               data={anonsPlaylist}
+              keyExtractor={(item, index) => String(index)}
               renderItem={({ item, index }) => (
                 <AudioListItem
                   title={item.filename}
                   duration={item.duration}
-                  //isPlaying={extendedState.isPlaying}
-                  activeListItem={audioContext.currentAudioIndex === index}
                   item={item}
                   style={styles.audioItem}
                 />
               )}
             />
-
-            {/* <Screen>
-              <RecyclerListView
-                dataProvider={dataProvider}
-                layoutProvider={layoutProvider}
-                rowRenderer={rowRenderer}
-                extendedState={{ isPlaying }}
-                style={{ paddingTop: 20 }}
-              />
-            </Screen>
-            {anonsSoundObj != null &&
-            currentPlayingAnons != null &&
-            anonsSoundObj.isPlaying ? (
-              <AnonsModal anons={currentPlayingAnons} />
-            ) : null}
-             */}
           </Screen>
         );
       }}

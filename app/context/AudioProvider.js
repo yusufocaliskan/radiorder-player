@@ -10,6 +10,7 @@ import {
   storeAudioForNextOpening,
   getDifferenceBetweenTwoHours,
   convertSecondToMillisecond,
+  convertHourToMilliseconds,
 } from "../misc/Helper";
 import RNFetchBlob from "rn-fetch-blob";
 import DownloadingGif from "../components/DownloadingGif";
@@ -936,7 +937,11 @@ export class AudioProvider extends Component {
 
     //Şarkıları al
     //Eğer son güncelleme 1 dk yı gectiyse
-    if (diffTime > 60000) {
+    //if (diffTime > 60000) {
+    if (
+      diffTime >
+      convertHourToMilliseconds(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
+    ) {
       await this.getUserGroupListFromServer();
     } else {
       this.state.songs = JSON.parse(await AsyncStorage.getItem("songs"));
@@ -1325,7 +1330,7 @@ export class AudioProvider extends Component {
       //VAr olan anonsları kontrol et.
       for (let i = 0; i < anonsPlaylist.length; i++) {
         //Herhangi bir anons çalmıyorsa
-        console.log(anonsPlaylist[i].showIt);
+        //console.log(anonsPlaylist[i].showIt);
 
         if (this.state.anonsSoundObj == null && anonsPlaylist[i].Show == true) {
           //Çalan bir şarkı varsa onu durdur

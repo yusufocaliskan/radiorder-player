@@ -90,6 +90,10 @@ export const convertSecondToMillisecond = (second) => {
 export const converMinutesToMilliseconds = (min) => {
   return min * 60 * 1000;
 };
+
+export const convertHourToMilliseconds = (hr) => {
+  return hr * 60 * 1000;
+};
 //Arayde var mı?
 export const issetInArray = (array, data) => {
   if (array.length != 0) {
