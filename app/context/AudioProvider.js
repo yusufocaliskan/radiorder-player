@@ -1104,14 +1104,22 @@ export class AudioProvider extends Component {
       //Son şarkıyı bul
       //Son şarkı ise, çalmayı durdur
       if (nextAudioIndex >= this.totalAudioCount) {
-        this.state.playbackObj.unloadAsync();
+        //this.state.playbackObj.unloadAsync();
+        // this.updateState(this, {
+        //   soundObj: null,
+        //   currentAudio: this.state.audioFiles[0],
+        //   isPlaying: false,
+        //   currentAudioIndex: 0,
+        //   playbackPosition: null,
+        //   playbackDuration: null,
+        // });
+        const audio = this.state.audioFiles[0];
+        const status = await playNext(this.state.playbackObj, audio?.uri);
         this.updateState(this, {
-          soundObj: null,
-          currentAudio: this.state.audioFiles[0],
-          isPlaying: false,
+          soundObj: status,
+          currentAudio: audio,
+          isPlaying: true,
           currentAudioIndex: 0,
-          playbackPosition: null,
-          playbackDuration: null,
         });
 
         //Çalma sayını sıfırla gulüüüm :)
