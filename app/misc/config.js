@@ -1,6 +1,3 @@
-let date = new Date().toLocaleTimeString().split(":").slice(0, -1);
-let date_string = `${date[0]}:${date[1]}`;
-
 const configs = {
   SER_USERNAME: "radiorder",
   SER_PASSWORD: "1@K_#$159X!",

@@ -1,27 +1,17 @@
-import React, { Component, useContext, useEffect, useState } from "react";
-import {
-  Alert,
-  TouchableOpacity,
-  View,
-  StyleSheet,
-  Text,
-  Image,
-} from "react-native";
+import React, { useContext } from "react";
+import { Alert, View, StyleSheet, Text, Image } from "react-native";
 import Screen from "../components/Screen";
-import { Avatar } from "@rneui/base";
 import { AudioContext } from "../context/AudioProvider";
 import Button from "../components/form/Button";
 import { newAuthContext } from "../context/newAuthContext";
 import color from "../misc/color";
 import { stop } from "../misc/AudioController";
-import { useNavigation } from "@react-navigation/native";
 import LanguageModal from "../components/LanguageModal";
 import { LangContext } from "../context/LangProvider";
 const User = () => {
   const { singOut, loadingState } = useContext(newAuthContext);
   const audioContext = useContext(AudioContext);
   const { Lang } = useContext(LangContext);
-  const navigation = useNavigation();
 
   const singOutHandle = async () => {
     //Çalan şarkı varsa durdur..
@@ -87,13 +77,6 @@ const User = () => {
     //Bana ne, sil gitsin
   };
 
-  if (!loadingState.userData) {
-    return (
-      <View>
-        <Text>VAllaa</Text>
-      </View>
-    );
-  }
   return (
     <Screen>
       <View style={styles.container}>

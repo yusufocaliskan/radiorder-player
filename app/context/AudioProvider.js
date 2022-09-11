@@ -1,4 +1,4 @@
-import React, { useContext, Component, createContext, useEffect } from "react";
+import React, { PureComponent, createContext } from "react";
 import { Text, StyleSheet, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import NetInfo from "@react-native-community/netinfo";
@@ -26,7 +26,7 @@ import config from "../misc/config";
 import { newAuthContext } from "../context/newAuthContext";
 import { v4 as uuidv4 } from "uuid";
 import "react-native-get-random-values";
-import Realm, { BSON, Results } from "realm";
+import Realm, { BSON } from "realm";
 import { AnonsShema, AppSettings } from "../database/DatabaseShemas";
 
 //Test Anonslar
@@ -34,7 +34,7 @@ import TestAnons from "../TestAnons";
 import color from "../misc/color";
 export const AudioContext = createContext();
 
-export class AudioProvider extends Component {
+export class AudioProvider extends PureComponent {
   static contextType = newAuthContext;
 
   constructor(props) {
@@ -938,11 +938,11 @@ export class AudioProvider extends Component {
 
     //Şarkıları al
     //Eğer son güncelleme 1 dk yı gectiyse
-    if (diffTime > 60000) {
-      // if (
-      //   diffTime >
-      //   convertHourToMilliseconds(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
-      // ) {
+    //if (diffTime > 60000) {
+    if (
+      diffTime >
+      convertHourToMilliseconds(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
+    ) {
       await this.getUserGroupListFromServer();
     } else {
       this.state.songs = JSON.parse(await AsyncStorage.getItem("songs"));
@@ -1302,7 +1302,7 @@ export class AudioProvider extends Component {
           // //Çalma-Durdurma iconları için
           isPlaying: true,
         });
-        console.log(status);
+        //console.log(status);
 
         //Slider bar için statuyü güncelle
         playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
@@ -1437,8 +1437,17 @@ export class AudioProvider extends Component {
 
   /**Kontrollerdan */
   updateState = (prevState, newState = {}) => {
+    console.log("----HII**");
     this.setState({ ...prevState, ...newState });
   };
+
+  // shouldComponentUpdate = (nextProps) => {
+  //   if ( nextProps.value !== this.props.value) {
+  //     return true;
+  //   } else {
+  //     return false;
+  //   }
+  // };
 
   render() {
     const {

@@ -1,6 +1,5 @@
 import React, { useContext } from "react";
 import {
-  TouchableWithoutFeedback,
   Dimensions,
   View,
   StyleSheet,
@@ -8,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import color from "../misc/color";
-import { convertTime, TranslateTheWeekDays } from "../misc/Helper";
+import { convertTime } from "../misc/Helper";
 //Icon
 import { Entypo } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
@@ -39,7 +38,8 @@ const AudioListItem = ({
   style,
   keyy,
 }) => {
-  const { Lang, selectedLang } = useContext(LangContext);
+  const { Lang } = useContext(LangContext);
+
   const TranslateTheWeekDays = (daysWillBeTranstlate) => {
     const translator = [];
     translator["Pazar"] = Lang?.SUNDAY;
@@ -58,8 +58,7 @@ const AudioListItem = ({
 
     return days;
   };
-  //console.log("---------------ITEM----------------");
-  //  console.log(item);
+
   return (
     <>
       <View style={styles.container}>

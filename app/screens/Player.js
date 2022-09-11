@@ -1,12 +1,6 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect } from "react";
 
-import {
-  View,
-  StyleSheet,
-  Text,
-  Dimensions,
-  TouchableOpacity,
-} from "react-native";
+import { View, StyleSheet, Text, Dimensions } from "react-native";
 import Screen from "../components/Screen";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import color from "../misc/color";
@@ -20,15 +14,13 @@ import { AudioContext } from "../context/AudioProvider";
 import { pause, play, playNext, resume } from "../misc/AudioController";
 import { storeAudioForNextOpening } from "../misc/Helper";
 import { useNavigation } from "@react-navigation/native";
-import { newAuthContext } from "../context/newAuthContext";
 const { width } = Dimensions.get("window");
 
 //Müzik Çalar Ekranı
 const Player = () => {
   const navigation = useNavigation();
 
-  const { loadingState } = useContext(newAuthContext);
-  const [userData, setUserData] = useState(loadingState?.userData?.FSL);
+  //const [userData, setUserData] = useState(loadingState?.userData?.FSL);
   const context = useContext(AudioContext);
   const { playbackPosition, playbackDuration } = context;
 

@@ -1,28 +1,19 @@
-import React, { Component, useContext, useEffect } from "react";
+import React, { PureComponent } from "react";
 import {
-  Text,
   FlatList,
   View,
-  TouchableOpacity,
   StyleSheet,
   Dimensions,
   ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Avatar } from "@rneui/base";
 import { AudioContext } from "../context/AudioProvider";
 import AudioListItem from "../components/AudioListItem";
-import { LayoutProvider, RecyclerListView } from "recyclerlistview";
 import color from "../misc/color";
 import Screen from "../components/Screen";
 import HeaderRight from "../components/HeaderRight";
-import {
-  updateAnonsSingRepeatTimes,
-  storeAudioForNextOpening,
-  getHoursAndMinutes,
-} from "../misc/Helper";
+import { storeAudioForNextOpening } from "../misc/Helper";
 import AnonsModal from "../components/AnonsModal";
-import ModalPlayer from "../components/ModalPlayer";
 //Expo-av şarkıları çalar.
 import { Audio } from "expo-av";
 
@@ -30,12 +21,9 @@ import { Audio } from "expo-av";
 import { play, pause, resume, playNext } from "../misc/AudioController";
 
 import "react-native-get-random-values";
-import Realm, { BSON } from "realm";
-import LoadingGif from "../components/LoadingGif";
 import LoadingSimple from "../components/LoadingSimple";
-import NoInternetConnection from "../components/NoInternetConnection";
 
-export class AudioList extends React.PureComponent {
+export class AudioList extends PureComponent {
   static contextType = AudioContext;
 
   //Constructor
@@ -48,15 +36,6 @@ export class AudioList extends React.PureComponent {
 
     this.currentItem = {};
   }
-
-  //Ses dosyaları Layouttu.
-  layoutProvider = new LayoutProvider(
-    (i) => "audio",
-    (type, dim) => {
-      dim.width = Dimensions.get("window").width;
-      dim.height = 70;
-    }
-  );
 
   /**
    * //İlkez: şarkıya çalmak için basıldığında
@@ -179,59 +158,8 @@ export class AudioList extends React.PureComponent {
   };
 
   componentDidMount = async () => {
-    //Anonsu çal
-    //TODO
-    //Eğer indirme işlemi devam ediyorsa anons çalma.
-    //Artık kontrolle başlayabilirisn.
-
     this.createHeader();
-
-    //TODO: Re-Check..
-    //this.context.loadPreviousAudio();
-    //çalma işlemi ve download işlemi yoksa
-
-    // if (!this.context.isDownloading && this.context.soundObj == null) {
-    //   await this.context.startToPlay();
-    // }
   };
-
-  // //Login olduğunda şarkıyı çalmaya başla..
-  // startToPlay = async () => {
-  //   const { soundObj, currentAudio, updateState, audioFiles } = this.context;
-
-  //   const audio = audioFiles[0];
-
-  //   if (audio && soundObj == null) {
-  //     console.log("---BURA");
-  //     //Playlisti oynatmaya başla
-  //     //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
-  //     const playbackObj = new Audio.Sound();
-
-  //     //Controllerdan çağır.
-  //     const status = await play(playbackObj, audio.uri);
-  //     const index = 0;
-
-  //     //Yeni durumu state ata ve ilerlememesi için return'le
-  //     updateState(this.context, {
-  //       currentAudio: audio,
-  //       playbackObj: playbackObj,
-  //       soundObj: status,
-  //       currentAudioIndex: index,
-
-  //       //Çalma-Durdurma iconları için
-  //       isPlaying: true,
-  //     });
-
-  //     //Slider bar için statuyü güncelle
-  //     playbackObj.setOnPlaybackStatusUpdate(
-  //       this.context.onPlaybackStatusUpdate
-  //     );
-
-  //     //Application açıldığında
-  //     //son çalınna şarkıyı bulmak için kullanırı
-  //     storeAudioForNextOpening(audio, index);
-  //   }
-  // };
 
   //Şarkıyı listele.
   rowRenderer = (type, item, index, extendedState) => {
@@ -261,7 +189,6 @@ export class AudioList extends React.PureComponent {
           anonsSoundObj,
           currentPlayingAnons,
           audioFiles,
-          isDownloading,
         }) => {
           if (!dataProvider._data.length) {
             return <LoadingSimple />;
@@ -292,25 +219,9 @@ export class AudioList extends React.PureComponent {
                       item={item}
                       keyy={index + 1}
                       onAudioPress={() => this.handleAudioPress(item)}
-                      onOptionPress={() => {
-                        this.currentItem = item;
-                        this.setState({
-                          ...this.state,
-                          optionModalVisible: true,
-                        });
-                      }}
                     />
                   )}
                 />
-
-                {/* <RecyclerListView
-                  dataProvider={dataProvider}
-                  layoutProvider={this.layoutProvider}
-                  rowRenderer={this.rowRenderer}
-                  keyExtractor={(item, index) => String(index)}
-                  extendedState={{ isPlaying }}
-                  style={{ paddingTop: 20 }}
-                /> */}
 
                 {this.context.isDownloading ? (
                   <View style={styles.spinnerView}>
