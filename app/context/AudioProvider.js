@@ -14,7 +14,7 @@ import {
 } from "../misc/Helper";
 import RNFetchBlob from "rn-fetch-blob";
 import DownloadingGif from "../components/DownloadingGif";
-import { play, pause, resume, playNext } from "../misc/AudioController";
+import { stop, play, pause, resume, playNext } from "../misc/AudioController";
 
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
@@ -26,7 +26,7 @@ import config from "../misc/config";
 import { newAuthContext } from "../context/newAuthContext";
 import { v4 as uuidv4 } from "uuid";
 import "react-native-get-random-values";
-import Realm, { BSON } from "realm";
+import Realm, { BSON, Results } from "realm";
 import { AnonsShema, AppSettings } from "../database/DatabaseShemas";
 
 //Test Anonslar
@@ -298,7 +298,7 @@ export class AudioProvider extends Component {
 
           let ListenedSongCount = JSON.parse(
             await AsyncStorage.getItem("ListenedSongCount")
-          ).ListenedSongCount;
+          )?.ListenedSongCount;
           //let ListenedSongCount = this.state.ListenedSongCount;
 
           //console.log("ListentedCount----------------", ListenedSongCount);
@@ -638,12 +638,12 @@ export class AudioProvider extends Component {
           );
 
           //console.log(this.state.totalSongInTheServer.ToplamSayfa);
-          // for (
-          //   let i = 1;
-          //   i <= this.state.totalSongInTheServer.ToplamSayfa;
-          //   i++
-          // ) {
-          for (let i = 1; i <= 3; i++) {
+          for (
+            let i = 1;
+            i <= this.state.totalSongInTheServer.ToplamSayfa;
+            i++
+          ) {
+            //for (let i = 1; i <= 3; i++) {
             this.getAllSongs(
               userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
               username,
@@ -651,7 +651,9 @@ export class AudioProvider extends Component {
               i
             );
           }
+
           //Son güncelleme tarihini sakla
+          //Kullanacağız
           await AsyncStorage.setItem(
             "Last_Playlist_Update_Time",
             this.state.whatIsTheDate
@@ -723,7 +725,7 @@ export class AudioProvider extends Component {
               await this.DownloadSoundFromServer(
                 parsedData.Liste.WsSarkiDto[i],
                 "sound",
-                i
+                pageNo
               );
               this.setState({
                 ...this,
@@ -744,12 +746,12 @@ export class AudioProvider extends Component {
                   JSON.stringify(this.state.songs)
                 );
 
-                //TODO:START
-                //Listeyi güncelle
-                await this.getAudioFiles();
-
                 //ilk part ((10 adet)) indirildikten sonra çal
                 if (pageNo == 1) {
+                  //TODO:START
+                  //Listeyi güncelle
+                  await this.getAudioFiles();
+
                   this.startToPlay();
                   this.state.waitLittleBitStillDownloading = true;
                 }
@@ -775,7 +777,7 @@ export class AudioProvider extends Component {
    * Server'dan şarkıları çeker
    * @param {object} sounds indirilicek şarkı
    */
-  DownloadSoundFromServer = async (sounds, downloadType = "sound", i) => {
+  DownloadSoundFromServer = async (sounds, downloadType = "sound", pageNo) => {
     try {
       const { DownloadDir } = RNFetchBlob.fs.dirs;
 
@@ -806,10 +808,9 @@ export class AudioProvider extends Component {
                 ? sounds?.AnonsIsmi
                 : sounds?.Ismi.split("_")[1],
           });
-          console.log("iiiiiiiii", i);
+
           //İlk şarkıdan sonra çalmaya başla
-          if (i == 1 && downloadType == "sound") {
-            console.log("---TEST:HII--");
+          if (pageNo == 1 && downloadType == "sound") {
             await this.getAudioFiles();
             this.startToPlay();
           }
@@ -937,11 +938,11 @@ export class AudioProvider extends Component {
 
     //Şarkıları al
     //Eğer son güncelleme 1 dk yı gectiyse
-    //if (diffTime > 60000) {
-    if (
-      diffTime >
-      convertHourToMilliseconds(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
-    ) {
+    if (diffTime > 60000) {
+      // if (
+      //   diffTime >
+      //   convertHourToMilliseconds(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
+      // ) {
       await this.getUserGroupListFromServer();
     } else {
       this.state.songs = JSON.parse(await AsyncStorage.getItem("songs"));
@@ -1301,6 +1302,7 @@ export class AudioProvider extends Component {
           // //Çalma-Durdurma iconları için
           isPlaying: true,
         });
+        console.log(status);
 
         //Slider bar için statuyü güncelle
         playbackObj.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate);
@@ -1404,6 +1406,35 @@ export class AudioProvider extends Component {
     }, 1000);
   };
 
+  //Tüm müzik dosyalarını siler
+  cleanAllTheFilesDownloaded = async () => {
+    const { DownloadDir } = RNFetchBlob.fs.dirs;
+
+    for (let i = 0; this.state.songs.length; i++) {
+      let soundName = `${DownloadDir}/sound_${this.state.songs[i]?.DosyaIsmi}`;
+      let dirs =
+        Platform.OS === "android"
+          ? soundName
+          : `${RNFS.DocumentDirectoryPath}/Folder_name/${soundName}`;
+
+      const results = await RNFetchBlob.fs
+        .unlink(dirs)
+        .then(() => {
+          this.state.songs = [];
+          stop(this.state.playbackObj);
+          this.state.playbackObj = [];
+
+          return { deleted: true, deletedFileCount: this.state.songs.length };
+        })
+        .catch((err) => {
+          return { deleted: false, deletedFileCount: 0 };
+          console.log("err", err);
+        });
+
+      return results;
+    }
+  };
+
   /**Kontrollerdan */
   updateState = (prevState, newState = {}) => {
     this.setState({ ...prevState, ...newState });
@@ -1473,6 +1504,7 @@ export class AudioProvider extends Component {
           removeListenedSongCount: this.removeListenedSongCount,
           writeAnonsToDatabase: this.writeAnonsToDatabase,
           saveListenedSongCount: this.saveListenedSongCount,
+          cleanAllTheFilesDownloaded: this.cleanAllTheFilesDownloaded,
         }}
       >
         {this.state.isDownloading ? (

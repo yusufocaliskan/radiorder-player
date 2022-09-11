@@ -29,4 +29,15 @@ export default {
   THURSDAY: "Thursday",
   FRIDAY: "Friday",
   STURDAY: "Sturday",
+
+  //USer
+  CLEAN: "Clean Caches",
+  ARE_YOU_SURE: "Are you sure?",
+  ALL_DATA_WILL_BE_LOST:
+    "If you press OK, all the data that downloaded will be lost. Make it sure!",
+  OK: "Okay",
+  CANCEL: "Cancel",
+  DELETED_FILES: "Deleted Files",
+  RESULT: "Result",
+  ERROR: "Error",
 };

@@ -26,4 +26,14 @@ export default {
   THURSDAY: "Perşembe",
   FRIDAY: "Cuma",
   STURDAY: "Cumartesi",
+
+  CLEAN: "Temizle",
+  ARE_YOU_SURE: "Emin misin?",
+  ALL_DATA_WILL_BE_LOST:
+    "Tamam, dersen bütün indirilmiş dosyaları sileceksin. Emin misin?",
+  OK: "Tamam",
+  CANCEL: "Vazgeç",
+  DELETED_FILES: "Silinen Dosya Sayısı: ",
+  RESULT: "Sonuç",
+  ERROR: "Hata",
 };

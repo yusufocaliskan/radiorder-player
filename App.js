@@ -82,8 +82,10 @@ export default function App() {
     //Çıkış yaptığında
     singOut: async () => {
       try {
-        await AsyncStorage.removeItem("userToken");
-        await AsyncStorage.removeItem("userData");
+        //Tüm Storage'ı sil.
+        //await AsyncStorage.removeItem("userToken");
+        //await AsyncStorage.removeItem("userData");
+        await AsyncStorage.clear();
       } catch (e) {
         console.log(e);
       }

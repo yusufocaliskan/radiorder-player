@@ -1,5 +1,12 @@
 import React, { Component, useContext, useEffect, useState } from "react";
-import { TouchableOpacity, View, StyleSheet, Text, Image } from "react-native";
+import {
+  Alert,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Text,
+  Image,
+} from "react-native";
 import Screen from "../components/Screen";
 import { Avatar } from "@rneui/base";
 import { AudioContext } from "../context/AudioProvider";
@@ -16,7 +23,7 @@ const User = () => {
   const { Lang } = useContext(LangContext);
   const navigation = useNavigation();
 
-  const singOutUser = async () => {
+  const singOutHandle = async () => {
     //Çalan şarkı varsa durdur..
     const status = await stop(audioContext.playbackObj);
     audioContext.updateState(audioContext, {
@@ -28,6 +35,56 @@ const User = () => {
     });
 
     singOut();
+  };
+  const singOutUser = async () => {
+    Alert.alert(Lang?.LOGOUT, Lang?.ARE_YOU_SURE, [
+      {
+        text: Lang?.OK,
+        onPress: async () => await singOutHandle(),
+      },
+      {
+        text: Lang?.CANCEL,
+      },
+    ]);
+  };
+
+  /**
+   * Indırılmiş dosyaları siler.
+   */
+  const cleanAllTheFilesDownloaded = async () => {
+    //Uyar
+    Alert.alert(Lang?.ARE_YOU_SURE, Lang?.ALL_DATA_WILL_BE_LOST, [
+      {
+        text: Lang?.OK,
+        onPress: async () => {
+          const resp = await audioContext.cleanAllTheFilesDownloaded();
+          if (resp.deleted == true) {
+            Alert.alert(
+              Lang?.RESULT,
+              `${Lang?.DELETED_FILES} : ${resp.deletedFileCount}`,
+              [
+                {
+                  text: Lang?.OK,
+                },
+              ]
+            );
+          } else {
+            Alert.alert(Lang?.ERROR, "-", [
+              {
+                text: Lang?.OK,
+              },
+            ]);
+          }
+        },
+      },
+      {
+        text: Lang?.CANCEL,
+        onPress: () => console.log("Canceled"),
+        style: "cancel",
+      },
+    ]);
+
+    //Bana ne, sil gitsin
   };
 
   if (!loadingState.userData) {
@@ -54,12 +111,20 @@ const User = () => {
         <View style={styles.langView}>
           <LanguageModal />
         </View>
-        <Button
-          style={styles.logOutButton}
-          onPress={singOutUser}
-          text={Lang?.LOGOUT}
-          textStyle={styles.buttonTextStyle}
-        />
+        <View style={styles.ButtonsView}>
+          <Button
+            style={[styles.logOutButton, styles.cleanTheFilesButton]}
+            onPress={cleanAllTheFilesDownloaded}
+            text={Lang?.CLEAN}
+            textStyle={styles.buttonTextStyle}
+          />
+          <Button
+            style={styles.logOutButton}
+            onPress={singOutUser}
+            text={Lang?.LOGOUT}
+            textStyle={styles.buttonTextStyle}
+          />
+        </View>
       </View>
     </Screen>
   );
@@ -111,13 +176,21 @@ const styles = StyleSheet.create({
     marginTop: 50,
     opacity: 0.5,
     padding: 5,
-    width: 100,
+    width: 130,
   },
   buttonTextStyle: { color: color.WHITE },
   langView: {
     position: "absolute",
     top: 20,
     right: 20,
+  },
+  ButtonsView: {
+    flexDirection: "row",
+    alignContent: "space-between",
+  },
+  cleanTheFilesButton: {
+    backgroundColor: color.YELLOW,
+    marginRight: 10,
   },
 });
 
