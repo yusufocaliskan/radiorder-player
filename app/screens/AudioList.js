@@ -198,7 +198,6 @@ export class AudioList extends PureComponent {
               <Screen>
                 <FlatList
                   style={{ paddingTop: 20 }}
-                  initialNumToRender={9}
                   refreshing={() => {
                     <LoadingSimple />;
                   }}

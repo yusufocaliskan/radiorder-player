@@ -11,7 +11,8 @@ const configs = {
   //Servera gitme saati
   //Her x saat kadar sonra git şarkıları al
   //Saat cinsinden
-  TIME_OF_GETTING_SONGS_FROM_SERVER: 5,
+  TIME_OF_GETTING_SONGS_FROM_SERVER: 30,
+  //TIME_OF_GETTING_SONGS_FROM_SERVER: 5,
 
   //SOAP QUERY
   SOAP_URL: "https://www.radiorder.online/ws/radi.asmx",

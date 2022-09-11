@@ -747,14 +747,11 @@ export class AudioProvider extends PureComponent {
                 );
 
                 //ilk part ((10 adet)) indirildikten sonra çal
-                if (pageNo == 1) {
-                  //TODO:START
-                  //Listeyi güncelle
-                  await this.getAudioFiles();
-
-                  this.startToPlay();
-                  this.state.waitLittleBitStillDownloading = true;
-                }
+                //TODO:START
+                //Listeyi güncelle
+                await this.getAudioFiles();
+                this.startToPlay();
+                this.state.waitLittleBitStillDownloading = true;
 
                 //Tüm şarkılar indiyse
                 if (pageNo == parsedData.ToplamSayfa) {
@@ -941,7 +938,8 @@ export class AudioProvider extends PureComponent {
     //if (diffTime > 60000) {
     if (
       diffTime >
-      convertHourToMilliseconds(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
+      //convertHourToMilliseconds(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
+      convertSecondToMillisecond(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
     ) {
       await this.getUserGroupListFromServer();
     } else {
@@ -1428,7 +1426,6 @@ export class AudioProvider extends PureComponent {
         })
         .catch((err) => {
           return { deleted: false, deletedFileCount: 0 };
-          console.log("err", err);
         });
 
       return results;
