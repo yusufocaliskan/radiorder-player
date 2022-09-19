@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "radiorder-player",
+    "name": "Radio Order Player",
     "slug": "radiorder-player",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,23 +8,23 @@
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yusufocaliskan.radiorderplayer"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.yusufocaliskan.radiorderplayer"
     },
     "web": {
       "favicon": "./assets/favicon.png"
