@@ -900,6 +900,10 @@ export class AudioProvider extends PureComponent {
    */
   DownloadSongsFromServer = async (sounds, downloadType = "sound", pageNo) => {
     try {
+      if (typeof sounds == undefined || sounds.length == 0 || sounds === null) {
+        return;
+      }
+
       const { DownloadDir } = RNFetchBlob.fs.dirs;
 
       //İsmi temizle ve yeniden oşlutiur
@@ -909,7 +913,6 @@ export class AudioProvider extends PureComponent {
 
       //Dosya yok is indir.
       //Dosyayı daha önce indirmişsek, bir şey yapma..
-
       try {
         const isExist = await RNFetchBlob.fs.exists(soundName);
         if (!isExist) {
@@ -1019,6 +1022,7 @@ export class AudioProvider extends PureComponent {
 
           // console.log("--------------PRETYYY----------------------");
           // console.log(pretty_anons);
+          //setTimeout(() => {}, 1000);
 
           //Anonsları indir
           for (let p = 0; p < pretty_anons?.length; p++) {

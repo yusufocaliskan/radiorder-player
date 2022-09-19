@@ -20,7 +20,7 @@ const Debug = () => {
           AnF: {context?.anonsFiles?.length} /
         </Text>
         <Text style={styles.debugingText}>
-          MdF: {context?.mediaFiles?.length}
+          MdF: {context?.mediaFiles?.length} /
         </Text>
         <Text style={styles.debugingText}>Vr: {configs.VERSION}</Text>
       </View>
