@@ -50,7 +50,8 @@ const User = () => {
         text: Lang?.OK,
         onPress: async () => {
           const resp = await audioContext.cleanAllTheFilesDownloaded();
-          if (resp.deleted == true) {
+          console.log(resp);
+          if (resp?.deleted == true) {
             Alert.alert(
               Lang?.RESULT,
               `${Lang?.DELETED_FILES} : ${resp.deletedFileCount}`,
@@ -107,12 +108,12 @@ const User = () => {
         <Text style={styles.Sehir}>{loadingState.userData?.FSL?.Sehir}</Text>
 
         <View style={styles.ButtonsView}>
-          <Button
+          {/* <Button
             style={[styles.logOutButton, styles.cleanTheFilesButton]}
             onPress={cleanAllTheFilesDownloaded}
             text={Lang?.CLEAN}
             textStyle={styles.buttonTextStyle}
-          />
+          /> */}
           <Button
             style={styles.logOutButton}
             onPress={singOutUser}

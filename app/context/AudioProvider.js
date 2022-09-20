@@ -1721,27 +1721,39 @@ export class AudioProvider extends PureComponent {
   };
 
   //Tüm müzik dosyalarını Temile
+  //Not works, somehow
   cleanAllTheFilesDownloaded = async () => {
     const { DownloadDir } = RNFetchBlob.fs.dirs;
+    let mediaFiles = await this.getMediaFiles();
+    mediaFiles = mediaFiles.assets;
 
-    for (let i = 0; this.state.songs.length; i++) {
-      let soundName = `${DownloadDir}/sound_${this.state.songs[i]?.DosyaIsmi}`;
-      let dirs =
-        Platform.OS === "android"
-          ? soundName
-          : `${RNFS.DocumentDirectoryPath}/Folder_name/${soundName}`;
-
+    for (let i = 0; mediaFiles.length; i++) {
       const results = await RNFetchBlob.fs
-        .unlink(dirs)
+        .unlink(`${DownloadDir}/${mediaFiles[i].filename}`)
         .then(() => {
+          //Cacheleri temizle
           this.state.songs = [];
+          this.state.anons = [];
+          this.state.audioFiles = [];
+          this.state.anonsFiles = [];
+          AsyncStorage.removeItem("anons");
+          AsyncStorage.removeItem("songs");
+
           stop(this.state.playbackObj);
           this.state.playbackObj = [];
 
-          return { deleted: true, deletedFileCount: this.state.songs.length };
+          return {
+            message: "Dosyalar silindi.. ",
+            deleted: true,
+            deletedFileCount: mediaFiles.length,
+          };
         })
         .catch((err) => {
-          return { deleted: false, deletedFileCount: 0 };
+          return {
+            message: "İşlem başarısız oldu",
+            deleted: false,
+            deletedFileCount: mediaFiles.length,
+          };
         });
 
       return results;

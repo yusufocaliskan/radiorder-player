@@ -1,6 +1,6 @@
 const configs = {
   //Application versionu
-  VERSION: "v1.5",
+  VERSION: "v1.8",
 
   //Sertifika bilgileri
   SER_USERNAME: "radiorder",

@@ -178,9 +178,10 @@ export class AudioList extends Component {
   };
 
   componentDidUpdate = (nextProps, nextState) => {
-    // if (this.context?.flatListScrollIndex) {
-    //   this.flatListScrollToIndex();
-    // }
+    if (this.context?.flatListScrollIndex) {
+      console.log("--List:Index---", this.context?.flatListScrollIndex);
+      this.flatListScrollToIndex();
+    }
   };
   rowRenderer = (type, item, index, extendedState) => {
     return (
