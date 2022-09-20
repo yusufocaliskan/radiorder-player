@@ -1,6 +1,6 @@
 const configs = {
   //Application versionu
-  VERSION: "v1.8.4",
+  VERSION: "v1.8.6",
 
   //Sertifika bilgileri
   SER_USERNAME: "radiorder",
@@ -23,7 +23,7 @@ const configs = {
 
   //Debug penceresi.
   //Sağ üstte görünür.
-  DEBUG: false,
+  DEBUG: true,
 
   //Application başlatıldığında müsic çalsın.
   //PLAY_ON_LOAD: true,
@@ -31,7 +31,7 @@ const configs = {
   //Servera gitme saati
   //Her x saat kadar sonra git şarkıları al
   //Saat cinsinden
-  TIME_OF_GETTING_SONGS_FROM_SERVER: 600000, //10 dk
+  TIME_OF_GETTING_SONGS_FROM_SERVER: 300000, //5 dk
   //TIME_OF_GETTING_SONGS_FROM_SERVER: 5,
 
   //SOAP QUERY

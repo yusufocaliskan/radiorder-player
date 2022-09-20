@@ -797,17 +797,18 @@ export class AudioProvider extends PureComponent {
       //Son sayfa geldiğinde kullanılmayan dosyaları sillll gitsin..
       //this.state.pageNo = 1;
       //Dinlenme sayısını sıfırla
-      console.log("---Silave---");
       //this.removeListenedSongCount();
-
       this.setState({ ...this.state.state, audioFiles: [] });
-
       await this.getAudioFiles();
 
       //Kullanılmayan şarkıları dosyadan sil
       // await this.theSongCleaner()
 
       //Sayfa numarasını 1 eşitle
+    }
+
+    if (this.state.pageNo == this.state.totalSongInTheServer.ToplamSayfa) {
+      this.removeListenedSongCount();
     }
   };
 
@@ -1074,7 +1075,7 @@ export class AudioProvider extends PureComponent {
                       ...this.state,
                       playListCrossChecking: false,
                     });
-                  }, 3000);
+                  }, 1000);
                 }
               });
             }

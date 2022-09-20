@@ -216,7 +216,7 @@ export class AudioList extends Component {
             data={this.context.audioFiles}
             keyExtractor={(item, index) => String(index)}
             //initialNumToRender={2}
-            scrollEnabled={this.context.playListCrossChecking ? false : true}
+            //scrollEnabled={this.context.playListCrossChecking ? false : true}
             // ref={(ref) => {
             //   this.flatListRef = ref;
             // }}
