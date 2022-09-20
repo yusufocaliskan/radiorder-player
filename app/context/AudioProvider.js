@@ -14,6 +14,7 @@ import {
   convertSecondToMillisecond,
   convertHourToMilliseconds,
   clearFileName,
+  getTheTime,
 } from "../misc/Helper";
 import RNFetchBlob from "rn-fetch-blob";
 import DownloadingGif from "../components/DownloadingGif";
@@ -745,10 +746,8 @@ export class AudioProvider extends PureComponent {
 
           //Son güncelleme tarihini sakla
           //Kullanacağız
-          AsyncStorage.setItem(
-            "Last_Playlist_Update_Time",
-            this.state.whatIsTheDate
-          );
+          AsyncStorage.setItem("Last_Playlist_Update_Time", getTheTime());
+          //await this.setLastPlaylistUpdateTime();
         })
         .catch(async (res) => {
           //heger kiii internet yokksaam :)
@@ -766,9 +765,29 @@ export class AudioProvider extends PureComponent {
   //Her çağrıldığında pageNo state'ni bir arttırıp serverdan şarkı alır.
   LoadMoreSongs = async () => {
     //Eğer son sayfa değilse yüklemeye devam et canısı
-    this.setState({ ...this.state, debug: "Çalıştııı" });
-    this.setState({ ...this.state.state, pageNo: this.state.pageNo + 1 });
-    if (this.state.pageNo <= this.state.totalSongInTheServer.ToplamSayfa) {
+
+    const lastPlaylistUpdateTime = await AsyncStorage.getItem(
+      "Last_Playlist_Update_Time"
+    );
+
+    //Son güncelleme tarihi ile şuanki tarih arasındaki farkı bul
+    const diffTime = getDifferenceBetweenTwoHours(
+      new Date(lastPlaylistUpdateTime).getTime(),
+      new Date(getTheTime()).getTime()
+    );
+    console.log("Last", lastPlaylistUpdateTime, "Time:", getTheTime());
+    console.log("Time: ", new Date(this.state.whatIsTheDate).getTime());
+
+    //Şarkıları al
+    //Eğer son güncelleme 1 dk yı gectiyse
+    //Fark config.TIME_OF_GETTING_SONGS_FROM_SERVER geçmiş ise update yap.
+
+    if (
+      this.state.pageNo <= this.state.totalSongInTheServer.ToplamSayfa &&
+      diffTime >
+        convertSecondToMillisecond(config.TIME_OF_GETTING_SONGS_FROM_SERVER)
+    ) {
+      this.setState({ ...this.state.state, pageNo: this.state.pageNo + 1 });
       //Sayfa sayını bir atttır ve gell.
       //await this.getAllSongsFilteringCacheControl();
       await this.getUserGroupListFromServer();
@@ -778,7 +797,8 @@ export class AudioProvider extends PureComponent {
       //Son sayfa geldiğinde kullanılmayan dosyaları sillll gitsin..
       //this.state.pageNo = 1;
       //Dinlenme sayısını sıfırla
-      this.removeListenedSongCount();
+      console.log("---Silave---");
+      //this.removeListenedSongCount();
 
       this.setState({ ...this.state.state, audioFiles: [] });
 
@@ -1085,13 +1105,13 @@ export class AudioProvider extends PureComponent {
   //TODO: Kullanılmıyor..
   getAllSongsFilteringCacheControl = async () => {
     //Ses dosyalarını serverdan indir.
-    await this.setLastPlaylistUpdateTime();
+    //await this.setLastPlaylistUpdateTime();
     const lastPlaylistUpdateTime = await AsyncStorage.getItem(
       "Last_Playlist_Update_Time"
     );
     const diffTime = getDifferenceBetweenTwoHours(
       new Date(this.state.lastPlaylistUpdateTime).getTime(),
-      new Date(this.state.whatIsTheDate).getTime()
+      new Date(getTheTime()).getTime()
     );
 
     //Şarkıları al

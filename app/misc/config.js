@@ -1,6 +1,6 @@
 const configs = {
   //Application versionu
-  VERSION: "v1.8",
+  VERSION: "v1.8.4",
 
   //Sertifika bilgileri
   SER_USERNAME: "radiorder",
@@ -31,7 +31,7 @@ const configs = {
   //Servera gitme saati
   //Her x saat kadar sonra git şarkıları al
   //Saat cinsinden
-  //TIME_OF_GETTING_SONGS_FROM_SERVER: 4,
+  TIME_OF_GETTING_SONGS_FROM_SERVER: 600000, //10 dk
   //TIME_OF_GETTING_SONGS_FROM_SERVER: 5,
 
   //SOAP QUERY

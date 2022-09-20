@@ -164,6 +164,15 @@ export const setAnonsRepeatTimes = async (AnonsId, repeat) => {
   //Update
 };
 
+export const getTheTime = () => {
+  const time = `${getCurrentDate(new Date())}T${new Date().toLocaleTimeString({
+    hour12: false,
+    hour: "2-digit",
+    timeZone: "Europe/Istanbul",
+  })}`;
+
+  return time;
+};
 //İlki saat arasındaki farkı bul
 export const getDifferenceBetweenTwoHours = (time1, time2) => {
   return Math.abs(time1 - time2);
