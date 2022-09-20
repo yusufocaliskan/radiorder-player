@@ -1,6 +1,6 @@
 const configs = {
   //Application versionu
-  VERSION: "v1.4",
+  VERSION: "v1.5",
 
   //Sertifika bilgileri
   SER_USERNAME: "radiorder",
@@ -23,7 +23,7 @@ const configs = {
 
   //Debug penceresi.
   //Sağ üstte görünür.
-  DEBUG: true,
+  DEBUG: false,
 
   //Application başlatıldığında müsic çalsın.
   //PLAY_ON_LOAD: true,

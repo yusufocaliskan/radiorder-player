@@ -21,7 +21,7 @@ import { stop, play, pause, resume, playNext } from "../misc/AudioController";
 
 //Şarkıları listelemek için kullanırlır
 //ScrollView'den daha performanlısdır.
-import { DataProvider } from "recyclerlistview";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { XMLParser } from "fast-xml-parser";
 import axios from "axios";
@@ -64,7 +64,7 @@ export class AudioProvider extends PureComponent {
       permissionError: false,
 
       //Şarkı listesi
-      dataProvider: new DataProvider((r1, r2) => r1 !== r2),
+      dataProvider: null,
 
       //Şarkı çalma conrtolleri.
       playbackObj: null,
@@ -89,7 +89,7 @@ export class AudioProvider extends PureComponent {
       waitLittleBitStillDownloading: false,
 
       //Şarkı listesi
-      dataProvider: new DataProvider((r1, r2) => r1 !== r2),
+      dataProvider: null,
 
       //songs
       songs: [],
