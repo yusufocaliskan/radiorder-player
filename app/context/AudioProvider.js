@@ -1,7 +1,10 @@
 import React, { PureComponent, createContext } from "react";
 import { Text, StyleSheet, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
-import NetInfo, { useNetInfo } from "@react-native-community/netinfo";
+import NetInfo from "@react-native-community/netinfo";
+//import CodePush from "react-native-code-push";
+//import { NativeModules } from "react-native";
+
 import { Audio } from "expo-av";
 import {
   issetInArray,
@@ -47,6 +50,10 @@ export class AudioProvider extends PureComponent {
     super(props);
 
     this.state = {
+      //Kullanıcı bilgileri
+      username: null,
+      password: null,
+
       debug: null,
       //Mediadan alınan şarkılar
       audioFiles: [],
@@ -115,6 +122,9 @@ export class AudioProvider extends PureComponent {
       ListenedSongCount: 1,
       theSongListened: [],
       theTimePastedSinceAnonsLoopStart: 0,
+
+      //Updates
+      noAnyNewUpdateInserver: false,
 
       //Güncel tarih
       whatIsTheDate: `${getCurrentDate(
@@ -225,16 +235,25 @@ export class AudioProvider extends PureComponent {
     }
   };
 
-  /**
-   * Şarkı dosyalarını al.
-   */
-  getAudioFiles = async () => {
-    //Ses telefona indirilen dosyaları
-    let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
+  getMediaFiles = async () => {
+    let media;
+    media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
     media = await MediaLibrary.getAssetsAsync({
       mediaType: "audio",
       first: media.totalCount,
     });
+
+    //Save it to cache
+    //AsyncStorage.setItem("mediaFiles", JSON.stringify(media));
+    return media;
+  };
+
+  /**
+   * Şarkı dosyalarını al.
+   */
+  getAudioFiles = async () => {
+    //Ses telefona indirilen/Download dosyaları
+    const media = await this.getMediaFiles();
 
     this.totalAudioCount = this.state.audioFiles.length;
     this.state.mediaFiles = media.assets;
@@ -250,10 +269,9 @@ export class AudioProvider extends PureComponent {
     }
 
     //Şarkıları da al.
-    //const songs = JSON.parse(await AsyncStorage.getItem("songs"));
     const songs = this.state.songs;
     const filtered_song = [];
-
+    console.log("Songs: ", this.state.songs.length);
     //Ses
     let d = 0;
     for (; d < songs?.length; d++) {
@@ -313,21 +331,9 @@ export class AudioProvider extends PureComponent {
    * Anons Dosyalarını al ve belirle
    */
   getAnonsFiles = async () => {
-    let media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
-    //Tüm şarkıları listele.
-    media = await MediaLibrary.getAssetsAsync({
-      mediaType: "audio",
-      first: media.totalCount,
-    });
+    let media = await this.getMediaFiles();
 
     this.totalAnonsCount = this.state.anonsFiles.length;
-
-    //Şarkıları state ata.
-
-    // this.setState({
-    //   ...this.state,
-    //   anonsFiles: [...anonsFiles, ...media.assets],
-    // });
 
     //Serverdan gelen anonslar
     const anons = this.state.anons;
@@ -684,8 +690,10 @@ export class AudioProvider extends PureComponent {
    */
   getUserGroupListFromServer = async () => {
     //Kullanıcı bilgilerini al
+    //this.getUserInfo();
     const username = await AsyncStorage.getItem("username");
     const password = await AsyncStorage.getItem("password");
+
     //const totalUserSong = JSON.parse(await AsyncStorage.getItem("userSongs"));
 
     try {
@@ -737,7 +745,7 @@ export class AudioProvider extends PureComponent {
 
           //Son güncelleme tarihini sakla
           //Kullanacağız
-          await AsyncStorage.setItem(
+          AsyncStorage.setItem(
             "Last_Playlist_Update_Time",
             this.state.whatIsTheDate
           );
@@ -827,7 +835,6 @@ export class AudioProvider extends PureComponent {
           //Hepsini indir.
           for (let i = 0; i <= parsedData.Liste.WsSarkiDto.length; i++) {
             //Push it into the array
-            //this.state.downloadedSongs.push(parsedData.Liste.WsSarkiDto[i]);
 
             //Serverdan cihaza indir.
             if (parsedData?.Liste?.WsSarkiDto[i]) {
@@ -838,12 +845,10 @@ export class AudioProvider extends PureComponent {
                 pageNo
               );
 
-              //arraye ata.
               this.setState({
                 ...this.state,
                 songs: [...this.state.songs, parsedData.Liste.WsSarkiDto[i]],
               });
-
               //Bu sayfa da
               //Download işlemi bittikten sonra Çalma Listesini güncelle
               if (i == parsedData.Liste.WsSarkiDto.length - 1) {
@@ -851,14 +856,19 @@ export class AudioProvider extends PureComponent {
                 this.setState({ ...this.state, isDownloading: false });
                 this.setState({ ...this.state, currentDownloadedSong: "" });
 
-                //ilk part ((10 adet)) indirildikten sonra çal
-                //TODO:START
-
                 this.setState({
                   ...this.state,
                   waitLittleBitStillDownloading: true,
                 });
+
+                //Şarkı listesini yükle
+                //ilk part ((10 adet)) indirildikten sonra çal
+                //TODO:START
+
+                await this.getAudioFiles();
+                await this.startToPlay();
               }
+
               //Biraz bekledikten sonra
               //Üst-üste sorguların önünü almak içüünn
               setTimeout(() => {
@@ -878,13 +888,6 @@ export class AudioProvider extends PureComponent {
               }
             }
           }
-
-          //Şarkı listesini yükle
-          await this.getAudioFiles().then(async () => {
-            await this.startToPlay();
-          });
-
-          //   await this.getAnonsFiles();
 
           return parsedData;
         });
@@ -928,7 +931,11 @@ export class AudioProvider extends PureComponent {
               },
             };
             try {
-              await RNFetchBlob.config(options).fetch("GET", sounds?.SesLink);
+              await RNFetchBlob.config(options)
+                .fetch("GET", sounds?.SesLink)
+                .then((res) => {
+                  return "res";
+                });
 
               this.setState({ ...this.state, isDownloading: true });
               this.setState({
@@ -942,6 +949,8 @@ export class AudioProvider extends PureComponent {
               console.log(error);
             }
           }
+        } else {
+          return "File Already exists!";
         }
       } catch (error) {
         console.log(error);
@@ -958,6 +967,8 @@ export class AudioProvider extends PureComponent {
    */
   getAllAnonsFromServer = async () => {
     //Kullanıcı bilgilerini al
+    // const username = this.state.username;
+    // const password = this.state.password;
     const username = await AsyncStorage.getItem("username");
     const password = await AsyncStorage.getItem("password");
     //const totalUserSong = JSON.parse(await AsyncStorage.getItem("userSongs"));
@@ -1115,11 +1126,8 @@ export class AudioProvider extends PureComponent {
     //Get songs directly
     await this.getUserGroupListFromServer();
 
-    //await this.getUserGroupListFromServer();
     //Anonsları her zaman all..
     await this.getAllAnonsFromServer();
-
-    //console.log(this.state.playlist);
   };
 
   //Aanons Realm'e bağlan
@@ -1320,13 +1328,19 @@ export class AudioProvider extends PureComponent {
         //Musiclere erişim izni all
         await this.getPermission().then(async () => {
           //Admin ayarları
-          await this.getAdminSettings();
+          await this.getAdminSettings().then(async () => {
+            //Serverdan Şarkı listesini al
+            await this.getSoundsAndAnonsFromServer();
 
-          //Serverdan Şarkı listesini al
-          await this.getSoundsAndAnonsFromServer();
+            setInterval(async () => {
+              await this.playAnons();
+              //this.clearAnonsRepeatsFromDatabase(true);
+              //this.removeListenedSongCount(true);
+            }, convertSecondToMillisecond(40)); //Her 40 saniye de bir anons kontrollü yap
 
-          //Temmizlik yap
-          this.cleanYourSelfAsACatBroooo();
+            //Temmizlik yap
+            this.cleanYourSelfAsACatBroooo();
+          });
         });
 
         //Serverdan şarkı ve anonsları al
@@ -1352,7 +1366,7 @@ export class AudioProvider extends PureComponent {
 
   getAdminSettings = async () => {
     const settings = this.state.DBConnection.objects("AdminSettings")[0];
-    console.log(settings);
+    console.log({ settings });
 
     //Ayarları ata
     if (settings != void 0) {
@@ -1380,6 +1394,15 @@ export class AudioProvider extends PureComponent {
   };
 
   /**
+   * Kullanıcı bilgiler.
+   */
+  getUserInfo = async () => {
+    const username = await AsyncStorage.getItem("username");
+    const password = await AsyncStorage.getItem("password");
+    this.setState({ ...this.state, username: username, password: password });
+  };
+
+  /**
    * Çalıştığında
    */
   componentDidMount = () => {
@@ -1391,13 +1414,6 @@ export class AudioProvider extends PureComponent {
 
     //Anons Kontrolü yap
     //Download işlemi tamamen bittiyse
-
-    setInterval(async () => {
-      this.setState({ ...this, debug: "Ez im!" });
-      this.playAnons();
-      //this.clearAnonsRepeatsFromDatabase(true);
-      //this.removeListenedSongCount(true);
-    }, convertSecondToMillisecond(40)); //Her 40 saniye de bir anons kontrollü yap
   };
 
   componentWillUnmount() {
@@ -1559,18 +1575,25 @@ export class AudioProvider extends PureComponent {
    * Çal
    */
   startToPlay = async () => {
+    //Dosya boş ise
+
     let timeout = 0;
-    if (this.state.audioFiles.length == 0) timeout = 2000;
+    if (this.state.audioFiles.length == 0) {
+      await this.getAudioFiles();
+      timeout = 1000;
+    }
+
     setTimeout(async () => {
       if (this.state.soundObj === null) {
         const audio = this.state.audioFiles[0];
-
+        console.log("----------------- START TO PLAY -----------------");
         //Playlisti oynatmaya başla
         //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
         const playbackObj = new Audio.Sound();
 
         //Controllerdan çağır.
         const status = await play(playbackObj, audio?.uri);
+
         const index = 0;
 
         //Yeni durumu state ata ve ilerlememesi için return'le

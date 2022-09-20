@@ -28,10 +28,10 @@ const App = () => {
   //Bu update application için
   //Varsa hemen indir..IMMEDIATE IMMEDIATE IMMEDIATE :)
   //start: -------------------------------------------
-  // codePush.sync({
-  //   updateDialog: false,
-  //   installMode: codePush.InstallMode.IMMEDIATE,
-  // });
+  codePush.sync({
+    updateDialog: false,
+    installMode: codePush.InstallMode.IMMEDIATE,
+  });
   //end: -------------------------------------------
 
   // codePush.sync(
@@ -202,5 +202,5 @@ const App = () => {
   );
 };
 
-//export default codePush(codePushOptions)(App);
-export default App;
+export default codePush(codePushOptions)(App);
+//export default App;

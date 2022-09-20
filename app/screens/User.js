@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useEffect, useContext } from "react";
 import { Alert, View, StyleSheet, Text, Image } from "react-native";
 import Screen from "../components/Screen";
 import { AudioContext } from "../context/AudioProvider";
@@ -8,6 +8,7 @@ import color from "../misc/color";
 import { stop } from "../misc/AudioController";
 import LanguageModal from "../components/LanguageModal";
 import { LangContext } from "../context/LangProvider";
+import * as ScreenOrientation from "expo-screen-orientation";
 
 const User = () => {
   const { singOut, loadingState } = useContext(newAuthContext);
@@ -74,9 +75,18 @@ const User = () => {
         style: "cancel",
       },
     ]);
-
-    //Bana ne, sil gitsin
   };
+
+  const changeScreenOrientation = async () => {
+    await ScreenOrientation.lockAsync(
+      ScreenOrientation.OrientationLock.PORTRAIT_UP
+    );
+  };
+
+  useEffect(() => {
+    //this.props.navigation.setOptions({ orientation: "landscape" });
+    changeScreenOrientation();
+  }, []);
 
   return (
     <Screen>

@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignSelf: "center",
-    width: width - 50,
+    //width: width - 50,
     paddingBottom: 5,
   },
   containerAnons: {},
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    width: width - 50,
+    width: width - 40,
   },
 
   thumbnail: {

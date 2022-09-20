@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { FlatList, View, Text, StyleSheet } from "react-native";
+import { Dimensions, FlatList, View, Text, StyleSheet } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { AudioContext } from "../context/AudioProvider";
 import AudioListItem from "../components/AudioListItem";
@@ -8,6 +8,7 @@ import Screen from "../components/Screen";
 import ListFooterComponent from "../components/ListFooterComponent";
 import { storeAudioForNextOpening } from "../misc/Helper";
 import AnonsModal from "../components/AnonsModal";
+import * as ScreenOrientation from "expo-screen-orientation";
 
 //Expo-av şarkıları çalar.
 import { Audio } from "expo-av";
@@ -164,6 +165,18 @@ export class AudioList extends Component {
       index: this.context?.flatListScrollIndex - 1,
     });
   };
+
+  changeScreenOrientation = async () => {
+    await ScreenOrientation.lockAsync(
+      ScreenOrientation.OrientationLock.LANDSCAPE
+    );
+  };
+  componentDidMount = () => {
+    console.log("------SILAV---");
+    //this.props.navigation.setOptions({ orientation: "landscape" });
+    //this.changeScreenOrientation();
+  };
+
   componentDidUpdate = (nextProps, nextState) => {
     // if (this.context?.flatListScrollIndex) {
     //   this.flatListScrollToIndex();
@@ -191,6 +204,8 @@ export class AudioList extends Component {
     if (!this.context.audioFiles.length) {
       return <LoadingSimple />;
     }
+
+    const { width } = Dimensions.get("screen");
 
     return (
       <>

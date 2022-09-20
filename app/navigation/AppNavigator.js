@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect, useLayoutEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+
 import { StyleSheet } from "react-native";
 import AudioList from "../screens/AudioList";
 //import Player from "../screens/Player";
@@ -40,6 +41,7 @@ const AppNavigator = () => {
         component={AudioList}
         context={context}
         options={{
+          orientation: "landscape",
           tabBarIcon: ({ color, size }) => {
             return <FontAwesome name="music" size={size} color={color} />;
           },
