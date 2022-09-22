@@ -334,10 +334,30 @@ export class AudioProvider extends PureComponent {
     await AsyncStorage.setItem("songs", JSON.stringify(filtered_song));
   };
 
+  cacheControl = async (lastCacheTime, timeOut) => {
+    const lastAnonsUpdateTime = await AsyncStorage.getItem(lastCacheTime);
+
+    const diffTime = getDifferenceBetweenTwoHours(
+      new Date(lastAnonsUpdateTime).getTime(),
+      new Date(getTheTime()).getTime()
+    );
+    console.log("Anons Last", lastAnonsUpdateTime, "Anons Time:", getTheTime());
+    console.log("Anons Time: ", new Date(this.state.whatIsTheDate).getTime());
+    console.log("Anons TimeOut: ", timeOut);
+
+    console.log(diffTime > convertSecondToMillisecond(timeOut));
+    if (diffTime > convertSecondToMillisecond(timeOut)) {
+      return true;
+    } else {
+      return false;
+    }
+  };
   /**
    * Anons Dosyalarını al ve belirle
    */
   getAnonsFiles = async () => {
+    //cache kontrolü yap
+
     let media = await this.getMediaFiles();
 
     this.totalAnonsCount = this.state.anonsFiles.length;
@@ -1094,6 +1114,9 @@ export class AudioProvider extends PureComponent {
             anons: pretty_anons,
           });
 
+          //Anons Güncelleme tarihini kontrol et.
+          AsyncStorage.setItem("Last_Anons_Update_Time", getTheTime());
+
           await this.getAnonsFiles();
 
           //Anons array'ini oluştur.
@@ -1157,6 +1180,8 @@ export class AudioProvider extends PureComponent {
     //Anonsları her zaman all..
     //TODO#1:Anons
     //await this.getAllAnonsFromServer();
+    // cachedeki anons su ata.
+    this.state.anonsFiles = JSON.parse(await AsyncStorage.getItem("anons"));
   };
 
   //Aanons Realm'e bağlan
@@ -1364,18 +1389,18 @@ export class AudioProvider extends PureComponent {
             //-------------------------ANONSLARI KONTROL ETTT------------------ //
             //----------------------indirilmiş anonslar----------------------- //
             //TODO#2:Anons
-            // setInterval(async () => {
-            //   //Kontrol et.
-            //   await this.playAnons();
+            setInterval(async () => {
+              //   //Kontrol et.
+              await this.playAnons();
 
-            //   //Sorug sayısını bir arttır.
-            //   this.setState({
-            //     ...this.state,
-            //     countPlayAnons: this.state.countPlayAnons + 1,
-            //   });
-            //   //this.clearAnonsRepeatsFromDatabase(true);
-            //   //this.removeListenedSongCount(true);
-            // }, convertSecondToMillisecond(40)); //Her 40 saniye de bir anons kontrollü yap
+              //   //Sorug sayısını bir arttır.
+              this.setState({
+                ...this.state,
+                countPlayAnons: this.state.countPlayAnons + 1,
+              });
+              //   //this.clearAnonsRepeatsFromDatabase(true);
+              //   //this.removeListenedSongCount(true);
+            }, convertSecondToMillisecond(config.PLAY_ANONS_TIME)); //Her 40 saniye de bir anons kontrollü yap
 
             //Temmizlik yap
             this.cleanYourSelfAsACatBroooo();
@@ -1662,15 +1687,28 @@ export class AudioProvider extends PureComponent {
    * Varsa Çalar, 40 saniye de bir
    */
   playAnons = async () => {
-    //Bazen boş dönüyor
-    console.log("--------------ANONS: ", this.state.anonsFiles.length);
+    //Eğer Anonsplaylisti boş ise doldur.
     if (this.state.anonsFiles.length == 0) {
-      console.log("------------EZZZ------------");
+      //Boş ise anonsu güncelle
+      await this.getAllAnonsFromServer();
+    }
+
+    //Cache kontrolü yap.
+    //Eğer son güncelleme tarihi hala geçerliyse pass geç
+    //cachedekini okumaya devam et.
+    if (
+      (await this.cacheControl(
+        "Last_Anons_Update_Time",
+        config.ANONS_FILTERING_CACHE_TIME
+      )) === true
+    ) {
+      console.log("HALA VARRRR, CACHEEE");
+      console.log("------------ANONS LEEBUNN------------");
       await this.getAllAnonsFromServer();
     }
 
     setTimeout(async () => {
-      await this.getAnonsFiles();
+      //await this.getAnonsFiles();
       console.log("Ev: Anons Kontrol # 1-2 / 1-2");
       let isPlaying = null;
 

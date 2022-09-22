@@ -1,6 +1,6 @@
 const configs = {
   //Application versionu
-  VERSION: "v1.8.6",
+  VERSION: "v1.8.9",
 
   //Sertifika bilgileri
   SER_USERNAME: "radiorder",
@@ -29,10 +29,15 @@ const configs = {
   //PLAY_ON_LOAD: true,
 
   //Servera gitme saati
-  //Her x saat kadar sonra git şarkıları al
-  //Saat cinsinden
+  //saniye cinsinden
   TIME_OF_GETTING_SONGS_FROM_SERVER: 360, //5 dk
-  //TIME_OF_GETTING_SONGS_FROM_SERVER: 5,
+
+  //Servera indirilmiş olan şarkıların yeniden
+  ANONS_FILTERING_CACHE_TIME: 260, //
+
+  //PLAY_ANONS_TIME
+  //saniye cinsinden
+  PLAY_ANONS_TIME: 40,
 
   //SOAP QUERY
   SOAP_URL: "https://www.radiorder.online/ws/radi.asmx",
