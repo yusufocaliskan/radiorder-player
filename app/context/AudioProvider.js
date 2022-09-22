@@ -85,6 +85,7 @@ export class AudioProvider extends PureComponent {
       //Downloads
       isDownloading: false,
       playListCrossChecking: false,
+      anonsCrossChecking: false,
       currentDownloadedSong: "",
       currentSongNumber: null,
       waitLittleBitStillDownloading: false,
@@ -105,6 +106,7 @@ export class AudioProvider extends PureComponent {
       currentAnonsName: null,
       currentPlayingAnons: null,
       anonsIsPlaying: false,
+      countPlayAnons: 0,
 
       //Song and Anons in the Storage
       downloadedSongs: [],
@@ -236,6 +238,10 @@ export class AudioProvider extends PureComponent {
     }
   };
 
+  /**
+   * Download klasöründe olan tüm ses dosyalarını verir.
+   * @returns object
+   */
   getMediaFiles = async () => {
     let media;
     media = await MediaLibrary.getAssetsAsync({ mediaType: "audio" });
@@ -272,7 +278,7 @@ export class AudioProvider extends PureComponent {
     //Şarkıları da al.
     const songs = this.state.songs;
     const filtered_song = [];
-    console.log("Songs: ", this.state.songs.length);
+
     //Ses
     let d = 0;
     for (; d < songs?.length; d++) {
@@ -1059,7 +1065,8 @@ export class AudioProvider extends PureComponent {
           //Anonsları indir
           for (let p = 0; p < pretty_anons?.length; p++) {
             if (pretty_anons[p].anons != "undefined") {
-              this.setState({ ...this.state, playListCrossChecking: true });
+              this.setState({ ...this.state, anonsCrossChecking: true });
+              //this.setState({ ...this.state, playListCrossChecking: true });
               await this.DownloadSongsFromServer(
                 pretty_anons[p].anons,
                 "anons"
@@ -1073,9 +1080,9 @@ export class AudioProvider extends PureComponent {
                   setTimeout(() => {
                     this.setState({
                       ...this.state,
-                      playListCrossChecking: false,
+                      anonsCrossChecking: false,
                     });
-                  }, 1000);
+                  }, 2000);
                 }
               });
             }
@@ -1148,7 +1155,8 @@ export class AudioProvider extends PureComponent {
     await this.getUserGroupListFromServer();
 
     //Anonsları her zaman all..
-    await this.getAllAnonsFromServer();
+    //TODO#1:Anons
+    //await this.getAllAnonsFromServer();
   };
 
   //Aanons Realm'e bağlan
@@ -1353,11 +1361,21 @@ export class AudioProvider extends PureComponent {
             //Serverdan Şarkı listesini al
             await this.getSoundsAndAnonsFromServer();
 
-            setInterval(async () => {
-              await this.playAnons();
-              //this.clearAnonsRepeatsFromDatabase(true);
-              //this.removeListenedSongCount(true);
-            }, convertSecondToMillisecond(40)); //Her 40 saniye de bir anons kontrollü yap
+            //-------------------------ANONSLARI KONTROL ETTT------------------ //
+            //----------------------indirilmiş anonslar----------------------- //
+            //TODO#2:Anons
+            // setInterval(async () => {
+            //   //Kontrol et.
+            //   await this.playAnons();
+
+            //   //Sorug sayısını bir arttır.
+            //   this.setState({
+            //     ...this.state,
+            //     countPlayAnons: this.state.countPlayAnons + 1,
+            //   });
+            //   //this.clearAnonsRepeatsFromDatabase(true);
+            //   //this.removeListenedSongCount(true);
+            // }, convertSecondToMillisecond(40)); //Her 40 saniye de bir anons kontrollü yap
 
             //Temmizlik yap
             this.cleanYourSelfAsACatBroooo();
@@ -1387,7 +1405,6 @@ export class AudioProvider extends PureComponent {
 
   getAdminSettings = async () => {
     const settings = this.state.DBConnection.objects("AdminSettings")[0];
-    console.log({ settings });
 
     //Ayarları ata
     if (settings != void 0) {
@@ -1510,7 +1527,8 @@ export class AudioProvider extends PureComponent {
       //Ve Şarkıya geç ve çal, durumu güncelle
       audio = this.state.audioFiles[nextAudioIndex];
       status = await playNext(this.state.playbackObj, audio?.uri);
-      this.updateState(this, {
+      this.setState({
+        ...this.state,
         soundObj: status,
         currentAudio: audio,
         isPlaying: true,
@@ -1608,6 +1626,7 @@ export class AudioProvider extends PureComponent {
       if (this.state.soundObj === null) {
         const audio = this.state.audioFiles[0];
         console.log("----------------- START TO PLAY -----------------");
+        console.log(this.state.soundObj);
         //Playlisti oynatmaya başla
         //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
         const playbackObj = new Audio.Sound();
@@ -1635,7 +1654,7 @@ export class AudioProvider extends PureComponent {
         //son çalınna şarkıyı bulmak için kullanırı
         //storeAudioForNextOpening(audio, index);
       }
-    }, timeout);
+    }, 4000);
   };
 
   /**
@@ -1644,7 +1663,9 @@ export class AudioProvider extends PureComponent {
    */
   playAnons = async () => {
     //Bazen boş dönüyor
+    console.log("--------------ANONS: ", this.state.anonsFiles.length);
     if (this.state.anonsFiles.length == 0) {
+      console.log("------------EZZZ------------");
       await this.getAllAnonsFromServer();
     }
 
@@ -1913,9 +1934,11 @@ export class AudioProvider extends PureComponent {
           flatListScrollIndex: this.state.flatListScrollIndex,
           debug: this.state.debug,
           playListCrossChecking: this.state.playListCrossChecking,
+          anonsCrossChecking: this.state.anonsCrossChecking,
           noInternetConnection: this.state.noInternetConnection,
           currentAnons: this.state.currentAnons,
           currentAnonsName: this.state.currentAnonsName,
+          countPlayAnons: this.state.countPlayAnons,
         }}
       >
         {this.state.isDownloading ? (

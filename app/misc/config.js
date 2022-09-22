@@ -23,7 +23,7 @@ const configs = {
 
   //Debug penceresi.
   //Sağ üstte görünür.
-  DEBUG: true,
+  DEBUG: false,
 
   //Application başlatıldığında müsic çalsın.
   //PLAY_ON_LOAD: true,

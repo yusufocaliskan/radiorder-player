@@ -15,7 +15,7 @@ export default NoInternetConnection = ({ text }) => {
     return (
       <View style={styles.itIsConnected}>
         <MaterialIcons name="wifi" size={14} color={color.WHITE} />
-        <Text style={styles.itIsConnectedText}>Online</Text>
+        {/* <Text style={styles.itIsConnectedText}>Online</Text> */}
       </View>
     );
   }
@@ -48,7 +48,8 @@ const styles = StyleSheet.create({
   },
   itIsConnected: {
     backgroundColor: color.GREEN,
-    paddingHorizontal: 5,
+    paddingHorizontal: 3,
+    paddingVertical: 2,
     borderRadius: 4,
     marginRight: 5,
     alignContent: "center",

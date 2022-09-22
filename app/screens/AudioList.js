@@ -158,6 +158,8 @@ export class AudioList extends Component {
     });
   };
 
+  //FlatList Scrollünü şarkının bulunduğu konuma
+  //scroll et
   flatListScrollToIndex = () => {
     //this.context?.flatListScrollIndex
     this.flatListRef?.scrollToIndex({

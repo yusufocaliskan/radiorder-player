@@ -68,6 +68,11 @@ const Debug = () => {
       <View style={[styles.debugingRow, styles.borderBottom]}>
         <Text style={styles.debugingText}>Debug: {context?.debug}</Text>
       </View>
+      <View style={[styles.debugingRow, styles.borderBottom]}>
+        <Text style={styles.debugingText}>
+          PlayAnons: {context?.countPlayAnons}
+        </Text>
+      </View>
     </View>
   );
 };

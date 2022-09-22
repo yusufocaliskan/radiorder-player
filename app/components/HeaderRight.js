@@ -15,12 +15,20 @@ const HeaderRight = ({ lastPlaylistUpdateTime }) => {
       {configs.DEBUG ? <Debug /> : null}
       <View style={styles.header}>
         <View style={styles.headerRight}>
-          {audioContext.playListCrossChecking == true ? (
-            <ActivityIndicator
-              size="small"
-              color={color.WHITE}
-              style={{ marginRight: 10 }}
-            />
+          {audioContext.playListCrossChecking ||
+          audioContext.anonsCrossChecking == true ? (
+            <>
+              <ActivityIndicator
+                size="small"
+                color={color.WHITE}
+                style={{ marginRight: 10 }}
+              />
+              <ActivityIndicator
+                size="small"
+                color={color.DARK_RED}
+                style={{ marginRight: 10 }}
+              />
+            </>
           ) : null}
           <View style={styles.updateView}>
             <MaterialIcons name="update" size={18} color={color.BLACK} />
