@@ -1476,7 +1476,7 @@ export class AudioProvider extends PureComponent {
     if (playbackStatus.didJustFinish) {
       //Şarkı bittiğinde yeni bir günceleme var mı yok mu diye kontrol et.
       //Anonsları çek.
-      await this.getSoundsAndAnonsFromServer();
+      //await this.getSoundsAndAnonsFromServer();
 
       //Çalının şarkı sayını bir artttır.
       this.saveListenedSongCount();
