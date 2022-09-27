@@ -44,7 +44,7 @@ export class AudioProvider extends PureComponent {
       password: null,
 
       //Login Pop-up
-      showLoginModal: true,
+      showLoginModal: false,
       loggingIsDone: false,
 
       debug: null,
@@ -370,72 +370,6 @@ export class AudioProvider extends PureComponent {
   };
 
   /**
-   * Server'dan şarkıları çeker
-   * @param {object} sounds indirilicek şarkı
-   */
-  DownloadSongsFromServer = async (sounds, downloadType = "sound", pageNo) => {
-    try {
-      // if (typeof sounds == undefined || sounds.length == 0 || sounds === null) {
-      //   return;
-      // }
-
-      const { DownloadDir } = RNFetchBlob.fs.dirs;
-
-      //İsmi temizle ve yeniden oşlutiur
-      let soundName = `${DownloadDir}/${downloadType}_${clearFileName(
-        sounds?.mp3?.split("/").pop()
-      )}`;
-
-      console.log(soundName);
-
-      //Dosya yok is indir.
-      //Dosyayı daha önce indirmişsek, bir şey yapma..
-      try {
-        const isExist = await RNFetchBlob.fs.exists(soundName);
-
-        if (!isExist) {
-          //Şarkıyı indir..
-          if (sounds) {
-            const options = {
-              fileCache: true,
-              addAndroidDownloads: {
-                useDownloadManager: true,
-                notification: false,
-                path: soundName,
-                description: "Downloading.",
-              },
-            };
-            try {
-              const mp3_file = `https://radiorder.online/${sounds?.mp3}`;
-              console.log(mp3_file);
-
-              await RNFetchBlob.config(options)
-                .fetch("GET", mp3_file)
-                .then((res) => {
-                  return "res";
-                });
-
-              this.setState({ ...this.state, isDownloading: true });
-              this.setState({
-                ...this,
-                currentDownloadedSong: sounds.title,
-              });
-            } catch (error) {
-              console.log(error);
-            }
-          }
-        } else {
-          return "File Already exists!";
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  /**
    * Arkada planda çalmaya devam etmek için
    */
   keepWorkingInBackground = () => {
@@ -496,7 +430,7 @@ export class AudioProvider extends PureComponent {
     //Cache kontrolü yap.
     if (
       (await this.cacheControl(
-        "Last_Anons_Update_Time",
+        "Last_Playlist_Update_Time",
         config.TIME_OF_GETTING_SONGS_FROM_SERVER
       )) === false
     ) {
@@ -517,28 +451,99 @@ export class AudioProvider extends PureComponent {
 
   //Playlisti alır..
   getPlaylistFromServer = async () => {
+    this.setState({ ...this.state, showLoginModal: true });
+
     await axios
       .post("https://www.radiorder.online/Profil/MobilePlaylistYukle")
       .then(async (playlist) => {
         //this.state.anons = playlist["data"];
-        console.log(playlist["data"].length);
-        if (playlist["data"].length === 0) return;
-
+        return playlist["data"];
+      })
+      .then(async (playlist) => {
         //Şarkıları indir.
-        for (i = 0; i <= playlist["data"].length; i++) {
-          await this.DownloadSongsFromServer(playlist["data"][i], "sound").then(
-            () => {
-              if (i == playlist["data"].length) {
-                this.setState({ ...this.state, isDownloading: false });
-                this.setState({ ...this.state, currentDownloadedSong: "" });
-              }
-            }
-          );
-        }
 
-        this.setState({ ...this.state, songs: playlist["data"] });
-        AsyncStorage.setItem("Last_Playlist_Update_Time", getTheTime());
+        if (playlist.length !== 0) {
+          for (i = 0; i <= playlist.length; i++) {
+            await this.DownloadSongsFromServer(playlist[i], "sound").then(
+              () => {
+                if (i == playlist.length) {
+                  this.setState({ ...this.state, isDownloading: false });
+                  this.setState({ ...this.state, currentDownloadedSong: "" });
+                }
+              }
+            );
+          }
+
+          this.setState({ ...this.state, songs: playlist });
+          AsyncStorage.setItem("Last_Playlist_Update_Time", getTheTime());
+        }
       });
+  };
+
+  /**
+   * Server'dan şarkıları çeker
+   * @param {object} sounds indirilicek şarkı
+   */
+  DownloadSongsFromServer = async (sounds, downloadType = "sound", pageNo) => {
+    try {
+      // if (typeof sounds == undefined || sounds.length == 0 || sounds === null) {
+      //   return;
+      // }
+
+      const { DownloadDir } = RNFetchBlob.fs.dirs;
+
+      //İsmi temizle ve yeniden oşlutiur
+      let soundName = `${DownloadDir}/${downloadType}_${clearFileName(
+        sounds?.mp3?.split("/").pop()
+      )}`;
+
+      //console.log(soundName);
+
+      //Dosya yok is indir.
+      //Dosyayı daha önce indirmişsek, bir şey yapma..
+      try {
+        const isExist = await RNFetchBlob.fs.exists(soundName);
+
+        if (!isExist) {
+          //Şarkıyı indir..
+          if (sounds) {
+            const options = {
+              fileCache: true,
+              addAndroidDownloads: {
+                useDownloadManager: true,
+                notification: false,
+                path: soundName,
+                description: "Downloading.",
+              },
+            };
+            try {
+              const mp3_file = `https://radiorder.online/${sounds?.mp3}`;
+              console.log(mp3_file);
+
+              await RNFetchBlob.config(options)
+                .fetch("GET", mp3_file)
+                .then((res) => {
+                  return "res";
+                });
+
+              this.setState({ ...this.state, isDownloading: true });
+              this.setState({
+                ...this,
+                currentDownloadedSong: sounds.title,
+              });
+            } catch (error) {
+              console.log(error);
+            }
+          }
+        } else {
+          return "File Already exists!";
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   componentWillUnmount() {
@@ -561,14 +566,12 @@ export class AudioProvider extends PureComponent {
 
     //Şarkı bitti ise diğerine geç
     if (playbackStatus.didJustFinish) {
-      //Şarkı bittiğinde yeni bir günceleme var mı yok mu diye kontrol et.
-      //Anonsları çek.
+      console.log("------------ . NEXT: Song .----------");
       //await this.getSoundsAndAnonsFromServer();
 
-      //Çalının şarkı sayını bir artttır.
-      //this.saveListenedSongCount();
-
-      console.log("------------NEXT: HIIIII----------");
+      //Playlisti güncelle
+      //Tabi eğer cache süresi dolmuş ise.
+      await this.loginToServerAndPlay();
 
       //Şuana kadar dinlenen şarkılar
       //this.state.theSongListened.push(this.state.soundObj);

@@ -109,10 +109,12 @@ export const issetInArray = (array, data) => {
 
 //Dosya isimlerini içindeki . (nokta)ları temizler.
 export const clearFileName = (FileName) => {
-  const extension = FileName.split(".").pop();
-  const name = FileName.split(".").join("-");
-  const soundName = `${name}.${extension}`;
-  return soundName;
+  if (FileName !== undefined) {
+    const extension = FileName.split(".").pop();
+    const name = FileName.split(".").join("-");
+    const soundName = `${name}.${extension}`;
+    return soundName;
+  }
 };
 
 export const howManyTimeSingToday = (AnonsRepeats, AnonsId) => {

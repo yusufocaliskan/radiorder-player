@@ -168,13 +168,7 @@ export class AudioList extends Component {
     });
   };
 
-  changeScreenOrientation = async () => {
-    await ScreenOrientation.lockAsync(
-      ScreenOrientation.OrientationLock.LANDSCAPE
-    );
-  };
   componentDidMount = () => {
-    console.log("------SILAV---");
     //this.props.navigation.setOptions({ orientation: "landscape" });
     //this.changeScreenOrientation();
   };
@@ -184,36 +178,16 @@ export class AudioList extends Component {
     //   this.flatListScrollToIndex();
     // }
   };
-  rowRenderer = (type, item, index, extendedState) => {
-    return (
-      <AudioListItem
-        title={item.filename}
-        duration={item.duration}
-        isPlaying={extendedState.isPlaying}
-        activeListItem={this.context.currentAudioIndex === index}
-        item={item}
-        ItemSeparatorComponent={<Text>---------------------</Text>}
-        onAudioPress={() => this.handleAudioPress(item)}
-        onOptionPress={() => {
-          this.currentItem = item;
-          this.setState({ ...this.state, optionModalVisible: true });
-        }}
-      />
-    );
-  };
 
   render() {
     if (!this.context.audioFiles.length) {
       return <LoadingSimple />;
     }
 
-    const { width } = Dimensions.get("screen");
-
     return (
       <>
         <Screen>
           <FlatList
-            //     {...this.props}
             style={{ paddingTop: 20 }}
             data={this.context.audioFiles}
             keyExtractor={(item, index) => String(index)}
@@ -222,16 +196,16 @@ export class AudioList extends Component {
             // ref={(ref) => {
             //   this.flatListRef = ref;
             // }}
-            onEndReached={() => {
-              NetInfo.fetch().then(async (connection) => {
-                if (connection.isConnected) {
-                  this.context.LoadMoreSongs();
-                }
-              });
-            }}
-            onEndReachedThreshold={0.1}
-            refreshing={<ListFooterComponent />}
-            ListFooterComponent={<ListFooterComponent />}
+            // onEndReached={() => {
+            //   NetInfo.fetch().then(async (connection) => {
+            //     if (connection.isConnected) {
+            //       this.context.LoadMoreSongs();
+            //     }
+            //   });
+            // }}
+            //onEndReachedThreshold={0.1}
+            //refreshing={<ListFooterComponent />}
+            //ListFooterComponent={<ListFooterComponent />}
             onScroll={(event) => {
               let currentOffset = event.nativeEvent.contentOffset.y;
 
