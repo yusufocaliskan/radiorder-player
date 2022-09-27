@@ -47,4 +47,6 @@ export default {
   DOWNLOADS_CONTINUE: "Songs are being downloaded...",
 
   EXPIRED: "Expired",
+  TODAY: "Today",
+  REPEAT: "Repeat",
 };

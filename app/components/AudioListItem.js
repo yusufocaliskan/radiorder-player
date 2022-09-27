@@ -93,8 +93,8 @@ const AudioListItem = ({
                 <View>
                   <Text numberOfLines={1} style={styles.title}>
                     {item.FileType == "audio"
-                      ? item.Ismi?.split("_")[1]
-                      : item.Ismi}
+                      ? item.Ismi.split("/").pop()
+                      : item.Ismi.split("/").pop()}
                   </Text>
                 </View>
               </View>
@@ -139,8 +139,16 @@ const AudioListItem = ({
                           size={14}
                           color={color.RED}
                         />{" "}
-                        Today :{" "}
+                        {Lang?.TODAY} :{" "}
                         {item.showIt.singItToday == true ? Lang?.YES : Lang?.NO}
+                      </Text>
+                      <Text style={styles.anonsDesc}>
+                        <Ionicons
+                          name="checkmark"
+                          size={14}
+                          color={color.RED}
+                        />{" "}
+                        {Lang?.REPEAT} : {item.showIt.repeat}
                       </Text>
 
                       <Text style={styles.anonsDesc}>

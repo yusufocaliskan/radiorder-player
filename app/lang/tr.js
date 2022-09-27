@@ -44,4 +44,6 @@ export default {
   DOWNLOADS_CONTINUE: "İndirme işlemi devam ediyor...",
 
   EXPIRED: "Süresi doldu",
+  TODAY: "Bu gün",
+  REPEAT: "Tekrar",
 };

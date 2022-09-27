@@ -96,8 +96,8 @@ export const convertHourToMilliseconds = (hr) => {
 };
 //Arayde var mı?
 export const issetInArray = (array, data) => {
-  console.log(array.length);
   if (array.length == 0) return true;
+
   if (array.length != 0) {
     for (let i = 0; i < array.length; i++) {
       if (parseInt(array[i]) === data) {
