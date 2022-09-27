@@ -1,13 +1,11 @@
 import React, { PureComponent, createContext } from "react";
-import { Text, StyleSheet, View, Alert } from "react-native";
+import { Text, Modal, StyleSheet, View, Alert } from "react-native";
 import * as MediaLibrary from "expo-media-library";
 import NetInfo from "@react-native-community/netinfo";
-//import CodePush from "react-native-code-push";
-//import { NativeModules } from "react-native";
+import WebView from "react-native-webview";
 
 import { Audio } from "expo-av";
 import {
-  issetInArray,
   getCurrentDate,
   storeAudioForNextOpening,
   getDifferenceBetweenTwoHours,
@@ -24,25 +22,14 @@ import { stop, play, pause, resume, playNext } from "../misc/AudioController";
 //ScrollView'den daha performanlısdır.
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { XMLParser } from "fast-xml-parser";
 import axios from "axios";
 import config from "../misc/config";
 import { newAuthContext } from "../context/newAuthContext";
-import { v4 as uuidv4 } from "uuid";
-import "react-native-get-random-values";
-import Realm, { BSON } from "realm";
-import {
-  AnonsShema,
-  AnonsDocs,
-  AppSettings,
-  AdminSettings,
-  ListenedSongShema,
-} from "../database/DatabaseShemas";
 
 //Test Anonslar
 //import TestAnons from "../TestAnons";
 import color from "../misc/color";
-import TestAnons from "../TestAnons";
+
 export const AudioContext = createContext();
 
 export class AudioProvider extends PureComponent {
@@ -56,6 +43,10 @@ export class AudioProvider extends PureComponent {
       username: null,
       password: null,
 
+      //Login Pop-up
+      showLoginModal: true,
+      loggingIsDone: false,
+
       debug: null,
       //Mediadan alınan şarkılar
       audioFiles: [],
@@ -64,6 +55,7 @@ export class AudioProvider extends PureComponent {
 
       //Permission hataları
       permissionError: false,
+      permission: null,
 
       //Şarkı listesi
       dataProvider: null,
@@ -188,21 +180,12 @@ export class AudioProvider extends PureComponent {
    * Kullanıcıdan şarkılarına erişim izni iste
    */
   getPermission = async () => {
-    //Erişim al.
-    // this.state.DBConnection.write(() => {
-    //   let appSettings = this.state.DBConnection.objects("AppSettings");
-    //   this.state.DBConnection.delete(appSettings);
-    //   appSettings = null;
-    // });
-
-    //const permissionStored = this.state.DBConnection.objects("AppSettings")[0];
-
     const permission = await MediaLibrary.getPermissionsAsync();
 
     //İzin verildiy mi?
     if (permission.granted) {
       //izin verildi tüm şarkıları aall
-      this.savePermission("granted");
+      //this.savePermission("granted");
     }
     if (!permission.granted && !permission.canAskAgain) {
       this.setState({ ...this.state.state, permissionError: true });
@@ -223,19 +206,20 @@ export class AudioProvider extends PureComponent {
       //Izin verildi..
       if (status === "granted") {
         //Tüm şarkıları all..
-        this.savePermission("granted");
+        this.setState({ ...this.state.state, permissionError: false });
+        //this.savePermission("granted");
       }
 
       if (!permission.canAskAgain && !permission.granted) {
         this.setState({ ...this.state.state, permissionError: true });
-        this.savePermission("denied");
+        //this.savePermission("denied");
       }
 
       //izin verilmedi ve yeniden sormamızı mı engelledi!!
       if (status === "denied" && !canAskAgain) {
         //Ona bir şeyler söyle..
         this.setState({ ...this.state.state, permissionError: true });
-        this.savePermission("denied");
+        //this.savePermission("denied");
       }
     }
   };
@@ -311,23 +295,6 @@ export class AudioProvider extends PureComponent {
         Artist: songs[d].artist,
         mp3: songs[d].mp3,
         Ismi: songs[d].title,
-        // Aktif: songs[d].Aktif,
-        // Album: songs[d].Album,
-        // DosyaIsmi: songs[d].DosyaIsmi,
-        // GrupTanimlamaKodu: songs[d].GrupTanimlamaKodu,
-        // Ismi: songs[d].Ismi,
-        // IsrcKodu: songs[d].IsrcKodu,
-        // PlaylistTanimlamaKodu: songs[d].PlaylistTanimlamaKodu,
-        // SarkiId: songs[d].SarkiId,
-        // Sarkici: songs[d].Sarkici,
-        // SarkiciId: songs[d].SarkiciId,
-        // SesLink: songs[d].SesLink,
-        // Silindi: songs[d].Silindi,
-        // Sure: songs[d].Sure,
-        // FileType: "audio",
-        // timeLineMinutes: 0,
-        // timeLineHours: 0,
-        // Order: d,
       });
     }
 
@@ -336,12 +303,18 @@ export class AudioProvider extends PureComponent {
       ...this.state,
       audioFiles: [...filtered_song],
     });
-    console.log(this.state.audioFiles);
+    //console.log(this.state.audioFiles);
 
     //Listeyi Cache at.
     await AsyncStorage.setItem("songs", JSON.stringify(filtered_song));
   };
 
+  /**
+   * Son güncelleme tarhi ile bu günü karşılaştırır
+   * @param {integer} lastCacheTime güncelleme zamanı
+   * @param {integer} timeOut kaç saat?
+   * @returns boolean
+   */
   cacheControl = async (lastCacheTime, timeOut) => {
     const lastAnonsUpdateTime = await AsyncStorage.getItem(lastCacheTime);
 
@@ -353,273 +326,11 @@ export class AudioProvider extends PureComponent {
     // console.log("Anons Time: ", new Date(this.state.whatIsTheDate).getTime());
     // console.log("Anons TimeOut: ", timeOut);
 
-    console.log(diffTime > convertSecondToMillisecond(timeOut));
     if (diffTime > convertSecondToMillisecond(timeOut)) {
       return true;
     } else {
       return false;
     }
-  };
-  /**
-   * Anons Dosyalarını al ve belirle
-   */
-  getAnonsFiles = async () => {
-    //cache kontrolü yap
-
-    let media = await this.getMediaFiles();
-
-    this.totalAnonsCount = this.state.anonsFiles.length;
-
-    //Serverdan gelen anonslar
-    //const anons = this.state.anons;
-    const anons = TestAnons;
-
-    //Çalma sayısını al - şuana kadar kaç şarkı çaldı?
-    await this.getListenedSongCount();
-    let ListenedSongCount = this.state.ListenedSongCount;
-
-    //Gösterilecek anonsları tutar
-    let anons_must_be_shown = [];
-
-    //Döngüye sok, çalma saatlerini belirle
-    for (let a = 0; a < anons?.length; a++) {
-      const repeatServer = anons[a].task.TekrarSayisi || 1;
-      const option = anons[a].task.Secenek
-        ? anons[a].task.Secenek.split(",")
-        : [];
-
-      const anonsHours = anons[a].task.Baslangic.split("T")[1].split(":")[0];
-      const anonsMinutes = anons[a].task.Baslangic.split("T")[1].split(":")[1];
-      const currentHours = new Date().getHours();
-      const currentMinutes = new Date().getMinutes();
-      const optionType = anons[a].task.SecenekTipi.split(",");
-      const currentDay = new Date().getDay();
-
-      const today = new Date(getTheTime()).getTime();
-      const start = new Date(anons[a].task.Baslangic).getTime();
-      const end = new Date(anons[a].task.Bitis).getTime();
-      const taskDescription = anons[a].task.GorevTipAciklama;
-
-      let singItToday = issetInArray(option, currentDay);
-      const AnonsRepeats = this.getAnonRepeatsFromDatabase(
-        anons[a].anons.Id,
-        anons.length
-      );
-      console.log("Anons: ", AnonsRepeats);
-      let lastAnonsRepeatByAnonsType = {};
-
-      //Bu anons çalınması gerekiyor mu?
-      //Şartları kontrol et.
-      let isAnonsShowable = false;
-      let AnonsType = ""; //Spesifik, HergunTekrarli /
-      let CategoryLength = ""; //Spesifik, HergunTekrarli /
-
-      //Anons saati var m?
-      //Haftalık mı çalınacak?
-      //Sepesifik saatler için
-      if (taskDescription == "Zamanlanmış Anons") {
-        AnonsType = "Spesifik";
-        isAnonsShowable =
-          today >= start &&
-          today <= end &&
-          singItToday == true &&
-          ListenedSongCount % repeatServer == 0;
-        //AnonsRepeats.repeats < repeatServer;
-      }
-
-      //Her gün bir kaç kez tekrar-tekrar çalacak olan anonslar
-      if (taskDescription == "Parça Sıralı Anons") {
-        //Anons tipini belirle
-        AnonsType = "HergunTekrarli";
-        CategoryLength = await this.getAnonsCountByTypeName(AnonsType);
-        lastAnonsRepeatByAnonsType =
-          await this.getAnonRepeatsFromDatabaseByAnonsType(AnonsType);
-
-        //Koşulu belirle
-        //Anons çalsın mı?
-        isAnonsShowable =
-          today >= start &&
-          today <= end &&
-          // AnonsRepeats.repeats < repeatServer &&
-          ListenedSongCount > 0 &&
-          //Son çalınan anonsun üzerinden x kadar geçti ise.
-          //Onun katlarını çal, her on şarkıda bir
-          ListenedSongCount % repeatServer == 0;
-
-        if (CategoryLength > 1) {
-          isAnonsShowable =
-            today >= start &&
-            today <= end &&
-            singItToday == true &&
-            //AnonsRepeats.repeats < repeatServer &&
-            ListenedSongCount > 0 &&
-            //Son çaldığın olmasın
-            lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
-            //Son çalınan anonsun üzerinden x kadar geçti ise.
-            //Onun katlarını çal, her on şarkıda bir
-            ListenedSongCount % repeatServer == 0;
-        }
-      }
-
-      // //BeliriGunlerTekrarli
-      // if (anonsHours == "00" && anonsMinutes == "00" && option.length != 0) {
-      //   //Anons tipi
-      //   AnonsType = "BeliriGunlerTekrarli";
-      //   CategoryLength = await this.getAnonsCountByTypeName(AnonsType);
-      //   lastAnonsRepeatByAnonsType =
-      //     await this.getAnonRepeatsFromDatabaseByAnonsType(AnonsType);
-
-      //   isAnonsShowable =
-      //     today >= start &&
-      //     today >= end &&
-      //     singItToday == true &&
-      //     //AnonsRepeats.repeats < repeatServer &&
-      //     ListenedSongCount > 0 &&
-      //     lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
-      //     //Enson  çaldığın kendin olmayaacaaann
-      //     ListenedSongCount % repeatServer == 0;
-
-      //   //Bir denf fazla BeliriGunlerTekrarli kategorisinde anons varsa
-      //   //Çalma id'sini de vbak
-      //   if (CategoryLength > 1)
-      //     isAnonsShowable =
-      //       today >= start &&
-      //       today >= end &&
-      //       singItToday == true &&
-      //       //AnonsRepeats.repeats < repeatServer &&
-      //       ListenedSongCount > 0 &&
-      //       lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id &&
-      //       //Enson  çaldığın kendin olmayaacaaann
-      //       ListenedSongCount % repeatServer == 0;
-      // }
-
-      // console.log(
-      //   CategoryLength,
-      //   AnonsType,
-      //   anons[a].anons.AnonsIsmi,
-      //   "Start: ",
-      //   today >= start,
-      //   "End: ",
-      //   today <= end,
-      //   "Expired: ",
-      //   today >= end && today >= start,
-      //   "repeat",
-      //   AnonsRepeats.repeats < repeatServer,
-      //   "ListenedSong: ",
-      //   ListenedSongCount > 0,
-      //   //Son çaldığın olmasın
-      //   "LastId: ",
-      //   lastAnonsRepeatByAnonsType.anonsId != anons[a].anons.Id,
-      //   //Son çalınan anonsun üzerinden x kadar geçti ise.
-      //   //Onun katlarını çal, her on şarkıda bir
-      //   "Mod: ",
-      //   ListenedSongCount % config.HERGUN_TEKRARLI_ANONS == 0,
-      //   "start",
-      //   start,
-      //   "today",
-      //   today,
-      //   "end",
-      //   end
-      // );
-
-      //Çoğunlukla debug için...
-      const showIt = {
-        AnonsName: anons[a].anons.AnonsIsmi,
-        Start: start,
-        Today: today,
-        End: end,
-        Expired: today >= start && today >= end,
-        optionType: optionType,
-        AnonsDays: option,
-        Show: isAnonsShowable,
-        currentHour: currentHours,
-        currentDay: currentDay,
-        currentMunites: currentMinutes,
-        anonsHours: anonsHours,
-        anonsMinutes: anonsMinutes,
-        singItToday: singItToday,
-        repeat: repeatServer,
-        anonsRepeated: AnonsRepeats?.repeats,
-        lastAnonsRepeatTime: AnonsRepeats.repeatDate,
-        anonsPeriotTime: config.REPEAT_PERIOT_TIME,
-        AnonsType: AnonsType,
-        Id: anons[a].anons.Id,
-        ListenedSongCount: ListenedSongCount,
-        lastAnonsRepeatByAnonsType: lastAnonsRepeatByAnonsType,
-        CategoryLength: CategoryLength,
-      };
-      console.log("Showit: ", showIt);
-      //Dosya eşini bul.
-      //Strorage taki file
-      const dosya_name = `anons_${clearFileName(anons[a].anons.DosyaIsmi)}`;
-      let storageFile;
-      media.assets.map((item) => {
-        if (dosya_name == item.filename) {
-          storageFile = item;
-        }
-      });
-
-      const anons_container = {
-        albumId: storageFile?.albumId,
-        creationTime: storageFile?.creationTime,
-        duration: storageFile?.duration,
-        filename: storageFile?.filename,
-        height: storageFile?.height,
-        id: storageFile?.id,
-        mediaType: storageFile?.mediaType,
-        modificationTime: storageFile?.modificationTime,
-        uri: storageFile?.uri,
-        width: storageFile?.width,
-        Aciklama: anons[a].task.Aciklama,
-        Aktif: anons[a].task.Aktif,
-        Baslangic: anons[a].task.Baslangic,
-        Bitis: anons[a].task.Bitis,
-        Durumu: anons[a].task.Durumu,
-        GT: anons[a].task.GT,
-        GK: anons[a].task.GK,
-        Ismi: anons[a].anons.AnonsIsmi,
-        GorevTipAciklama: anons[a].task.GorevTipAciklama,
-        GorevTipi: anons[a].task.GorevTipi,
-        GrupTanimlamaKodu: anons[a].task.GrupTanimlamaKodu,
-        Id: anons[a].anons.Id,
-        KK: anons[a].task.KK,
-        KT: anons[a].task.KT,
-        KayitBilgisi: anons[a].task.KayitBilgisi,
-        SecenekTipi: anons[a].task.SecenekTipi,
-        Secenek: anons[a].task.Secenek,
-        Secenek: anons[a].task.Secenek,
-        SecenekAciklama: anons[a].task.SecenekAciklama,
-        Silindi: anons[a].task.Silindi,
-        TekrarSayisi: anons[a].task.TekrarSayisi,
-        FileType: "anons",
-        AnonsType: AnonsType,
-        timeLineMinutes: 0,
-        timeLineHours: 0,
-        anonsRepeated: AnonsRepeats.repeats,
-
-        //Anons Playlistte gösterilsin mi?
-        Show: isAnonsShowable,
-        showIt: showIt,
-      };
-
-      //Sort et...
-      // anons_must_be_shown.sort((a, b) =>
-      //   a.showIt.lastAnonsRepeatTime > b.showIt.lastAnonsRepeatTime ? 1 : -1
-      // );
-
-      anons_must_be_shown.push(anons_container);
-
-      //Save to the database |OR| update it
-      this.insertAnonsById(anons_container);
-      //console.log(showIt);
-    }
-
-    this.setState({
-      ...this.state,
-      anonsFiles: anons_must_be_shown,
-    });
-
-    await AsyncStorage.setItem("anons", JSON.stringify(anons_must_be_shown));
   };
 
   /**
@@ -659,302 +370,6 @@ export class AudioProvider extends PureComponent {
   };
 
   /**
-   * Serverda kaç tane şarkı var, sayısını verrir
-   * @param {string} groupCode Group kkod
-   * @param {string} username Kullanıcı e-postassı
-   * @param {string} password kullanıcı şifresi
-   */
-  checkHowManySongsInTheServer = async (groupCode, username, password) => {
-    try {
-      const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-    <soap:Body>
-        <KullnaiciSarkiGuncellemeBilgisi xmlns="http://tempuri.org/">
-             <SertifikaBilgileri>
-                <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
-                <Sifre>${config.SER_PASSWORD}</Sifre>
-            </SertifikaBilgileri>
-            <Eposta>${username}</Eposta>
-            <Sifre>${password}</Sifre>
-
-            <!-- Kullanici Grup Listesinden Geliyor -->
-            <GrupTanimlamaKodu>
-                <string>${groupCode}</string>
-            </GrupTanimlamaKodu>         
-                  
-        </KullnaiciSarkiGuncellemeBilgisi>
-      </soap:Body>
-      </soap:Envelope>`;
-
-      await axios
-        .post(config.SOAP_URL, xml, {
-          headers: { "Content-Type": "text/xml" },
-        })
-        .then((resData) => {
-          const options = {
-            ignoreNameSpace: false,
-            ignoreAttributes: false,
-          };
-
-          const parser = new XMLParser(options);
-          const parsedData = parser.parse(
-            resData.data.match(
-              /<KullnaiciSarkiGuncellemeBilgisiResult>([\s\S]*)<\/KullnaiciSarkiGuncellemeBilgisiResult>/im
-            )[1]
-          );
-
-          this.setState({
-            ...this.state.state,
-            totalSongInTheServer: parsedData,
-          });
-          return parsedData;
-        })
-        .catch((res) => {
-          //Internet yoksa
-          console.log("....no internet...");
-          //this.ifThereIsNOOInternet();
-        });
-    } catch (error) {
-      console.log("Heee");
-      console.error(`SOAP FAIL: ${error}`);
-    }
-  };
-
-  /**
-   * Serrverdan kullanıcıya ait playlisti alır ve download eder.
-   * //Storage kayıt eder.
-   */
-  getUserGroupListFromServer = async () => {
-    //Kullanıcı bilgilerini al
-    //this.getUserInfo();
-    const username = await AsyncStorage.getItem("username");
-    const password = await AsyncStorage.getItem("password");
-
-    //const totalUserSong = JSON.parse(await AsyncStorage.getItem("userSongs"));
-
-    try {
-      const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-    <soap:Body>
-        <KullaniciGrupListesi xmlns="http://tempuri.org/">
-            <SertifikaBilgileri>
-            <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
-            <Sifre>${config.SER_PASSWORD}</Sifre>
-            </SertifikaBilgileri>
-            <Eposta>${username}</Eposta>
-        <Sifre>${password}</Sifre>
-        </KullaniciGrupListesi>
-    </soap:Body>
-</soap:Envelope>`;
-
-      axios
-        .post(config.SOAP_URL, xml, {
-          headers: { "Content-Type": "text/xml" },
-        })
-
-        .then((resData) => {
-          const options = {
-            ignoreNameSpace: false,
-            ignoreAttributes: false,
-          };
-
-          const parser = new XMLParser(options);
-
-          const parsedData = parser.parse(
-            resData.data.match(/<GrupPlasylist>([\s\S]*)<\/GrupPlasylist>/im)[1]
-          );
-
-          return parsedData;
-        })
-        .then(async (userGroupInfoFromServer) => {
-          const totalSongFromServer = await this.checkHowManySongsInTheServer(
-            userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
-            username,
-            password
-          );
-
-          this.getAllSongs(
-            userGroupInfoFromServer.WsGrupPlaylistDto.GrupTanimlamaKodu,
-            username,
-            password,
-            this.state.pageNo
-          );
-
-          //Son güncelleme tarihini sakla
-          //Kullanacağız
-          AsyncStorage.setItem("Last_Playlist_Update_Time", getTheTime());
-          //await this.setLastPlaylistUpdateTime();
-        })
-        .catch(async (res) => {
-          //heger kiii internet yokksaam :)
-          console.log(
-            "------------------SONGS:Internet Yok-------------------"
-          );
-          this.ifThereIsNOOInternet(true);
-        });
-    } catch (error) {
-      console.log("Heee");
-      console.error(`SOAP FAIL: ${error}`);
-    }
-  };
-
-  //Her çağrıldığında pageNo state'ni bir arttırıp serverdan şarkı alır.
-  LoadMoreSongs = async () => {
-    //Eğer son sayfa değilse yüklemeye devam et canısı
-
-    const lastPlaylistUpdateTime = await AsyncStorage.getItem(
-      "Last_Playlist_Update_Time"
-    );
-
-    //Son güncelleme tarihi ile şuanki tarih arasındaki farkı bul
-    const diffTime = getDifferenceBetweenTwoHours(
-      new Date(lastPlaylistUpdateTime).getTime(),
-      new Date(getTheTime()).getTime()
-    );
-    console.log("Last", lastPlaylistUpdateTime, "Time:", getTheTime());
-    console.log("Time: ", new Date(this.state.whatIsTheDate).getTime());
-
-    //Şarkıları al
-    //Eğer son güncelleme 1 dk yı gectiyse
-    //Fark config.TIME_OF_GETTING_SONGS_FROM_SERVER geçmiş ise update yap.
-
-    if (
-      this.state.pageNo <= this.state.totalSongInTheServer.ToplamSayfa &&
-      diffTime >
-        convertSecondToMillisecond(config.TIME_OF_GETTING_SONGS_FROM_SERVER)
-    ) {
-      this.setState({ ...this.state.state, pageNo: this.state.pageNo + 1 });
-      //Sayfa sayını bir atttır ve gell.
-      //await this.getAllSongsFilteringCacheControl();
-      await this.getUserGroupListFromServer();
-
-      //.................Son sayfa............
-    } else {
-      //Son sayfa geldiğinde kullanılmayan dosyaları sillll gitsin..
-      //this.state.pageNo = 1;
-      //Dinlenme sayısını sıfırla
-      //this.removeListenedSongCount();
-      this.setState({ ...this.state.state, audioFiles: [] });
-      await this.getAudioFiles();
-
-      //Kullanılmayan şarkıları dosyadan sil
-      // await this.theSongCleaner()
-
-      //Sayfa numarasını 1 eşitle
-    }
-
-    if (this.state.pageNo == this.state.totalSongInTheServer.ToplamSayfa) {
-      this.removeListenedSongCount();
-    }
-  };
-
-  /**
-   * Serverdan playlisti alır ve download eder.
-   */
-  getAllSongs = async (groupCode, username, password, pageNo) => {
-    try {
-      const xml = `<?xml version="1.0" encoding="utf-8"?>
-    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-        <soap:Body>
-            <KullnaiciFSLSarkiListesiGuncelleme xmlns="http://tempuri.org/"> 
-            <SertifikaBilgileri>
-                    <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
-                    <Sifre>${config.SER_PASSWORD}</Sifre>
-                </SertifikaBilgileri>
-                <Eposta>${username}</Eposta>
-                <Sifre>${password}</Sifre>
-                <!-- Kullaniczi Grup Listesinden Geliyor -->
-                <GrupTanimlamaKodu>${groupCode}</GrupTanimlamaKodu>
-                <SarkiIdListesi />   
-                <SayfaNo>${pageNo}</SayfaNo>
-            </KullnaiciFSLSarkiListesiGuncelleme>
-        </soap:Body>
-    </soap:Envelope>`;
-
-      axios
-        .post(config.SOAP_URL, xml, {
-          headers: { "Content-Type": "text/xml" },
-        })
-        .then(async (resData) => {
-          const options = {
-            ignoreNameSpace: false,
-            ignoreAttributes: false,
-          };
-
-          //Seç
-          const parser = new XMLParser(options);
-          const parsedData = parser.parse(
-            resData.data.match(
-              /<KullnaiciFSLSarkiListesiGuncellemeResult>([\s\S]*)<\/KullnaiciFSLSarkiListesiGuncellemeResult>/im
-            )[1]
-          );
-          this.setState({ ...this.state, playListCrossChecking: true });
-          //Hepsini indir.
-          for (let i = 0; i <= parsedData.Liste.WsSarkiDto.length; i++) {
-            //Push it into the array
-
-            //Serverdan cihaza indir.
-            if (parsedData?.Liste?.WsSarkiDto[i]) {
-              //Download işlemini başlat
-              await this.DownloadSongsFromServer(
-                parsedData.Liste.WsSarkiDto[i],
-                "sound",
-                pageNo
-              );
-
-              this.setState({
-                ...this.state,
-                songs: [...this.state.songs, parsedData.Liste.WsSarkiDto[i]],
-              });
-              //Bu sayfa da
-              //Download işlemi bittikten sonra Çalma Listesini güncelle
-              if (i == parsedData.Liste.WsSarkiDto.length - 1) {
-                //Download işlemi bitti
-                this.setState({ ...this.state, isDownloading: false });
-                this.setState({ ...this.state, currentDownloadedSong: "" });
-
-                this.setState({
-                  ...this.state,
-                  waitLittleBitStillDownloading: true,
-                });
-
-                //Şarkı listesini yükle
-                //ilk part ((10 adet)) indirildikten sonra çal
-                //TODO:START
-
-                await this.getAudioFiles().then(() => {
-                  this.preLoadAudioFiles();
-                });
-                await this.startToPlay();
-              }
-
-              //Biraz bekledikten sonra
-              //Üst-üste sorguların önünü almak içüünn
-              setTimeout(() => {
-                this.setState({
-                  ...this.state,
-                  playListCrossChecking: false,
-                });
-              }, 1000);
-
-              //Tüm şarkılar indiyse
-              if (pageNo == parsedData.ToplamSayfa) {
-                //Download işlemi bitti!
-                this.setState({
-                  ...this.state,
-                  waitLittleBitStillDownloading: false,
-                });
-              }
-            }
-          }
-
-          return parsedData;
-        });
-    } catch (error) {
-      //Save it to storage
-      console.error(`SOAP FAIL: ${error}`);
-    }
-  };
-
-  /**
    * Server'dan şarkıları çeker
    * @param {object} sounds indirilicek şarkı
    */
@@ -968,8 +383,10 @@ export class AudioProvider extends PureComponent {
 
       //İsmi temizle ve yeniden oşlutiur
       let soundName = `${DownloadDir}/${downloadType}_${clearFileName(
-        sounds?.mp3.split("/").pop()
+        sounds?.mp3?.split("/").pop()
       )}`;
+
+      console.log(soundName);
 
       //Dosya yok is indir.
       //Dosyayı daha önce indirmişsek, bir şey yapma..
@@ -989,7 +406,8 @@ export class AudioProvider extends PureComponent {
               },
             };
             try {
-              const mp3_file = `https://radiorder.online/${sounds.mp3}`;
+              const mp3_file = `https://radiorder.online/${sounds?.mp3}`;
+              console.log(mp3_file);
 
               await RNFetchBlob.config(options)
                 .fetch("GET", mp3_file)
@@ -1000,8 +418,7 @@ export class AudioProvider extends PureComponent {
               this.setState({ ...this.state, isDownloading: true });
               this.setState({
                 ...this,
-                currentDownloadedSong:
-                  downloadType == "anons" ? sounds?.AnonsIsmi : sounds.title,
+                currentDownloadedSong: sounds.title,
               });
             } catch (error) {
               console.log(error);
@@ -1016,448 +433,6 @@ export class AudioProvider extends PureComponent {
     } catch (error) {
       console.log(error);
     }
-  };
-
-  /*********************** ANONS *********************** */
-
-  /**
-   * Kullanıcıya ait tüm anonsları çeker
-   */
-  getAllAnonsFromServer = async () => {
-    //Kullanıcı bilgilerini al
-    // const username = this.state.username;
-    // const password = this.state.password;
-    const username = await AsyncStorage.getItem("username");
-    const password = await AsyncStorage.getItem("password");
-    //const totalUserSong = JSON.parse(await AsyncStorage.getItem("userSongs"));
-
-    const xml = `<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-    <soap:Body>
-        <KullaniciAnonsListesi xmlns="http://tempuri.org/">
-            <SertifikaBilgileri>
-                <KullaniciAdi>${config.SER_USERNAME}</KullaniciAdi>
-                <Sifre>${config.SER_PASSWORD}</Sifre>
-            </SertifikaBilgileri>
-            <Eposta>${username}</Eposta>
-            <Sifre>${password}</Sifre>
-        </KullaniciAnonsListesi>
-    </soap:Body>
-</soap:Envelope>`;
-
-    try {
-      axios
-        .post(config.SOAP_URL, xml, {
-          headers: { "Content-Type": "text/xml" },
-        })
-        .then(async (resData) => {
-          const options = {
-            ignoreNameSpace: false,
-            ignoreAttributes: false,
-          };
-
-          const parser = new XMLParser(options);
-
-          //Anonslar
-          const anons = parser.parse(
-            resData.data.match(
-              /<KullaniciAnonsListesiResult>([\s\S]*)<\/KullaniciAnonsListesiResult>/im
-            )[1]
-          );
-
-          return anons;
-        })
-        .then(async (allAnons) => {
-          const anonsResult = [];
-
-          anonsResult[0] = allAnons.AnonsListesi.wsAnonsDto;
-          anonsResult[1] = allAnons.GorevListesi.AnonsGorevTanimDto;
-
-          //göre ve anonsları eşleştir.
-          //Ayrı geliyorlar
-          const pretty_anons = [];
-          for (let i = 0; i < anonsResult[0].length; i++) {
-            //LoperGorevler
-            for (let a = 0; a <= anonsResult[1].length; a++) {
-              if (
-                anonsResult[0][i]?.GrupTanimlamaKodu ==
-                anonsResult[1][a]?.GrupTanimlamaKodu
-              ) {
-                pretty_anons.push({
-                  anons: anonsResult[0][i],
-                  task: anonsResult[1][a],
-                });
-              }
-            }
-          }
-
-          // console.log("--------------PRETYYY----------------------");
-          // console.log(pretty_anons);
-          //setTimeout(() => {}, 1000);
-
-          //Anonsları indir
-          for (let p = 0; p < pretty_anons?.length; p++) {
-            if (pretty_anons[p].anons != "undefined") {
-              this.setState({ ...this.state, anonsCrossChecking: true });
-              //this.setState({ ...this.state, playListCrossChecking: true });
-              await this.DownloadSongsFromServer(
-                pretty_anons[p].anons,
-                "anons"
-              ).then(async () => {
-                //Anons Download işlemi bittiyse
-                if (p == pretty_anons?.length - 1) {
-                  //Download işlemi bitti
-                  this.setState({ ...this.state, isDownloading: false });
-                  this.setState({ ...this.state, currentDownloadedSong: "" });
-
-                  setTimeout(() => {
-                    this.setState({
-                      ...this.state,
-                      anonsCrossChecking: false,
-                    });
-                  }, 2000);
-                }
-              });
-            }
-          }
-
-          //arraye ata.
-          this.setState({
-            ...this,
-            anons: pretty_anons,
-          });
-
-          //Anons Güncelleme tarihini kontrol et.
-          AsyncStorage.setItem("Last_Anons_Update_Time", getTheTime());
-          await this.getAnonsFiles();
-
-          //Anons array'ini oluştur.
-          //console.log(pretty_anons);
-          //AsyncStorage.setItem("anons", JSON.stringify(pretty_anons));
-          //console.log(this.state.playlist);
-        })
-        .catch((e) => {
-          console.log("------------- . Anons:Internet Yok . -------------");
-          this.ifThereIsNOOInternet();
-        });
-    } catch (e) {}
-  };
-
-  //TODO: Kullanılmıyor..
-  getAllSongsFilteringCacheControl = async () => {
-    //Ses dosyalarını serverdan indir.
-    //await this.setLastPlaylistUpdateTime();
-    const lastPlaylistUpdateTime = await AsyncStorage.getItem(
-      "Last_Playlist_Update_Time"
-    );
-    const diffTime = getDifferenceBetweenTwoHours(
-      new Date(this.state.lastPlaylistUpdateTime).getTime(),
-      new Date(getTheTime()).getTime()
-    );
-
-    //Şarkıları al
-    //Eğer son güncelleme 1 dk yı gectiyse
-    if (
-      diffTime >
-      //   //convertHourToMilliseconds(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
-      convertSecondToMillisecond(config.TIME_OF_GETTING_SONGS_FROM_SERVER) //5saat
-    ) {
-      console.log("-----------------HERE----- DIRECT-----------");
-      await this.getUserGroupListFromServer();
-    } else {
-      console.log("-----------------HERE----- CACHE-----------");
-      const songs = JSON.parse(await AsyncStorage.getItem("songs"));
-      console.log("CACHE SONGS : ", songs.length);
-
-      //   //TODO:START
-      //   //Listeyi güncelle
-      this.setState({ ...this.state.state, songs: songs });
-      await this.getAudioFiles();
-      //this.startToPlay();
-    }
-  };
-  /**
-   * Şarkı ve Anonsları çeker
-   */
-  getSoundsAndAnonsFromServer = async () => {
-    //Cache controll...
-    //TODO: Gerek kalmadı.. Pagegination yaptıkk...
-    //await this.getAllSongsFilteringCacheControl();
-
-    //Get songs directly
-    await this.getUserGroupListFromServer();
-
-    //Anonsları her zaman all..
-    //TODO#1:Anons
-    await this.getAllAnonsFromServer();
-    // cachedeki anons su ata.
-    //this.state.anonsFiles = JSON.parse(await AsyncStorage.getItem("anons"));
-  };
-
-  //Aanons Realm'e bağlan
-  connectToAnonsDatabaseDoc = async () => {
-    //Anonslar için bir bağlantı aç
-
-    const connection = await Realm.open({
-      schema: [
-        AnonsDocs,
-        AnonsShema,
-        AppSettings,
-        ListenedSongShema,
-        AdminSettings,
-      ],
-      deleteRealmIfMigrationNeeded: true,
-    });
-    this.setState({ ...this.state.state, DBConnection: connection });
-  };
-
-  //Anons Tekrarlarını veri sakla.
-  writeAnonsToDatabase = (
-    anonsId,
-    repeats = 0,
-    localRepeat,
-    name,
-    AnonsType
-  ) => {
-    const date = getCurrentDate(new Date());
-    //Check is there is any anons equal to anonsId
-    try {
-      let checkAnons = this.state.DBConnection.objects("AnonsDocs").filtered(
-        `anonsId=${anonsId} && date='${date}' && anonsType='${AnonsType}'`
-      );
-
-      //Anons daha önce varsa
-      if (
-        typeof checkAnons == undefined ||
-        checkAnons == NaN ||
-        checkAnons.length == 0
-      ) {
-        //Yeni veriyi ekkle
-        let insert;
-        this.state.DBConnection.write(() => {
-          //YOKSA EKLE
-          insert = this.state.DBConnection.create("AnonsDocs", {
-            _id: new BSON.ObjectID(),
-            repeats: 1,
-            anonsId: anonsId,
-            repeatDate: this.state.whatIsTheDate,
-            date: date,
-            anonsName: name,
-            anonsType: AnonsType,
-          });
-        });
-      } else {
-        //Güncelleme yap
-        this.state.DBConnection.write(() => {
-          const anons = this.state.DBConnection.objects("AnonsDocs").filtered(
-            `anonsId=${anonsId} && date='${date}' && anonsType='${AnonsType}'`
-          )[0];
-          //VAR GUNCELLE
-          //Güncellemeyi en fazla serverdaki kadar yap.
-          if (anons.repeats < localRepeat + 1) {
-            anons.repeats += 1;
-            anons.date = date;
-
-            //Enson tekrar ettiği tarih
-            anons.repeatDate = this.state.whatIsTheDate;
-          }
-        });
-      }
-    } catch (error) {}
-  };
-
-  //Yeni bir anons Database'e ekler
-  //@param anons data
-  insertAnonsById = (anonsData) => {
-    //Daha önce ekli değilse
-    if (
-      anonsData === null ||
-      anonsData === undefined ||
-      anonsData?.Id == "" ||
-      anonsData.length <= 0
-    ) {
-      return;
-    }
-
-    const anonsRealm = this.state.DBConnection.objects("Anons").filtered(
-      `Id=${anonsData.Id}`
-    );
-    if (anonsRealm.length <= 0) {
-      this.state.DBConnection.write(() => {
-        this.state.DBConnection.create("Anons", {
-          Ismi: anonsData.AnonsIsmi,
-          Id: anonsData.Id,
-          AnonsType: anonsData.AnonsType,
-        });
-      });
-    }
-
-    //Ekliyse güncelle
-    else {
-      this.state.DBConnection.write(() => {
-        anonsRealm.AnonsIsmi = anonsData.AnonsIsmi;
-        anonsRealm.Id = anonsData.Id;
-        anonsRealm.AnonsType = anonsData.AnonsType;
-      });
-    }
-  };
-
-  //Aynı tipten kaç tane anons var?
-  getAnonsCountByTypeName = async (typeName) => {
-    const type_counts = await this.state.DBConnection.objects("Anons").filtered(
-      `AnonsType='${typeName}'`
-    );
-    return type_counts.length;
-  };
-
-  //Anons Tekrarını al
-  //Anons Kaç defa tekrar ettti
-  //Database'den al
-  //@anonsId
-  getAnonRepeatsFromDatabase = (anonsId, limit = null) => {
-    try {
-      const date = getCurrentDate(new Date());
-
-      return this.state.DBConnection.write(() => {
-        let repeats;
-        if (limit !== null) {
-          //@limit kadarını çek
-          repeats = this.state.DBConnection.objects("AnonsDocs")
-            .filtered(`anonsId=${anonsId} && date='${date}'`)
-            .subList(0, limit);
-        } else {
-          repeats = this.state.DBConnection.objects("AnonsDocs").filtered(
-            `anonsId=${anonsId} && date='${date}'`
-          );
-        }
-
-        if (repeats.length !== 0) {
-          return repeats[0];
-        }
-
-        //Boş iswe
-        if (repeats.length === 0) {
-          return {
-            repeats: 0,
-            repeatDate: null,
-          };
-        }
-      });
-    } catch (er) {}
-  };
-
-  //YApılmış anons tekrarlarını siler
-  clearAnonsRepeatsFromDatabase = (deleteAll = false) => {
-    const today = this.state.whatIsTheDate.split("T")[0];
-    this.state.DBConnection.write(() => {
-      let anons;
-
-      //hepsini sil
-      if (deleteAll) {
-        anons = this.state.DBConnection.objects("AnonsDocs");
-      }
-
-      //Tarihe göre sil
-      else {
-        anons = this.state.DBConnection.objects("AnonsDocs").filtered(
-          `date != '${today}'`
-        );
-      }
-      this.state.DBConnection.delete(anons);
-      anons = null;
-    });
-  };
-  getAnonRepeatsFromDatabaseByAnonsType = (anonsType) => {
-    try {
-      const date = getCurrentDate(new Date());
-
-      return this.state.DBConnection.write(() => {
-        const repeats = this.state.DBConnection.objects("AnonsDocs")
-          .filtered(`date='${date}' && anonsType='${anonsType}'`)
-          .sorted("_id", true);
-        if (repeats.length !== 0) {
-          return repeats[0];
-        }
-
-        //Boş iswe
-        if (repeats.length === 0) {
-          return {
-            repeats: 0,
-            repeatDate: null,
-          };
-        }
-      });
-    } catch (er) {}
-  };
-
-  /**
-   * Database bağlantısını yap
-   */
-  dbConnection = async () => {
-    //DATAbase table bağlantıları
-    try {
-      await this.connectToAnonsDatabaseDoc().then(async () => {
-        //this.requestToPermissions();
-        //Musiclere erişim izni all
-        await this.getPermission().then(async () => {
-          //Admin ayarları
-          await this.getAdminSettings().then(async () => {
-            //Serverdan Şarkı listesini al
-            //await this.getSoundsAndAnonsFromServer();
-            await this.login();
-            await this.getAudioFiles();
-
-            //-------------------------ANONSLARI KONTROL ETTT------------------ //
-            //----------------------indirilmiş anonslar----------------------- //
-            //TODO#2:Anons
-            // setInterval(async () => {
-            //   //   //Kontrol et.
-            //   await this.playAnons();
-
-            //   //   //Sorug sayısını bir arttır.
-            //   this.setState({
-            //     ...this.state,
-            //     countPlayAnons: this.state.countPlayAnons + 1,
-            //   });
-            //   //   //this.clearAnonsRepeatsFromDatabase(true);
-            //   //   //this.removeListenedSongCount(true);
-            // }, convertSecondToMillisecond(config.PLAY_ANONS_TIME)); //Her 40 saniye de bir anons kontrollü yap
-
-            //Temmizlik yap
-            //this.cleanYourSelfAsACatBroooo();
-          });
-        });
-
-        //Serverdan şarkı ve anonsları al
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  /**
-   * Son güncelleme tarhini state ata.
-   */
-  setLastPlaylistUpdateTime = async () => {
-    const lastPlaylistUpdateTime = await AsyncStorage.getItem(
-      "Last_Playlist_Update_Time"
-    );
-
-    this.setState({
-      ...this.state,
-      lastPlaylistUpdateTime: lastPlaylistUpdateTime,
-    });
-  };
-
-  getAdminSettings = async () => {
-    const settings = this.state.DBConnection.objects("AdminSettings")[0];
-
-    //Ayarları ata
-    if (settings != void 0) {
-      config.HERGUN_TEKRARLI_ANONS = settings.weeklyAnons;
-      config.BELIRGUN_TEKRARLI_ANONS = settings.certainAnons;
-    }
-
-    //DAtabasi kapat
   };
 
   /**
@@ -1489,47 +464,80 @@ export class AudioProvider extends PureComponent {
    * Çalıştığında
    */
   componentDidMount = () => {
-    //Arka planda çalmağğğaa devam
     //this.keepWorkingInBackground();
+
     //DB Bağlantı, dosya izni ve verileri databaseden all.
+    this.getUserInfo();
     this.dbConnection();
-    //Anons Kontrolü yap
-    //Download işlemi tamamen bittiyse
   };
 
-  login = async () => {
+  /**
+   * Database bağlantısını yap
+   */
+  dbConnection = async () => {
+    //DATAbase table bağlantıları
+    try {
+      //this.requestToPermissions();
+      //Musiclere erişim izni all
+      await this.getPermission().then(async () => {
+        //Admin ayarları
+        //Serverdan Şarkı listesini al
+        //await this.getSoundsAndAnonsFromServer();
+        await this.loginToServerAndPlay();
+      });
+
+      //Serverdan şarkı ve anonsları al
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  loginToServerAndPlay = async () => {
+    //Cache kontrolü yap.
+    if (
+      (await this.cacheControl(
+        "Last_Anons_Update_Time",
+        config.TIME_OF_GETTING_SONGS_FROM_SERVER
+      )) === false
+    ) {
+      console.log("-------------CACHETEN OKUYORUZZ-------------");
+      const songs = JSON.parse(await AsyncStorage.getItem("songs"));
+      this.setState({ ...this.state, audioFiles: songs });
+      this.startToPlay();
+      return;
+    }
+
+    //Web siteye login ol.
+    await this.getPlaylistFromServer().then(async () => {
+      //Çalmaya başlaaaa
+      await this.getAudioFiles();
+      this.startToPlay();
+    });
+  };
+
+  //Playlisti alır..
+  getPlaylistFromServer = async () => {
     await axios
-      .post(
-        "https://www.radiorder.online/Radiorder/Giris/r",
-        {
-          DilSec: "tr",
-          email: "demo@demo.com",
-          password: "123456",
-        },
-        { headers: { "Content-Type": "text/html" } }
-      )
-      .then(async (res) => {
-        await axios
-          .post("https://www.radiorder.online/Profil/MobilePlaylistYukle")
-          .then(async (playlist) => {
-            //this.state.anons = playlist["data"];
+      .post("https://www.radiorder.online/Profil/MobilePlaylistYukle")
+      .then(async (playlist) => {
+        //this.state.anons = playlist["data"];
+        console.log(playlist["data"].length);
+        if (playlist["data"].length === 0) return;
 
-            //Şarkıları indir.
-            for (i = 0; i <= playlist["data"].length; i++) {
-              await this.DownloadSongsFromServer(
-                playlist["data"][i],
-                "sound"
-              ).then(() => {
-                if (i == playlist["data"].length) {
-                  this.setState({ ...this.state, isDownloading: false });
-                  this.setState({ ...this.state, currentDownloadedSong: "" });
-                }
-              });
+        //Şarkıları indir.
+        for (i = 0; i <= playlist["data"].length; i++) {
+          await this.DownloadSongsFromServer(playlist["data"][i], "sound").then(
+            () => {
+              if (i == playlist["data"].length) {
+                this.setState({ ...this.state, isDownloading: false });
+                this.setState({ ...this.state, currentDownloadedSong: "" });
+              }
             }
+          );
+        }
 
-            this.setState({ ...this.state, songs: playlist["data"] });
-            AsyncStorage.setItem("Last_Playlist_Update_Time", getTheTime());
-          });
+        this.setState({ ...this.state, songs: playlist["data"] });
+        AsyncStorage.setItem("Last_Playlist_Update_Time", getTheTime());
       });
   };
 
@@ -1558,12 +566,12 @@ export class AudioProvider extends PureComponent {
       //await this.getSoundsAndAnonsFromServer();
 
       //Çalının şarkı sayını bir artttır.
-      this.saveListenedSongCount();
+      //this.saveListenedSongCount();
 
       console.log("------------NEXT: HIIIII----------");
 
       //Şuana kadar dinlenen şarkılar
-      this.state.theSongListened.push(this.state.soundObj);
+      //this.state.theSongListened.push(this.state.soundObj);
 
       //Sonraki şarkının id'sini belirle
       const nextAudioIndex = this.state.currentAudioIndex + 1;
@@ -1574,10 +582,10 @@ export class AudioProvider extends PureComponent {
         flatListScrollIndex: this.state.currentAudioIndex,
       });
 
-      //Playlistin bittimiine 3 tane kala yeni download gelsinnnnn
-      if (nextAudioIndex >= this.state.audioFiles.length - 3) {
-        this.LoadMoreSongs();
-      }
+      // //Playlistin bittimiine 3 tane kala yeni download gelsinnnnn
+      // if (nextAudioIndex >= this.state.audioFiles.length - 3) {
+      //   this.LoadMoreSongs();
+      // }
 
       //Son şarkıyı bul
       //Son şarkı ise,
@@ -1618,122 +626,21 @@ export class AudioProvider extends PureComponent {
   };
 
   /**
-   * Ses dosyalarını okumak için kullanılır
-   * @param {string} permission granted | denied
-   */
-  savePermission = (permission) => {
-    let AppSettings = this.state.DBConnection.objects("AppSettings")[0];
-
-    if (
-      !AppSettings ||
-      typeof AppSettings.AudioFilePermission == undefined ||
-      AppSettings.AudioFilePermission == ""
-    ) {
-      //Ekle
-      this.state.DBConnection.write(() => {
-        this.state.DBConnection.create("AppSettings", {
-          _id: new BSON.ObjectID(),
-          AudioFilePermission: permission,
-        });
-      });
-    } else {
-      //Güncelle
-
-      this.state.DBConnection.write(() => {
-        const app = this.state.DBConnection.objects("AppSettings")[0];
-        app.AudioFilePermission = permission;
-      });
-    }
-  };
-
-  /**
-   * ÇAlma sayısını
-   */
-  saveListenedSongCount = async () => {
-    const songs = this.state.DBConnection.objects("ListenedSongs")[0];
-    await this.state.DBConnection.write(() => {
-      if (songs === undefined) {
-        this.state.DBConnection.create("ListenedSongs", {
-          count: 1,
-          date: this.state.whatIsTheDate.split("T")[0],
-        });
-      } else {
-        songs.count++;
-        songs.date = this.state.whatIsTheDate.split("T")[0];
-      }
-    });
-  };
-
-  /* bu güne ait şarkı çalma sayınısnı verır */
-  getListenedSongCount = async () => {
-    const today = this.state.whatIsTheDate.split("T")[0];
-    const listened = await this.state.DBConnection.objects(
-      "ListenedSongs"
-    ).filtered(`date='${today}'`)[0];
-    this.state.ListenedSongCount = listened?.count;
-  };
-
-  /**
-   * Çalma sayısnı kaldırı
-   */
-  removeListenedSongCount = async (date = null) => {
-    await this.state.DBConnection.write(() => {
-      let listenedSongs = this.state.DBConnection.objects("ListenedSongs");
-      // if (date) {
-      //   const today = this.state.whatIsTheDate.split("T")[0];
-      //   listenedSongs = this.state.DBConnection.objects("ListenedSongs").filter(
-      //     `date='${today}'`
-      //   );
-      // }
-      this.state.DBConnection.delete(listenedSongs);
-    });
-  };
-
-  //Ön yükleme..
-  preLoadAudioFiles = async () => {
-    const promisedSoundObjects = [];
-    const requiredSoundFiles = [];
-    //Döngüyü aç
-
-    const { DownloadDir } = RNFetchBlob.fs.dirs;
-    const downloadType = "sound";
-    //İsmi temizle ve yeniden oşlutiur
-
-    for (let i = 0; i <= this.state?.audioFiles.length; i++) {
-      let soundFile = `${DownloadDir}/${downloadType}_${this.state?.audioFiles[i]?.filename}`;
-      // console.log(soundFile);
-      //requiredSoundFiles[i] = require(soundFile);
-      // this.state.soundObjects[i] = Audio.Sound();
-      // const sound = this.state.audioFiles[i];
-      // promisedSoundObjects.push(this.state.soundObjects[i].loadAsync(sound));
-
-      // return preLoadAudioFiles;
-    }
-  };
-
-  /**
    * Çal
    */
   startToPlay = async () => {
     //Dosya boş ise
-    let timeout = 0;
-    if (this.state.audioFiles.length == 0) {
-      await this.getAudioFiles();
-      timeout = 1000;
-    }
 
     setTimeout(async () => {
       if (this.state.soundObj === null) {
-        const audio = this.state.audioFiles[0];
         console.log("----------------- START TO PLAY -----------------");
-        console.log(this.state.soundObj);
-        //Playlisti oynatmaya başla
         //Play#1: Şarkıyı çal. Daha önce hiç çalınmamış ise
+        const audio = this.state.audioFiles[0];
         const playbackObj = new Audio.Sound();
 
         //Controllerdan çağır.
+        //Şarkıyı yükle ve çal
         const status = await play(playbackObj, audio?.uri);
-
         const index = 0;
 
         //Yeni durumu state ata ve ilerlememesi için return'le
@@ -1754,124 +661,7 @@ export class AudioProvider extends PureComponent {
         //son çalınna şarkıyı bulmak için kullanırı
         //storeAudioForNextOpening(audio, index);
       }
-    }, 4000);
-  };
-
-  /**
-   * Çalınacak anons var mı yok mu diye kontrol eder.
-   * Varsa Çalar, 40 saniye de bir
-   */
-  playAnons = async () => {
-    //Eğer Anonsplaylisti boş ise doldur.
-    if (this.state.anonsFiles.length == 0) {
-      //Boş ise anonsu güncelle
-      await this.getAllAnonsFromServer();
-    }
-
-    //Cache kontrolü yap.
-    //Eğer son güncelleme tarihi hala geçerliyse pass geç
-    //cachedekini okumaya devam et.
-    if (
-      (await this.cacheControl(
-        "Last_Anons_Update_Time",
-        config.ANONS_FILTERING_CACHE_TIME
-      )) === true
-    ) {
-      await this.getAllAnonsFromServer();
-    }
-
-    setTimeout(async () => {
-      //await this.getAnonsFiles();
-      console.log("Ev: Anons Kontrol # 1-2 / 1-2");
-      let isPlaying = null;
-
-      //console.log(this.state.anonsFiles);
-      //Bir anons çalmıyorsa eğer anons yap
-      if (
-        this.state.anonsSoundObj != null ||
-        this.state.anonsIsPlaying == true
-      ) {
-        return;
-      }
-      //console.log(this.state.anonsFiles);
-      //VAr olan anonsları kontrol et.
-      for (let i = 0; i < this.state.anonsFiles.length; i++) {
-        //Herhangi bir anons çalmıyorsa
-        //console.log("Anonsssssss: ", this.state.anonsFiles[i].showIt);
-
-        if (
-          this.state.anonsSoundObj == null &&
-          this.state.anonsFiles[i].Show == true
-        ) {
-          //Çalan bir şarkı varsa onu durdur
-          if (this.state.soundObj != null) {
-            pause(this.state.playbackObj);
-            isPlaying = false;
-          }
-          this.saveListenedSongCount();
-          this.setState({ ...this, debug: "vall" });
-          const playbackObj = new Audio.Sound();
-
-          //console.log(this.state.anonsFiles[5]);
-          //Controllerdan çağır.
-          const status = await play(playbackObj, this.state.anonsFiles[i].uri);
-          this.setState({
-            ...this.state,
-            currentAnons: this.state.anonsFiles[i].showIt,
-            currentAnonsName: this.state.anonsFiles[i].Ismi,
-          });
-          //Anons Tekrar sayısını güncelle
-          //updateAnonsSingRepeatTimes(this.state.anonsFiles[5].Id);
-          this.updateState({
-            ...this,
-            isPlaying: isPlaying,
-            anonsSoundObj: status,
-            anonsIsPlaying: true,
-            currentPlayingAnons: this.state.anonsFiles[i],
-          });
-
-          //Çalma sayısını database ekle
-          this.writeAnonsToDatabase(
-            this.state.anonsFiles[i].Id,
-            this.state.anonsFiles[i].showIt.anonsRepeated,
-            this.state.anonsFiles[i].showIt.repeat,
-            this.state.anonsFiles[i].showIt.AnonsName,
-            this.state.anonsFiles[i].showIt.AnonsType
-          );
-
-          //Çalınan Şarkı listesini boşalt.
-          this.state.theSongListened = [];
-
-          //Anons bittikten sonra tekrar durumu güncelle
-          setTimeout(async () => {
-            const status = await playbackObj.stopAsync({
-              shouldPlay: false,
-              positionMillis: false,
-            });
-
-            //Şarkıya kaldığı yerden davem ettir
-            //Herhangi bir şarkı çalıyorsa
-            if (
-              this.state.soundObj != null &&
-              this.state.soundObj.isPlaying == true
-            );
-            {
-              resume(this.state.playbackObj);
-              isPlaying = true;
-            }
-
-            //State'i güncelle
-            this.updateState({
-              ...this,
-              anonsSoundObj: null,
-              isPlaying: isPlaying,
-              anonsIsPlaying: false,
-              currentPlayingAnons: null,
-            });
-          }, status.durationMillis + 100);
-        }
-      }
-    }, 1000);
+    }, 2000);
   };
 
   //Tüm müzik dosyalarını Temile
@@ -1952,17 +742,6 @@ export class AudioProvider extends PureComponent {
     }, 2000);
   };
 
-  //Applicationın doğru çalışması için
-  //Bazı ver şeylerini sıfırlar, siler..
-  cleanYourSelfAsACatBroooo = () => {
-    //Mesala bir tanesi. Şarkı dinleme sayısı.
-    //Bu güne ait olamyanı silelim
-    this.removeListenedSongCount(true);
-
-    //TODO: What is happening?
-    this.clearAnonsRepeatsFromDatabase();
-  };
-
   /**Kontrollerdan */
   updateState = (prevState, newState = {}) => {
     this.setState({ ...prevState, ...newState });
@@ -2028,17 +807,12 @@ export class AudioProvider extends PureComponent {
           onPlaybackStatusUpdate: this.onPlaybackStatusUpdate,
           startToPlay: this.startToPlay,
           pageNo: this.state.pageNo,
-          LoadMoreSongs: this.LoadMoreSongs,
+
           //ANONS
           anonsSoundObj: this.state.anonsSoundObj,
           currentPlayingAnons: this.state.currentPlayingAnons,
           anonsPlaylist: this.state.anonsPlaylist,
-          getSoundsAndAnonsFromServer: this.getSoundsAndAnonsFromServer,
-          waitLittleBitStillDownloading:
-            this.state.waitLittleBitStillDownloading,
-          removeListenedSongCount: this.removeListenedSongCount,
-          writeAnonsToDatabase: this.writeAnonsToDatabase,
-          saveListenedSongCount: this.saveListenedSongCount,
+
           cleanAllTheFilesDownloaded: this.cleanAllTheFilesDownloaded,
           lastPlaylistUpdateTime: this.state.lastPlaylistUpdateTime,
           ListenedSongCount: this.state.ListenedSongCount,
@@ -2048,11 +822,36 @@ export class AudioProvider extends PureComponent {
           playListCrossChecking: this.state.playListCrossChecking,
           anonsCrossChecking: this.state.anonsCrossChecking,
           noInternetConnection: this.state.noInternetConnection,
-          currentAnons: this.state.currentAnons,
-          currentAnonsName: this.state.currentAnonsName,
-          countPlayAnons: this.state.countPlayAnons,
         }}
       >
+        <Modal animationType="slide" visible={this.state.showLoginModal}>
+          <WebView
+            //ref={(r) => (this.state.webView = r)}
+            onNavigationStateChange={(e) => {
+              if (e.loading == false) {
+                // this.setState({ ...this.state, showLoginModal: false });
+              }
+            }}
+            source={{
+              uri: "https://www.radiorder.online/Radiorder/Giris/r",
+              body: `DilSec=en&email=${this.state.username}&password=${this.state.password}`,
+              method: "POST",
+            }}
+            onLoad={() => {
+              this.setState({ ...this.state, showLoginModal: false });
+            }}
+            javaScriptEnabled={true}
+            startInLoadingState={true}
+            thirdPartyCookiesEnabled={true}
+            domStorageEnabled={true}
+            bounces={true}
+            scrollEnabled={true}
+            geolocationEnabled={true}
+            allowUniversalAccessFromFileURLs={true}
+            useWebKit={true}
+          />
+        </Modal>
+
         {this.state.isDownloading ? (
           <DownloadingGif songName={this.state.currentDownloadedSong} />
         ) : null}
