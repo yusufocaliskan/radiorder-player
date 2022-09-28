@@ -98,12 +98,11 @@ const AudioListItem = ({
                   </Text>
                 </View>
               </View>
+
               <View style={styles.titleBottom}>
-                {item.FileType == "audio" ? (
-                  <Text style={styles.timeText}>{convertTime(duration)}</Text>
-                ) : (
-                  <></>
-                )}
+                <Text style={styles.timeText}>
+                  {convertTime(item.duration)}
+                </Text>
                 {item.FileType == "anons" ? (
                   <View>
                     <View>

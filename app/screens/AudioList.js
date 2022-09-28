@@ -65,7 +65,6 @@ export class AudioList extends Component {
         isPlaying: true,
       });
 
-      //Slider bar için statuyü güncelle
       playbackObj.setOnPlaybackStatusUpdate(
         this.context.onPlaybackStatusUpdate
       );
@@ -180,7 +179,7 @@ export class AudioList extends Component {
   };
 
   render() {
-    if (!this.context.audioFiles.length) {
+    if (!this.context?.audioFiles?.length) {
       return <LoadingSimple />;
     }
 

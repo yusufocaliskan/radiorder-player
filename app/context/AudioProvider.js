@@ -558,12 +558,14 @@ export class AudioProvider extends PureComponent {
     let audio;
     let status;
     if (playbackStatus.isLoaded && playbackStatus.isPlaying) {
-      this.updateState(this, {
+      this.setState({
+        ...this.state,
         playbackPosition: playbackStatus.positionMillis,
         playbackDuration: playbackStatus.durationMillis,
       });
     }
 
+    console.log(playbackStatus.didJustFinish);
     //Şarkı bitti ise diğerine geç
     if (playbackStatus.didJustFinish) {
       console.log("------------ . NEXT: Song .----------");
@@ -831,6 +833,7 @@ export class AudioProvider extends PureComponent {
           <WebView
             //ref={(r) => (this.state.webView = r)}
             onNavigationStateChange={(e) => {
+              console.log(e);
               if (e.loading == false) {
                 // this.setState({ ...this.state, showLoginModal: false });
               }
