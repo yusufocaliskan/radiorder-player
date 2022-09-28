@@ -7,7 +7,7 @@ export default {
   MODAL_BG: "rgba(0,0,0,0.2)",
   ACTIVE_BG: "#5252ad",
   FONT_FONT: "#fff",
-  RED: "#EB5353",
+  RED: "#EF003B",
   DARK_RED: "#950101",
   LIGHT_RED: "#FA9494",
   WHITE: "#fafafa",
